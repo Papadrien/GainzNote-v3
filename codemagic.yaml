@@ -1,16 +1,51 @@
 workflows:
+
+  # ──────────────────────────────────────────
+  # Debug Build — triggered on every push
+  # ──────────────────────────────────────────
+  android-debug:
+    name: Android Debug Build
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: "main"
+          include: true
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
+        script: |
+          chmod +x gradlew
+
+      - name: Build Debug APK
+        script: |
+          ./gradlew :androidApp:assembleDebug
+
+    artifacts:
+      - androidApp/build/outputs/apk/debug/*.apk
+
     publishing:
       email:
         recipients:
-          - VOTRE_EMAIL@example.com   # ← REMPLACEZ par votre email
+          - ivorydu13@gmail.com
         notify:
           success: true
           failure: true
 
   # ──────────────────────────────────────────
-  # (Optionnel) Build Release signé
+  # Signed Release — triggered on version tags
   # ──────────────────────────────────────────
-  android-signed-release:
+  android-release:
     name: Android Signed Release
     max_build_duration: 60
     instance_type: mac_mini_m2
@@ -18,9 +53,8 @@ workflows:
     environment:
       java: 17
       groups:
-        - keystore_credentials   # À configurer dans Codemagic UI
+        - keystore_credentials   # Configure in Codemagic UI → Teams → Global variables
       vars:
-        PACKAGE_NAME: "com.papadrien.gainznote"
         CM_KEYSTORE_PATH: /tmp/keystore.jks
 
     triggering:
@@ -45,14 +79,15 @@ workflows:
 
       - name: Build Release APK
         script: |
-          ./gradlew :androidApp:assembleRelease \\
-            -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \\
-            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \\
-            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \\
+          ./gradlew :androidApp:assembleRelease \
+            -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
             -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
 
     artifacts:
-      - androidApp/build/outputs/**/*.apk
+      - androidApp/build/outputs/apk/release/*.apk
+      - androidApp/build/outputs/bundle/release/*.aab
 
     publishing:
       email:
