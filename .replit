@@ -1,0 +1,29 @@
+modules = ["java-graalvm22.3"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export ANDROID_SDK_ROOT=/home/runner/android-sdk && export ANDROID_HOME=/home/runner/android-sdk && export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java)))) && ./gradlew --no-daemon --no-configuration-cache :androidApp:assembleDebug"
+
+[workflows.workflow.metadata]
+outputType = "console"
