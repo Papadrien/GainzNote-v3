@@ -21,9 +21,9 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "export ANDROID_SDK_ROOT=/home/runner/android-sdk && export ANDROID_HOME=/home/runner/android-sdk && export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java)))) && ./gradlew --no-daemon --no-configuration-cache :androidApp:assembleDebug"
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash setup_and_build.sh"
