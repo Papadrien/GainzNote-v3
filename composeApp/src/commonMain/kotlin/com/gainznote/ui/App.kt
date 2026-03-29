@@ -81,4 +81,5 @@ fun App(
 }
 
 // expect/actual pour BackHandler multiplateforme
+@Composable
 expect fun BackHandler(enabled: Boolean, onBack: () -> Unit)

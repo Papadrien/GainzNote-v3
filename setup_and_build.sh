@@ -33,6 +33,13 @@ else
     echo "==> Android SDK already present."
 fi
 
+# Ensure gradle-wrapper.jar is present (not persistent across sessions)
+if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+    echo "==> Downloading gradle-wrapper.jar..."
+    curl -L "https://github.com/gradle/gradle/raw/v8.9.0/gradle/wrapper/gradle-wrapper.jar" \
+        -o gradle/wrapper/gradle-wrapper.jar
+fi
+
 # Ensure local.properties is correct
 echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 echo "==> local.properties updated."
