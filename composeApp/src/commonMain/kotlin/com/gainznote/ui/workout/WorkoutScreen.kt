@@ -21,12 +21,14 @@ import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-// ─── Écran principal ──────────────────────────────────────────────────────────
 
 @Composable
-fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -> Unit) {
+fun WorkoutScreen(
+    repo: WorkoutRepository,
+    templateId: String?,
+    onBack: () -> Unit,
+    onFinished: () -> Unit
+) {
     val scope = rememberCoroutineScope()
     val vm = remember { WorkoutViewModel(repo, scope, templateId) }
     val workout by vm.state.collectAsState()
@@ -35,11 +37,10 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
     var showSupersetPicker by remember { mutableStateOf<String?>(null) }
     var showAddSetsFor by remember { mutableStateOf<String?>(null) }
 
-    // Chronomètre : null = caché, non-null = timestamp de départ
+    // Chronomètre
     var chronoStart by remember { mutableStateOf<Long?>(null) }
     var chronoDisplay by remember { mutableStateOf("00:00") }
 
-    // Tick du chrono toutes les secondes quand actif
     LaunchedEffect(chronoStart) {
         while (chronoStart != null) {
             val elapsed = (kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - chronoStart!!) / 1000L
@@ -64,27 +65,38 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
                     Text("Démarré à ${formatDisplayDate(workout.startedAt)}", color = c.textMuted, fontSize = 11.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Bouton chronomètre
+
+                    // ── Bouton chronomètre ────────────────────────────────────
+                    // Fond : surfaceAlt au repos, surface+bordure accent actif
+                    // Icône toujours en accent pour rester lisible sur fond sombre
+                    val chronoActive = chronoStart != null
                     Box(
                         Modifier
                             .background(
-                                if (chronoStart != null) c.accentDim else c.surfaceAlt,
+                                if (chronoActive) c.surface else c.surfaceAlt,
                                 RoundedCornerShape(8.dp)
                             )
-                            .border(1.dp, if (chronoStart != null) c.accent else c.border, RoundedCornerShape(8.dp))
+                            .border(
+                                1.dp,
+                                if (chronoActive) c.accent else c.border,
+                                RoundedCornerShape(8.dp)
+                            )
                             .clickable {
-                                if (chronoStart != null) {
-                                    // Réinitialise et cache
+                                if (chronoActive) {
                                     chronoStart = null
                                     chronoDisplay = "00:00"
                                 } else {
-                                    // Démarre
                                     chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
                                 }
                             }
-                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("⏱", fontSize = 16.sp)
+                        Text(
+                            "⏱",
+                            fontSize = 16.sp,
+                            color = if (chronoActive) c.accent else c.textSec
+                        )
                     }
 
                     Button(
@@ -101,22 +113,25 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
 
             // ── Contenu scrollable ────────────────────────────────────────────
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                GainzTextField(value = workout.title, placeholder = "Titre de l'entraînement",
-                    textSize = 22.sp, bold = true, c = c, onValueChange = vm::updateTitle)
+                GainzTextField(
+                    value = workout.title,
+                    placeholder = "Titre de l'entraînement",
+                    textSize = 22.sp, bold = true, c = c,
+                    onValueChange = vm::updateTitle
+                )
                 Spacer(Modifier.height(8.dp))
-                GainzTextField(value = workout.notes, placeholder = "Notes générales…",
-                    c = c, onValueChange = vm::updateNotes, minLines = 2)
+                GainzTextField(
+                    value = workout.notes,
+                    placeholder = "Notes générales…",
+                    c = c, onValueChange = vm::updateNotes, minLines = 2
+                )
                 Spacer(Modifier.height(20.dp))
 
-                // Exercices : chaque exercice affiché indépendamment,
-                // les supersets sont juste surlignés en violet
                 workout.exercises.forEach { ex ->
-                    val isSupersetMember = ex.supersetWith != null
                     ExerciseCard(
                         exercise = ex,
-                        isSupersetMember = isSupersetMember,
-                        c = c,
-                        vm = vm,
+                        isSupersetMember = ex.supersetWith != null,
+                        c = c, vm = vm,
                         allExercises = workout.exercises,
                         onPickSuperset = { showSupersetPicker = ex.id },
                         onAddMultiple = { showAddSetsFor = ex.id }
@@ -137,7 +152,7 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
             }
         }
 
-        // ── Chronomètre flottant (en bas à droite, discret) ───────────────────
+        // ── Chronomètre flottant ──────────────────────────────────────────────
         AnimatedVisibility(
             visible = chronoStart != null,
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
@@ -147,16 +162,11 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
             Box(
                 Modifier
                     .background(c.surface, RoundedCornerShape(12.dp))
-                    .border(1.dp, c.accent, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .border(1.5.dp, c.accent, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
-                Text(
-                    chronoDisplay,
-                    color = c.accent,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
+                Text(chronoDisplay, color = c.accent, fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
             }
         }
     }
@@ -176,7 +186,7 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
             },
             dismissButton = {
                 TextButton(onClick = { showFinishDialog = false }) {
-                    Text("Continuer", color = c.textMuted)
+                    Text("Continuer", color = c.textSec)
                 }
             }
         )
@@ -190,8 +200,7 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
             containerColor = c.surface,
             title = { Text("Associer en superset avec…", color = c.text) },
             text = {
-                if (candidates.isEmpty())
-                    Text("Aucun exercice disponible.", color = c.textSec)
+                if (candidates.isEmpty()) Text("Aucun exercice disponible.", color = c.textSec)
                 else Column {
                     candidates.forEach { ex ->
                         TextButton(
@@ -204,7 +213,7 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showSupersetPicker = null }) {
-                    Text("Annuler", color = c.textMuted)
+                    Text("Annuler", color = c.textSec)
                 }
             }
         )
@@ -237,9 +246,7 @@ fun WorkoutScreen(repo: WorkoutRepository, templateId: String?, onFinished: () -
                 ) { Text("Ajouter", color = Color.Black) }
             },
             dismissButton = {
-                TextButton(onClick = { showAddSetsFor = null }) {
-                    Text("Annuler", color = c.textMuted)
-                }
+                TextButton(onClick = { showAddSetsFor = null }) { Text("Annuler", color = c.textSec) }
             }
         )
     }
@@ -255,17 +262,11 @@ fun GainzTextField(
 ) {
     BasicTextField(
         value = value, onValueChange = onValueChange, minLines = minLines,
-        textStyle = TextStyle(
-            color = c.text, fontSize = textSize,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
-        ),
+        textStyle = TextStyle(color = c.text, fontSize = textSize,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal),
         cursorBrush = SolidColor(c.accent),
         decorationBox = { inner ->
-            Box(
-                Modifier.fillMaxWidth()
-                    .border(1.dp, c.border, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
-            ) {
+            Box(Modifier.fillMaxWidth().border(1.dp, c.border, RoundedCornerShape(12.dp)).padding(12.dp)) {
                 if (value.isEmpty()) Text(placeholder, color = c.textMuted, fontSize = textSize)
                 inner()
             }
@@ -274,8 +275,6 @@ fun GainzTextField(
 }
 
 // ─── ExerciseCard ─────────────────────────────────────────────────────────────
-// Chaque exercice est maintenant une carte indépendante.
-// S'il fait partie d'un superset, la bordure devient violette.
 
 @Composable
 fun ExerciseCard(
@@ -289,31 +288,19 @@ fun ExerciseCard(
 ) {
     Column(
         Modifier.fillMaxWidth()
-            .border(
-                width = if (isSupersetMember) 2.dp else 1.dp,
-                color = if (isSupersetMember) c.superset else c.border,
-                shape = RoundedCornerShape(14.dp)
-            )
+            .border(if (isSupersetMember) 2.dp else 1.dp,
+                if (isSupersetMember) c.superset else c.border, RoundedCornerShape(14.dp))
             .background(c.surface, RoundedCornerShape(14.dp))
     ) {
-        // ── Header ────────────────────────────────────────────────────────────
-        Row(
-            Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Badge SS discret si superset
+        Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
             if (isSupersetMember) {
-                Box(
-                    Modifier
-                        .background(c.supersetDim, RoundedCornerShape(5.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
+                Box(Modifier.background(c.supersetDim, RoundedCornerShape(5.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)) {
                     Text("SS", color = c.superset, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
             }
-
-            // Nom de l'exercice — toujours éditable
             BasicTextField(
                 value = exercise.name,
                 onValueChange = { vm.updateExerciseName(exercise.id, it) },
@@ -322,66 +309,46 @@ fun ExerciseCard(
                 cursorBrush = SolidColor(c.accent),
                 singleLine = true,
                 decorationBox = { inner ->
-                    if (exercise.name.isEmpty())
-                        Text("Nom de l'exercice", color = c.textMuted, fontSize = 15.sp)
+                    if (exercise.name.isEmpty()) Text("Nom de l'exercice", color = c.textMuted, fontSize = 15.sp)
                     inner()
                 }
             )
-
-            // Menu contextuel
             var menuOpen by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { menuOpen = true }) {
-                    Text("⋮", color = c.textMuted, fontSize = 20.sp)
+                    Text("⋮", color = c.textSec, fontSize = 20.sp)
                 }
-                DropdownMenu(
-                    expanded = menuOpen,
-                    onDismissRequest = { menuOpen = false },
-                    containerColor = c.surface
-                ) {
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false },
+                    containerColor = c.surface) {
                     if (isSupersetMember)
-                        DropdownMenuItem(
-                            text = { Text("Retirer du superset", color = c.superset) },
-                            onClick = { vm.unlinkSuperset(exercise.id); menuOpen = false }
-                        )
+                        DropdownMenuItem(text = { Text("Retirer du superset", color = c.superset) },
+                            onClick = { vm.unlinkSuperset(exercise.id); menuOpen = false })
                     else
-                        DropdownMenuItem(
-                            text = { Text("Associer en superset", color = c.text) },
-                            onClick = { onPickSuperset(); menuOpen = false }
-                        )
-                    DropdownMenuItem(
-                        text = { Text("Supprimer l'exercice", color = c.danger) },
-                        onClick = { vm.removeExercise(exercise.id); menuOpen = false }
-                    )
+                        DropdownMenuItem(text = { Text("Associer en superset", color = c.text) },
+                            onClick = { onPickSuperset(); menuOpen = false })
+                    DropdownMenuItem(text = { Text("Supprimer l'exercice", color = c.danger) },
+                        onClick = { vm.removeExercise(exercise.id); menuOpen = false })
                 }
             }
         }
 
         HorizontalDivider(color = if (isSupersetMember) c.superset.copy(alpha = 0.3f) else c.border, thickness = 0.5.dp)
 
-        // ── En-têtes colonnes ─────────────────────────────────────────────────
         Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
             Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(24.dp))
             Text("kg", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("reps", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("note", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
-            // Espace réservé pour les boutons (propagate + suppr)
             Spacer(Modifier.width(56.dp))
         }
 
-        // ── Séries ────────────────────────────────────────────────────────────
         exercise.sets.forEachIndexed { i, set ->
-            SetRow(
-                index = i,
-                set = set,
-                c = c,
+            SetRow(index = i, set = set, c = c,
                 onUpdate = { w, r, n -> vm.updateSet(exercise.id, set.id, weight = w, reps = r, notes = n) },
                 onPropagate = { vm.propagateWeight(exercise.id, set.id) },
-                onRemove = { vm.removeSet(exercise.id, set.id) }
-            )
+                onRemove = { vm.removeSet(exercise.id, set.id) })
         }
 
-        // ── Boutons ajout séries ──────────────────────────────────────────────
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
             TextButton(onClick = { vm.addSets(exercise.id) }, modifier = Modifier.weight(1f)) {
                 Text("+ Série", color = c.accent, fontSize = 13.sp)
@@ -397,93 +364,100 @@ fun ExerciseCard(
 
 @Composable
 fun SetRow(
-    index: Int,
-    set: TrainingSet,
-    c: GainzThemeColors,
+    index: Int, set: TrainingSet, c: GainzThemeColors,
     onUpdate: (Double?, Int?, String?) -> Unit,
-    onPropagate: () -> Unit,
-    onRemove: () -> Unit
+    onPropagate: () -> Unit, onRemove: () -> Unit
 ) {
-    val hasWeight = set.weightKg != null
-
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        // Numéro de série
+        horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+
         Text("${index + 1}", color = c.textMuted, fontSize = 12.sp, modifier = Modifier.width(24.dp))
 
-        // Poids — hauteur fixe grâce à height()
-        CompactField(
-            value = set.weightKg?.let {
+        // ── Poids ─────────────────────────────────────────────────────────────
+        // On utilise un state local pour éviter le bug de suppression du dernier caractère.
+        // Le state local absorbe la frappe en temps réel ; on ne notifie le VM
+        // que quand la valeur parsée change, ce qui évite le re-render intempestif.
+        var weightText by remember(set.id) {
+            mutableStateOf(set.weightKg?.let {
                 if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-            } ?: "",
+            } ?: "")
+        }
+        CompactField(
+            localValue = weightText,
             hint = "0",
             keyboardType = KeyboardType.Decimal,
             c = c,
             modifier = Modifier.weight(1f).height(34.dp),
-            onValueChange = { onUpdate(it.toDoubleOrNull(), null, null) }
+            onLocalChange = { raw ->
+                weightText = raw
+                onUpdate(raw.toDoubleOrNull(), null, null)
+            }
         )
 
-        // Reps — hauteur fixe
+        // ── Reps ──────────────────────────────────────────────────────────────
+        var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
         CompactField(
-            value = set.reps?.toString() ?: "",
+            localValue = repsText,
             hint = set.repsPlaceholder?.toString() ?: "0",
             hintIsAccent = set.repsPlaceholder != null,
             keyboardType = KeyboardType.Number,
             c = c,
             modifier = Modifier.weight(1f).height(34.dp),
-            onValueChange = { onUpdate(null, it.toIntOrNull(), null) }
+            onLocalChange = { raw ->
+                repsText = raw
+                onUpdate(null, raw.toIntOrNull(), null)
+            }
         )
 
-        // Note — hauteur fixe
+        // ── Notes ─────────────────────────────────────────────────────────────
+        var notesText by remember(set.id) { mutableStateOf(set.notes) }
         CompactField(
-            value = set.notes,
+            localValue = notesText,
             hint = "…",
             c = c,
             modifier = Modifier.weight(1.5f).height(34.dp),
-            onValueChange = { onUpdate(null, null, it) }
+            onLocalChange = { raw ->
+                notesText = raw
+                onUpdate(null, null, raw)
+            }
         )
 
-        // Bouton propager — visible seulement si poids renseigné
+        // ── Bouton propager (visible seulement si poids renseigné) ────────────
         Box(Modifier.width(32.dp).height(34.dp), contentAlignment = Alignment.Center) {
-            if (hasWeight) {
-                Box(
-                    Modifier.size(28.dp).clickable { onPropagate() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("⬇", color = c.textMuted, fontSize = 14.sp)
+            if (set.weightKg != null) {
+                Box(Modifier.size(28.dp).clickable { onPropagate() },
+                    contentAlignment = Alignment.Center) {
+                    Text("⬇", color = c.textSec, fontSize = 14.sp)
                 }
             }
         }
 
-        // Bouton supprimer
-        Box(
-            Modifier.size(32.dp).clickable { onRemove() },
-            contentAlignment = Alignment.Center
-        ) {
+        // ── Bouton supprimer ──────────────────────────────────────────────────
+        Box(Modifier.size(32.dp).clickable { onRemove() }, contentAlignment = Alignment.Center) {
             Text("✕", color = c.danger, fontSize = 12.sp)
         }
     }
 }
 
 // ─── CompactField ─────────────────────────────────────────────────────────────
-// Hauteur fixée par le parent via Modifier.height(), singleLine = true
+// Prend un `localValue` géré par le parent (state local dans SetRow).
+// Cela évite le problème où BasicTextField lie sa valeur au modèle distant
+// et empêche la suppression du dernier caractère.
 
 @Composable
 fun CompactField(
-    value: String,
+    localValue: String,
     hint: String,
     c: GainzThemeColors,
     modifier: Modifier,
     hintIsAccent: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
-    onValueChange: (String) -> Unit
+    onLocalChange: (String) -> Unit
 ) {
     BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = localValue,
+        onValueChange = onLocalChange,
         modifier = modifier
             .background(c.surfaceAlt, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 0.dp),
@@ -493,9 +467,9 @@ fun CompactField(
         singleLine = true,
         decorationBox = { inner ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                if (value.isEmpty())
+                if (localValue.isEmpty())
                     Text(hint,
-                        color = if (hintIsAccent) c.accent.copy(alpha = 0.5f) else c.textMuted,
+                        color = if (hintIsAccent) c.accent.copy(alpha = 0.6f) else c.textMuted,
                         fontSize = 14.sp)
                 inner()
             }

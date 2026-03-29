@@ -17,39 +17,68 @@ sealed class Screen {
 }
 
 @Composable
-fun App(driverFactory: DatabaseDriverFactory) {
+fun App(
+    driverFactory: DatabaseDriverFactory,
+    onExit: () -> Unit = {}
+) {
     val repo = remember { WorkoutRepository(driverFactory) }
-    var screen by remember { mutableStateOf<Screen>(Screen.Home) }
+    // Stack de navigation — le premier élément est toujours Home
+    val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
+    val currentScreen = backStack.last()
     var darkTheme by remember { mutableStateOf(true) }
 
+    fun navigateTo(screen: Screen) = backStack.add(screen)
+    fun navigateBack() {
+        if (backStack.size > 1) backStack.removeLast()
+        else onExit()
+    }
+
+    // Intercepte le bouton retour Android/iOS
+    BackHandler(enabled = backStack.size > 1) { navigateBack() }
+
     GainzTheme(dark = darkTheme) {
-        when (val s = screen) {
+        when (val s = currentScreen) {
             Screen.Home -> HomeScreen(
                 repo = repo,
                 darkTheme = darkTheme,
                 onToggleTheme = { darkTheme = !darkTheme },
-                onNewWorkout = { screen = Screen.Workout() },
-                onHistory = { screen = Screen.History },
-                onOpenWorkout = { id -> screen = Screen.Detail(id) }
+                onNewWorkout = { navigateTo(Screen.Workout()) },
+                onHistory = { navigateTo(Screen.History) },
+                onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) }
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
                 templateId = s.templateId,
-                onFinished = { screen = Screen.Home }
+                onBack = { navigateBack() },
+                onFinished = {
+                    backStack.clear()
+                    backStack.add(Screen.Home)
+                }
             )
             Screen.History -> HistoryScreen(
                 repo = repo,
-                onBack = { screen = Screen.Home },
-                onOpenDetail = { id -> screen = Screen.Detail(id) },
-                onUseAsTemplate = { id -> screen = Screen.Workout(id) }
+                onBack = { navigateBack() },
+                onOpenDetail = { id -> navigateTo(Screen.Detail(id)) },
+                onUseAsTemplate = { id ->
+                    backStack.clear()
+                    backStack.add(Screen.Home)
+                    navigateTo(Screen.Workout(id))
+                }
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
                 workoutId = s.workoutId,
-                onBack = { screen = Screen.History },
-                onUseAsTemplate = { id -> screen = Screen.Workout(id) },
-                onDeleted = { screen = Screen.History }
+                onBack = { navigateBack() },
+                onUseAsTemplate = { id ->
+                    backStack.clear()
+                    backStack.add(Screen.Home)
+                    navigateTo(Screen.Workout(id))
+                },
+                onDeleted = { navigateBack() }
             )
         }
     }
 }
+
+// expect/actual pour BackHandler multiplateforme
+expect fun BackHandler(enabled: Boolean, onBack: () -> Unit)

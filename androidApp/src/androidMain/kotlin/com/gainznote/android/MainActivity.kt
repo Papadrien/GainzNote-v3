@@ -12,7 +12,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            App(driverFactory = DatabaseDriverFactory(this))
+            App(
+                driverFactory = DatabaseDriverFactory(this),
+                onExit = { finish() }  // ferme l'app si on est à Home et qu'on appuie retour
+            )
         }
     }
 }
