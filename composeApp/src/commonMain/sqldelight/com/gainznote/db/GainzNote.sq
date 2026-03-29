@@ -1,0 +1,67 @@
+CREATE TABLE workout (
+    id          TEXT NOT NULL PRIMARY KEY,
+    title       TEXT NOT NULL DEFAULT '',
+    notes       TEXT NOT NULL DEFAULT '',
+    started_at  TEXT NOT NULL,
+    finished_at TEXT
+);
+
+CREATE TABLE exercise (
+    id            TEXT NOT NULL PRIMARY KEY,
+    workout_id    TEXT NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
+    name          TEXT NOT NULL DEFAULT '',
+    position      INTEGER NOT NULL DEFAULT 0,
+    superset_with TEXT
+);
+
+CREATE TABLE training_set (
+    id               TEXT NOT NULL PRIMARY KEY,
+    exercise_id      TEXT NOT NULL REFERENCES exercise(id) ON DELETE CASCADE,
+    position         INTEGER NOT NULL DEFAULT 0,
+    weight_kg        REAL,
+    reps             INTEGER,
+    reps_placeholder INTEGER,
+    notes            TEXT NOT NULL DEFAULT ''
+);
+
+-- Workouts
+getAllWorkouts:
+SELECT * FROM workout ORDER BY started_at DESC;
+
+getWorkoutById:
+SELECT * FROM workout WHERE id = :id;
+
+insertWorkout:
+INSERT OR REPLACE INTO workout(id, title, notes, started_at, finished_at)
+VALUES (:id, :title, :notes, :started_at, :finished_at);
+
+updateWorkout:
+UPDATE workout SET title=:title, notes=:notes, finished_at=:finished_at WHERE id=:id;
+
+deleteWorkout:
+DELETE FROM workout WHERE id=:id;
+
+-- Exercises
+getExercisesForWorkout:
+SELECT * FROM exercise WHERE workout_id=:workout_id ORDER BY position;
+
+insertExercise:
+INSERT OR REPLACE INTO exercise(id, workout_id, name, position, superset_with)
+VALUES (:id, :workout_id, :name, :position, :superset_with);
+
+deleteExercise:
+DELETE FROM exercise WHERE id=:id;
+
+deleteExercisesForWorkout:
+DELETE FROM exercise WHERE workout_id=:workout_id;
+
+-- Sets
+getSetsForExercise:
+SELECT * FROM training_set WHERE exercise_id=:exercise_id ORDER BY position;
+
+insertSet:
+INSERT OR REPLACE INTO training_set(id, exercise_id, position, weight_kg, reps, reps_placeholder, notes)
+VALUES (:id, :exercise_id, :position, :weight_kg, :reps, :reps_placeholder, :notes);
+
+deleteSetsForExercise:
+DELETE FROM training_set WHERE exercise_id=:exercise_id;

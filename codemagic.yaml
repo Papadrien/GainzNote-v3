@@ -1,50 +1,25 @@
-# codemagic.yaml
-# Ce fichier configure Codemagic pour builder l'APK automatiquement
-# à chaque push sur GitHub — sans avoir besoin d'un ordi.
-#
-# Étapes pour activer :
-#   1. Va sur https://codemagic.io et connecte ton compte GitHub
-#   2. Ajoute ton repo GainzNote
-#   3. Codemagic détecte ce fichier automatiquement
-#   4. Lance un build → reçois l'APK par email
-
 workflows:
   android-release:
-    name: Android APK (debug)
-    max_build_duration: 30  # minutes
-
+    name: Android APK Debug
+    max_build_duration: 30
     environment:
-      flutter: 3.24.0        # version Flutter stable
       java: 17
-
     triggering:
       events:
-        - push                # build à chaque push
+        - push
       branch_patterns:
         - pattern: main
           include: true
-
     scripts:
-      # 1. Récupère les dépendances
-      - name: Flutter pub get
-        script: flutter pub get
-
-      # 2. (Optionnel) Lance les tests
-      # - name: Tests
-      #   script: flutter test
-
-      # 3. Build APK debug (pas besoin de keystore pour tester)
+      - name: Set up Gradle
+        script: chmod +x gradlew
       - name: Build APK
-        script: flutter build apk --debug --target-platform android-arm64
-
+        script: ./gradlew :androidApp:assembleDebug
     artifacts:
-      # L'APK sera disponible en téléchargement dans le dashboard Codemagic
-      - build/app/outputs/flutter-apk/app-debug.apk
-
+      - androidApp/build/outputs/apk/debug/androidApp-debug.apk
     publishing:
       email:
         recipients:
-          # Remplace par ton email : tu recevras un lien de téléchargement
           - ivorydu13@gmail.com
         notify:
           success: true
