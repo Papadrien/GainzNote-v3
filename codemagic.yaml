@@ -1,59 +1,22 @@
 workflows:
-    publishing:
-      email:
-        recipients:
-          - VOTRE_EMAIL@example.com   # ← REMPLACEZ par votre email
-        notify:
-          success: true
-          failure: true
-
-  # ──────────────────────────────────────────
-  # (Optionnel) Build Release signé
-  # ──────────────────────────────────────────
-  android-signed-release:
-    name: Android Signed Release
-    max_build_duration: 60
-    instance_type: mac_mini_m2
-
+  android-release:
+    name: Android APK Debug
+    max_build_duration: 30
     environment:
       java: 17
-      groups:
-        - keystore_credentials   # À configurer dans Codemagic UI
-      vars:
-        PACKAGE_NAME: "com.papadrien.gainznote"
-        CM_KEYSTORE_PATH: /tmp/keystore.jks
-
     triggering:
       events:
-        - tag
-      tag_patterns:
-        - pattern: "v*"
+        - push
+      branch_patterns:
+        - pattern: main
           include: true
-
     scripts:
-      - name: Set up local.properties
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
-
-      - name: Set up keystore
-        script: |
-          echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
-
-      - name: Make gradlew executable
-        script: |
-          chmod +x gradlew
-
-      - name: Build Release APK
-        script: |
-          ./gradlew :androidApp:assembleRelease \\
-            -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \\
-            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \\
-            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \\
-            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
-
+      - name: Set up Gradle
+        script: chmod +x gradlew
+      - name: Build APK
+        script: ./gradlew :androidApp:assembleDebug
     artifacts:
-      - androidApp/build/outputs/**/*.apk
-
+      - androidApp/build/outputs/apk/debug/androidApp-debug.apk
     publishing:
       email:
         recipients:
