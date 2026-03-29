@@ -30,12 +30,16 @@ class WorkoutViewModel(
         if (templateId != null) scope.launch {
             repo.getWorkoutById(templateId)?.let { t ->
                 _state.value = _state.value.copy(
-                    title = t.title, notes = t.notes,
+                    title = t.title,
+                    notes = "",  // ← on ne copie PAS les notes de l'entraînement précédent
                     exercises = t.exercises.map { ex ->
-                        ex.copy(id = newId(), supersetWith = null,
+                        ex.copy(
+                            id = newId(),
+                            supersetWith = null,
                             sets = ex.sets.map { s ->
                                 s.copy(id = newId(), reps = null, repsPlaceholder = s.reps)
-                            })
+                            }
+                        )
                     }
                 )
             }
@@ -57,11 +61,15 @@ class WorkoutViewModel(
     fun updateNotes(v: String) = update { copy(notes = v) }
 
     fun addExercise() = updateExercises { this + makeExercise(_state.value.id, size) }
-    fun removeExercise(id: String) = updateExercises { filter { it.id != id }.also {
-        // délie le superset si nécessaire
-        val partnerId = firstOrNull { it.id == id }?.supersetWith
-        map { if (it.id == partnerId) it.copy(supersetWith = null) else it }
-    }}
+
+    fun removeExercise(id: String) {
+        val partnerId = _state.value.exercises.firstOrNull { it.id == id }?.supersetWith
+        updateExercises {
+            filter { it.id != id }
+                .map { if (it.id == partnerId) it.copy(supersetWith = null) else it }
+        }
+    }
+
     fun updateExerciseName(id: String, name: String) =
         updateExercises { map { if (it.id == id) it.copy(name = name) else it } }
 
@@ -69,10 +77,12 @@ class WorkoutViewModel(
         map { if (it.id != exId) it else
             it.copy(sets = it.sets + List(count) { makeSet(exId) }) }
     }
+
     fun removeSet(exId: String, setId: String) = updateExercises {
         map { ex -> if (ex.id != exId || ex.sets.size <= 1) ex else
             ex.copy(sets = ex.sets.filter { it.id != setId }) }
     }
+
     fun updateSet(exId: String, setId: String, weight: Double? = null,
                   clearWeight: Boolean = false, reps: Int? = null,
                   clearReps: Boolean = false, notes: String? = null) = updateExercises {
@@ -84,6 +94,7 @@ class WorkoutViewModel(
             )
         })}
     }
+
     fun propagateWeight(exId: String, setId: String) = updateExercises {
         map { ex -> if (ex.id != exId) ex else {
             val idx = ex.sets.indexOfFirst { it.id == setId }
@@ -91,9 +102,11 @@ class WorkoutViewModel(
             ex.copy(sets = ex.sets.mapIndexed { i, s -> if (i > idx) s.copy(weightKg = w) else s })
         }}
     }
+
     fun linkSuperset(aId: String, bId: String) = updateExercises {
         map { when (it.id) { aId -> it.copy(supersetWith = bId); bId -> it.copy(supersetWith = aId); else -> it } }
     }
+
     fun unlinkSuperset(exId: String) {
         val partnerId = _state.value.exercises.firstOrNull { it.id == exId }?.supersetWith
         updateExercises { map { if (it.id == exId || it.id == partnerId) it.copy(supersetWith = null) else it } }

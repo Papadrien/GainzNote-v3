@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 
 class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
     private val db = GainzNoteDatabase(driverFactory.createDriver())
-    private val q = db.gainzNoteDatabaseQueries
+    private val q = db.gainzNoteQueries
 
     suspend fun getAllWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
         q.getAllWorkouts().executeAsList().map { buildWorkout(it.id) }
