@@ -13,6 +13,9 @@ import com.gainznote.model.Workout
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun HomeScreen(
@@ -129,8 +132,8 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
 }
 
 fun formatDisplayDate(iso: String): String = try {
-    val instant = kotlinx.datetime.Instant.parse(iso)
-    val local = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val instant = Instant.parse(iso)
+    val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
     val days = listOf("Lun","Mar","Mer","Jeu","Ven","Sam","Dim")
     val months = listOf("jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc")
     "${days[local.dayOfWeek.ordinal]} ${local.dayOfMonth} ${months[local.monthNumber-1]} · ${local.hour.toString().padStart(2,'0')}:${local.minute.toString().padStart(2,'0')}"

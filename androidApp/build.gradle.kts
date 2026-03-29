@@ -5,7 +5,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-kotlin { androidTarget() }
+kotlin {
+    androidTarget {
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+}
 
 android {
     namespace = "com.gainznote.android"
@@ -32,4 +39,5 @@ android {
 dependencies {
     implementation(project(":composeApp"))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
 }
