@@ -45,7 +45,7 @@ workflows:
       email:
         recipients:
           # Remplace par ton email : tu recevras un lien de téléchargement
-          - TON_EMAIL@example.com
+          - ivorydu13@gmail.com
         notify:
           success: true
           failure: true
