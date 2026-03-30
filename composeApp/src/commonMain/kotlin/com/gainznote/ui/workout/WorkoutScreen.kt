@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun WorkoutScreen(
     repo: WorkoutRepository,
+    darkTheme: Boolean,
     templateId: String?,
     onBack: () -> Unit,
     onFinished: () -> Unit
@@ -32,7 +33,7 @@ fun WorkoutScreen(
     val scope = rememberCoroutineScope()
     val vm = remember { WorkoutViewModel(repo, scope, templateId) }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(true)
+    val c = GainzThemeColors(darkTheme)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showSupersetPicker by remember { mutableStateOf<String?>(null) }
     var showAddSetsFor by remember { mutableStateOf<String?>(null) }
@@ -40,13 +41,10 @@ fun WorkoutScreen(
     // Chronomètre
     var chronoStart by remember { mutableStateOf<Long?>(null) }
     var chronoDisplay by remember { mutableStateOf("00:00") }
-
     LaunchedEffect(chronoStart) {
         while (chronoStart != null) {
             val elapsed = (kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - chronoStart!!) / 1000L
-            val m = elapsed / 60
-            val s = elapsed % 60
-            chronoDisplay = "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+            chronoDisplay = "${(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}"
             delay(1000)
         }
     }
@@ -55,81 +53,50 @@ fun WorkoutScreen(
         Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
 
             // ── TopBar ────────────────────────────────────────────────────────
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
                     Text("Démarré à ${formatDisplayDate(workout.startedAt)}", color = c.textMuted, fontSize = 11.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-
-                    // ── Bouton chronomètre ────────────────────────────────────
-                    // Fond : surfaceAlt au repos, surface+bordure accent actif
-                    // Icône toujours en accent pour rester lisible sur fond sombre
                     val chronoActive = chronoStart != null
                     Box(
                         Modifier
-                            .background(
-                                if (chronoActive) c.surface else c.surfaceAlt,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .border(
-                                1.dp,
-                                if (chronoActive) c.accent else c.border,
-                                RoundedCornerShape(8.dp)
-                            )
+                            .background(if (chronoActive) c.accentDim else c.surfaceAlt, RoundedCornerShape(8.dp))
+                            .border(1.dp, if (chronoActive) c.accent else c.border, RoundedCornerShape(8.dp))
                             .clickable {
-                                if (chronoActive) {
-                                    chronoStart = null
-                                    chronoDisplay = "00:00"
-                                } else {
-                                    chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
-                                }
+                                if (chronoActive) { chronoStart = null; chronoDisplay = "00:00" }
+                                else chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
                             }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            "⏱",
-                            fontSize = 16.sp,
-                            color = if (chronoActive) c.accent else c.textSec
-                        )
+                        Text("⏱", fontSize = 16.sp, color = if (chronoActive) c.accent else c.textSec)
                     }
-
-                    Button(
-                        onClick = { showFinishDialog = true },
+                    Button(onClick = { showFinishDialog = true },
                         colors = ButtonDefaults.buttonColors(containerColor = c.accent),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("Terminer", color = Color.Black, fontWeight = FontWeight.Bold)
+                        shape = RoundedCornerShape(10.dp)) {
+                        Text("Terminer", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
-            // ── Contenu scrollable ────────────────────────────────────────────
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                GainzTextField(
-                    value = workout.title,
-                    placeholder = "Titre de l'entraînement",
-                    textSize = 22.sp, bold = true, c = c,
-                    onValueChange = vm::updateTitle
-                )
+                GainzTextField(value = workout.title, placeholder = "Titre de l'entraînement",
+                    textSize = 22.sp, bold = true, c = c, onValueChange = vm::updateTitle)
                 Spacer(Modifier.height(8.dp))
-                GainzTextField(
-                    value = workout.notes,
-                    placeholder = "Notes générales…",
-                    c = c, onValueChange = vm::updateNotes, minLines = 2
-                )
+                GainzTextField(value = workout.notes, placeholder = "Notes générales…",
+                    c = c, onValueChange = vm::updateNotes, minLines = 2)
                 Spacer(Modifier.height(20.dp))
 
-                workout.exercises.forEach { ex ->
+                workout.exercises.forEachIndexed { idx, ex ->
                     ExerciseCard(
                         exercise = ex,
+                        isFirst = idx == 0,
                         isSupersetMember = ex.supersetWith != null,
                         c = c, vm = vm,
                         allExercises = workout.exercises,
@@ -139,129 +106,97 @@ fun WorkoutScreen(
                     Spacer(Modifier.height(12.dp))
                 }
 
-                OutlinedButton(
-                    onClick = vm::addExercise,
+                OutlinedButton(onClick = vm::addExercise,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, c.border),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = c.accent)
-                ) {
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = c.accent)) {
                     Text("+ Ajouter un exercice", fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(40.dp))
             }
         }
 
-        // ── Chronomètre flottant ──────────────────────────────────────────────
-        AnimatedVisibility(
-            visible = chronoStart != null,
+        // Chronomètre flottant
+        AnimatedVisibility(visible = chronoStart != null,
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             enter = fadeIn() + slideInVertically { it },
-            exit = fadeOut() + slideOutVertically { it }
-        ) {
-            Box(
-                Modifier
-                    .background(c.surface, RoundedCornerShape(12.dp))
-                    .border(1.5.dp, c.accent, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-            ) {
+            exit = fadeOut() + slideOutVertically { it }) {
+            Box(Modifier.background(c.surface, RoundedCornerShape(12.dp))
+                .border(1.5.dp, c.accent, RoundedCornerShape(12.dp))
+                .padding(horizontal = 18.dp, vertical = 12.dp)) {
                 Text(chronoDisplay, color = c.accent, fontSize = 24.sp,
                     fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
             }
         }
     }
 
-    // ── Dialogue terminer ─────────────────────────────────────────────────────
+    // Dialogue terminer
     if (showFinishDialog) {
-        AlertDialog(
-            onDismissRequest = { showFinishDialog = false },
+        AlertDialog(onDismissRequest = { showFinishDialog = false },
             containerColor = c.surface,
             title = { Text("Terminer l'entraînement ?", color = c.text) },
             text = { Text("${workout.exercises.size} exercice(s) · ${workout.exercises.sumOf { it.sets.size }} série(s)", color = c.textSec) },
             confirmButton = {
-                Button(
-                    onClick = { showFinishDialog = false; vm.finish(onFinished) },
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-                ) { Text("Terminer ✓", color = Color.Black, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showFinishDialog = false }) {
-                    Text("Continuer", color = c.textSec)
+                Button(onClick = { showFinishDialog = false; vm.finish(onFinished) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
+                    Text("Terminer ✓", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                 }
-            }
-        )
+            },
+            dismissButton = { TextButton(onClick = { showFinishDialog = false }) { Text("Continuer", color = c.textSec) } })
     }
 
-    // ── Dialogue superset ─────────────────────────────────────────────────────
+    // Dialogue superset
     showSupersetPicker?.let { srcId ->
         val candidates = workout.exercises.filter { it.id != srcId && it.supersetWith == null }
-        AlertDialog(
-            onDismissRequest = { showSupersetPicker = null },
+        AlertDialog(onDismissRequest = { showSupersetPicker = null },
             containerColor = c.surface,
             title = { Text("Associer en superset avec…", color = c.text) },
             text = {
                 if (candidates.isEmpty()) Text("Aucun exercice disponible.", color = c.textSec)
-                else Column {
-                    candidates.forEach { ex ->
-                        TextButton(
-                            onClick = { vm.linkSuperset(srcId, ex.id); showSupersetPicker = null },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text(ex.name.ifBlank { "Exercice sans nom" }, color = c.superset) }
+                else Column { candidates.forEach { ex ->
+                    TextButton(onClick = { vm.linkSuperset(srcId, ex.id); showSupersetPicker = null },
+                        modifier = Modifier.fillMaxWidth()) {
+                        Text(ex.name.ifBlank { "Exercice sans nom" }, color = c.superset)
                     }
-                }
+                }}
             },
             confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showSupersetPicker = null }) {
-                    Text("Annuler", color = c.textSec)
-                }
-            }
-        )
+            dismissButton = { TextButton(onClick = { showSupersetPicker = null }) { Text("Annuler", color = c.textSec) } })
     }
 
-    // ── Dialogue multi-séries ─────────────────────────────────────────────────
+    // Dialogue multi-séries
     showAddSetsFor?.let { exId ->
         var count by remember { mutableStateOf(3) }
-        AlertDialog(
-            onDismissRequest = { showAddSetsFor = null },
+        AlertDialog(onDismissRequest = { showAddSetsFor = null },
             containerColor = c.surface,
             title = { Text("Ajouter des séries", color = c.text) },
             text = {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { if (count > 1) count-- }) {
-                        Text("−", color = c.textSec, fontSize = 20.sp)
-                    }
+                    IconButton(onClick = { if (count > 1) count-- }) { Text("−", color = c.textSec, fontSize = 20.sp) }
                     Text("$count", color = c.text, fontSize = 28.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 16.dp))
-                    IconButton(onClick = { if (count < 20) count++ }) {
-                        Text("+", color = c.textSec, fontSize = 20.sp)
-                    }
+                    IconButton(onClick = { if (count < 20) count++ }) { Text("+", color = c.textSec, fontSize = 20.sp) }
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = { vm.addSets(exId, count); showAddSetsFor = null },
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-                ) { Text("Ajouter", color = Color.Black) }
+                Button(onClick = { vm.addSets(exId, count); showAddSetsFor = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
+                    Text("Ajouter", color = if (darkTheme) Color.Black else Color.White)
+                }
             },
-            dismissButton = {
-                TextButton(onClick = { showAddSetsFor = null }) { Text("Annuler", color = c.textSec) }
-            }
-        )
+            dismissButton = { TextButton(onClick = { showAddSetsFor = null }) { Text("Annuler", color = c.textSec) } })
     }
 }
 
 // ─── GainzTextField ───────────────────────────────────────────────────────────
 
 @Composable
-fun GainzTextField(
-    value: String, placeholder: String, c: GainzThemeColors,
-    onValueChange: (String) -> Unit, textSize: TextUnit = 15.sp,
-    bold: Boolean = false, minLines: Int = 1
-) {
-    BasicTextField(
-        value = value, onValueChange = onValueChange, minLines = minLines,
+fun GainzTextField(value: String, placeholder: String, c: GainzThemeColors,
+                   onValueChange: (String) -> Unit, textSize: TextUnit = 15.sp,
+                   bold: Boolean = false, minLines: Int = 1) {
+    BasicTextField(value = value, onValueChange = onValueChange, minLines = minLines,
         textStyle = TextStyle(color = c.text, fontSize = textSize,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal),
         cursorBrush = SolidColor(c.accent),
@@ -270,8 +205,7 @@ fun GainzTextField(
                 if (value.isEmpty()) Text(placeholder, color = c.textMuted, fontSize = textSize)
                 inner()
             }
-        }
-    )
+        })
 }
 
 // ─── ExerciseCard ─────────────────────────────────────────────────────────────
@@ -279,6 +213,7 @@ fun GainzTextField(
 @Composable
 fun ExerciseCard(
     exercise: Exercise,
+    isFirst: Boolean,
     isSupersetMember: Boolean,
     c: GainzThemeColors,
     vm: WorkoutViewModel,
@@ -286,12 +221,12 @@ fun ExerciseCard(
     onPickSuperset: () -> Unit,
     onAddMultiple: () -> Unit
 ) {
-    Column(
-        Modifier.fillMaxWidth()
-            .border(if (isSupersetMember) 2.dp else 1.dp,
-                if (isSupersetMember) c.superset else c.border, RoundedCornerShape(14.dp))
-            .background(c.surface, RoundedCornerShape(14.dp))
-    ) {
+    Column(Modifier.fillMaxWidth()
+        .border(if (isSupersetMember) 2.dp else 1.dp,
+            if (isSupersetMember) c.superset else c.border, RoundedCornerShape(14.dp))
+        .background(c.surface, RoundedCornerShape(14.dp))) {
+
+        // Header
         Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             if (isSupersetMember) {
@@ -301,18 +236,15 @@ fun ExerciseCard(
                 }
                 Spacer(Modifier.width(8.dp))
             }
-            BasicTextField(
-                value = exercise.name,
+            BasicTextField(value = exercise.name,
                 onValueChange = { vm.updateExerciseName(exercise.id, it) },
                 modifier = Modifier.weight(1f),
                 textStyle = TextStyle(color = c.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
-                cursorBrush = SolidColor(c.accent),
-                singleLine = true,
+                cursorBrush = SolidColor(c.accent), singleLine = true,
                 decorationBox = { inner ->
                     if (exercise.name.isEmpty()) Text("Nom de l'exercice", color = c.textMuted, fontSize = 15.sp)
                     inner()
-                }
-            )
+                })
             var menuOpen by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { menuOpen = true }) {
@@ -320,6 +252,10 @@ fun ExerciseCard(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false },
                     containerColor = c.surface) {
+                    // Option déplacer vers le haut (masquée pour le premier)
+                    if (!isFirst)
+                        DropdownMenuItem(text = { Text("↑  Déplacer vers le haut", color = c.text) },
+                            onClick = { vm.moveExerciseUp(exercise.id); menuOpen = false })
                     if (isSupersetMember)
                         DropdownMenuItem(text = { Text("Retirer du superset", color = c.superset) },
                             onClick = { vm.unlinkSuperset(exercise.id); menuOpen = false })
@@ -363,20 +299,12 @@ fun ExerciseCard(
 }
 
 // ─── SetRow ───────────────────────────────────────────────────────────────────
-// State local par champ pour éviter le bug de suppression du dernier caractère.
-// La condition d'affichage du bouton ⬇ est basée sur weightText (state local),
-// pas sur set.weightKg (modèle), ce qui règle le bug placeholder.
 
 @Composable
-fun SetRow(
-    index: Int, set: TrainingSet, c: GainzThemeColors,
-    onWeightChange: (Double?) -> Unit,
-    onRepsChange: (Int?) -> Unit,
-    onNotesChange: (String) -> Unit,
-    onPropagate: () -> Unit,
-    onRemove: () -> Unit
-) {
-    // State local initialisé depuis le modèle (keyed sur set.id pour reset si nouvelle série)
+fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
+           onWeightChange: (Double?) -> Unit, onRepsChange: (Int?) -> Unit,
+           onNotesChange: (String) -> Unit, onPropagate: () -> Unit, onRemove: () -> Unit) {
+
     var weightText by remember(set.id) {
         mutableStateOf(set.weightKg?.let {
             if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
@@ -385,10 +313,7 @@ fun SetRow(
     var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
     var notesText by remember(set.id) { mutableStateOf(set.notes) }
 
-    // Synchronise weightText depuis le modèle quand le poids change de façon externe
-    // (ex : propagation depuis une série précédente).
-    // On ne met à jour que si le texte local ne représente pas déjà la valeur du modèle,
-    // pour ne pas écraser ce que l'utilisateur est en train de saisir (ex : "75." en cours).
+    // Sync modèle → local lors d'une propagation externe
     LaunchedEffect(set.weightKg) {
         if (weightText.toDoubleOrNull() != set.weightKg) {
             weightText = set.weightKg?.let {
@@ -397,7 +322,6 @@ fun SetRow(
         }
     }
 
-    // Le bouton ⬇ est visible si et seulement si weightText est non-vide
     val showPropagate = weightText.isNotEmpty()
 
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
@@ -406,52 +330,25 @@ fun SetRow(
 
         Text("${index + 1}", color = c.textMuted, fontSize = 12.sp, modifier = Modifier.width(24.dp))
 
-        // ── Poids ─────────────────────────────────────────────────────────────
-        CompactField(
-            localValue = weightText,
-            hint = "0",
-            keyboardType = KeyboardType.Decimal,
-            c = c,
-            modifier = Modifier.weight(1f).height(34.dp),
-            onLocalChange = { raw ->
-                weightText = raw
-                // Toujours notifier le VM, y compris null (champ vidé)
-                onWeightChange(raw.toDoubleOrNull())
-            }
-        )
+        CompactField(localValue = weightText, hint = "0", keyboardType = KeyboardType.Decimal,
+            c = c, modifier = Modifier.weight(1f).height(34.dp),
+            onLocalChange = { raw -> weightText = raw; onWeightChange(raw.toDoubleOrNull()) })
 
-        // ── Reps ──────────────────────────────────────────────────────────────
-        CompactField(
-            localValue = repsText,
+        CompactField(localValue = repsText,
             hint = set.repsPlaceholder?.toString() ?: "0",
             hintIsAccent = set.repsPlaceholder != null,
             keyboardType = KeyboardType.Number,
-            c = c,
-            modifier = Modifier.weight(1f).height(34.dp),
-            onLocalChange = { raw ->
-                repsText = raw
-                onRepsChange(raw.toIntOrNull())
-            }
-        )
+            c = c, modifier = Modifier.weight(1f).height(34.dp),
+            onLocalChange = { raw -> repsText = raw; onRepsChange(raw.toIntOrNull()) })
 
-        // ── Notes ─────────────────────────────────────────────────────────────
-        CompactField(
-            localValue = notesText,
-            hint = "…",
-            c = c,
+        CompactField(localValue = notesText, hint = "…", c = c,
             modifier = Modifier.weight(1.5f).height(34.dp),
-            onLocalChange = { raw ->
-                notesText = raw
-                onNotesChange(raw)
-            }
-        )
+            onLocalChange = { raw -> notesText = raw; onNotesChange(raw) })
 
-        // ── Bouton propager ────────────────────────────────────────────────────
-        // Visible seulement si weightText non-vide (état local, pas le modèle)
+        // Bouton propager — visible seulement si poids non vide
         Box(Modifier.width(32.dp).height(34.dp), contentAlignment = Alignment.Center) {
             if (showPropagate) {
                 Box(Modifier.size(28.dp).clickable {
-                    // Sync le poids dans le modèle avant de propager
                     onWeightChange(weightText.toDoubleOrNull())
                     onPropagate()
                 }, contentAlignment = Alignment.Center) {
@@ -460,46 +357,33 @@ fun SetRow(
             }
         }
 
-        // ── Bouton supprimer ──────────────────────────────────────────────────
-        Box(Modifier.size(32.dp).clickable { onRemove() }, contentAlignment = Alignment.Center) {
-            Text("✕", color = c.danger, fontSize = 12.sp)
+        // Bouton supprimer — croix blanche sur fond danger
+        Box(Modifier.size(28.dp)
+            .background(c.danger, RoundedCornerShape(6.dp))
+            .clickable { onRemove() },
+            contentAlignment = Alignment.Center) {
+            Text("✕", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 // ─── CompactField ─────────────────────────────────────────────────────────────
-// Prend un `localValue` géré par le parent (state local dans SetRow).
-// Cela évite le problème où BasicTextField lie sa valeur au modèle distant
-// et empêche la suppression du dernier caractère.
 
 @Composable
-fun CompactField(
-    localValue: String,
-    hint: String,
-    c: GainzThemeColors,
-    modifier: Modifier,
-    hintIsAccent: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    onLocalChange: (String) -> Unit
-) {
-    BasicTextField(
-        value = localValue,
-        onValueChange = onLocalChange,
-        modifier = modifier
-            .background(c.surfaceAlt, RoundedCornerShape(6.dp))
+fun CompactField(localValue: String, hint: String, c: GainzThemeColors, modifier: Modifier,
+                 hintIsAccent: Boolean = false, keyboardType: KeyboardType = KeyboardType.Text,
+                 onLocalChange: (String) -> Unit) {
+    BasicTextField(value = localValue, onValueChange = onLocalChange,
+        modifier = modifier.background(c.surfaceAlt, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 0.dp),
         textStyle = TextStyle(color = c.text, fontSize = 14.sp, fontWeight = FontWeight.Medium),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        cursorBrush = SolidColor(c.accent),
-        singleLine = true,
+        cursorBrush = SolidColor(c.accent), singleLine = true,
         decorationBox = { inner ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
                 if (localValue.isEmpty())
-                    Text(hint,
-                        color = if (hintIsAccent) c.accent.copy(alpha = 0.6f) else c.textMuted,
-                        fontSize = 14.sp)
+                    Text(hint, color = if (hintIsAccent) c.accent.copy(alpha = 0.6f) else c.textMuted, fontSize = 14.sp)
                 inner()
             }
-        }
-    )
+        })
 }

@@ -5,8 +5,10 @@ import com.gainznote.model.TrainingSet
 import com.gainznote.model.Workout
 import com.gainznote.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -29,19 +31,21 @@ class WorkoutViewModel(
     init {
         if (templateId != null) scope.launch {
             repo.getWorkoutById(templateId)?.let { t ->
+                // Construire une map ancien_id → nouveau_id pour remapper les supersets
+                val idMap = t.exercises.associate { ex -> ex.id to newId() }
                 _state.value = _state.value.copy(
                     title = t.title,
-                    notes = "",
+                    notes = "",  // on ne copie pas les notes
                     exercises = t.exercises.map { ex ->
                         ex.copy(
-                            id = newId(),
-                            supersetWith = null,
+                            id = idMap[ex.id]!!,
+                            // Conserver le superset en remappant l'ID du partenaire
+                            supersetWith = ex.supersetWith?.let { idMap[it] },
                             sets = ex.sets.map { s ->
                                 s.copy(
                                     id = newId(),
                                     reps = null,
-                                    repsPlaceholder = s.reps,
-                                    // weightKg conservé depuis le template
+                                    repsPlaceholder = s.reps
                                 )
                             }
                         )
@@ -49,10 +53,15 @@ class WorkoutViewModel(
                 )
             }
         }
+
+        // Autosave : sauvegarde 2s après chaque modification
+        @OptIn(FlowPreview::class)
         scope.launch {
-            while (true) {
-                kotlinx.coroutines.delay(30_000)
-                repo.saveWorkout(_state.value)
+            _state.debounce(2000).collect { workout ->
+                // Sauvegarder uniquement si l'entraînement a du contenu
+                if (workout.title.isNotEmpty() || workout.exercises.isNotEmpty()) {
+                    repo.saveWorkout(workout)
+                }
             }
         }
     }
@@ -77,6 +86,15 @@ class WorkoutViewModel(
     fun updateExerciseName(id: String, name: String) =
         updateExercises { map { if (it.id == id) it.copy(name = name) else it } }
 
+    // Intervertit l'exercice avec celui du dessus
+    fun moveExerciseUp(id: String) = updateExercises {
+        val idx = indexOfFirst { it.id == id }
+        if (idx <= 0) return@updateExercises this
+        val list = toMutableList()
+        val tmp = list[idx]; list[idx] = list[idx - 1]; list[idx - 1] = tmp
+        list
+    }
+
     fun addSets(exId: String, count: Int = 1) = updateExercises {
         map { if (it.id != exId) it else
             it.copy(sets = it.sets + List(count) { makeSet(exId) }) }
@@ -87,9 +105,6 @@ class WorkoutViewModel(
             ex.copy(sets = ex.sets.filter { it.id != setId }) }
     }
 
-    // weight=null signifie "effacer le poids", on utilise un sentinel distinct
-    // pour "ne pas toucher au poids" → on passe un Optional via sealed class implicite
-    // Solution simple : weight est nullable et clearWeight indique l'intention
     fun updateSetWeight(exId: String, setId: String, weight: Double?) = updateExercises {
         map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
             if (s.id != setId) s else s.copy(weightKg = weight)
@@ -112,7 +127,6 @@ class WorkoutViewModel(
         map { ex -> if (ex.id != exId) ex else {
             val idx = ex.sets.indexOfFirst { it.id == setId }
             val w = ex.sets.getOrNull(idx)?.weightKg
-            // Ne propage que si le poids source est non-null
             if (w == null) ex
             else ex.copy(sets = ex.sets.mapIndexed { i, s ->
                 if (i > idx) s.copy(weightKg = w) else s

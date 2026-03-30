@@ -3,6 +3,8 @@ package com.gainznote.ui.detail
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -20,12 +22,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun DetailScreen(
     repo: WorkoutRepository,
+    darkTheme: Boolean,
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
     onDeleted: () -> Unit
 ) {
-    val c = GainzThemeColors(true)
+    val c = GainzThemeColors(darkTheme)
     val scope = rememberCoroutineScope()
     var workout by remember { mutableStateOf<Workout?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -40,9 +43,11 @@ fun DetailScreen(
                 Text("←", color = c.accent, fontSize = 22.sp)
             }
             if (workout != null) {
-                Box(Modifier.size(40.dp).clickable { showDeleteDialog = true },
-                    contentAlignment = Alignment.Center) {
-                    Text("🗑", fontSize = 18.sp)
+                // Icône poubelle Material
+                IconButton(onClick = { showDeleteDialog = true }) {
+                    Icon(imageVector = Icons.Default.Delete,
+                        contentDescription = "Supprimer",
+                        tint = c.danger)
                 }
             }
         }
@@ -65,8 +70,7 @@ fun DetailScreen(
                 }
                 if (w.notes.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))
-                    Box(Modifier.fillMaxWidth().background(c.surfaceAlt, RoundedCornerShape(10.dp))
-                        .padding(12.dp)) {
+                    Box(Modifier.fillMaxWidth().background(c.surfaceAlt, RoundedCornerShape(10.dp)).padding(12.dp)) {
                         Text(w.notes, color = c.textSec, fontSize = 14.sp)
                     }
                 }
@@ -79,7 +83,7 @@ fun DetailScreen(
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
-                    Text("↻  Utiliser comme base", color = Color.Black,
+                    Text("↻  Utiliser comme base", color = if (darkTheme) Color.Black else Color.White,
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
                 Spacer(Modifier.height(32.dp))
@@ -93,14 +97,12 @@ fun DetailScreen(
             title = { Text("Supprimer ?", color = c.text) },
             text = { Text("Action irréversible.", color = c.textSec) },
             confirmButton = {
-                Button(onClick = {
-                    scope.launch { repo.deleteWorkout(workoutId); onDeleted() }
-                }, colors = ButtonDefaults.buttonColors(containerColor = c.danger)) {
+                Button(onClick = { scope.launch { repo.deleteWorkout(workoutId); onDeleted() } },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.danger)) {
                     Text("Supprimer", color = Color.White)
                 }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) {
-                Text("Annuler", color = c.textMuted) } })
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler", color = c.textMuted) } })
     }
 }
 

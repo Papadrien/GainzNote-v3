@@ -24,50 +24,39 @@ fun HomeScreen(
     onToggleTheme: () -> Unit,
     onNewWorkout: () -> Unit,
     onHistory: () -> Unit,
-    onOpenWorkout: (String) -> Unit
+    onOpenWorkout: (String) -> Unit,
+    onExport: () -> Unit = {},
+    onImport: () -> Unit = {}
 ) {
     val c = GainzThemeColors(darkTheme)
-    val scope = rememberCoroutineScope()
     var recentWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         recentWorkouts = repo.getAllWorkouts().take(3)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(c.background)
-            .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-    ) {
+    Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()
+        .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+
         Spacer(Modifier.height(24.dp))
         Text("GainzNote", color = c.accent, fontSize = 34.sp,
             fontWeight = FontWeight.Black, letterSpacing = (-1).sp)
         Text("Ton carnet de musculation", color = c.textMuted, fontSize = 13.sp)
         Spacer(Modifier.height(28.dp))
 
-        // Bouton principal
-        Button(
-            onClick = onNewWorkout,
-            modifier = Modifier.fillMaxWidth().height(58.dp),
+        Button(onClick = onNewWorkout, modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-        ) {
-            Text("+ Nouvel entraînement", color = Color.Black,
+            colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
+            Text("+ Nouvel entraînement", color = if (darkTheme) Color.Black else Color.White,
                 fontSize = 17.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(32.dp))
 
-        // Récents
         if (recentWorkouts.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
                 SectionLabel("Récents", c)
-                TextButton(onClick = onHistory) {
-                    Text("Voir tout →", color = c.accent, fontSize = 13.sp)
-                }
+                TextButton(onClick = onHistory) { Text("Voir tout →", color = c.accent, fontSize = 13.sp) }
             }
             Spacer(Modifier.height(8.dp))
             recentWorkouts.forEach { w ->
@@ -77,46 +66,53 @@ fun HomeScreen(
             Spacer(Modifier.height(24.dp))
         }
 
-        // Paramètres
         SectionLabel("Paramètres", c)
         Spacer(Modifier.height(12.dp))
 
-        // Switch thème
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = c.surface,
-            border = BorderStroke(1.dp, c.border),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        // Thème
+        Surface(shape = RoundedCornerShape(12.dp), color = c.surface,
+            border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
+                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Mode sombre", color = c.text, fontSize = 15.sp)
                 Switch(checked = darkTheme, onCheckedChange = { onToggleTheme() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.accent,
-                        checkedTrackColor = c.accentDim))
+                    colors = SwitchDefaults.colors(checkedThumbColor = c.accent, checkedTrackColor = c.accentDim))
             }
         }
+        Spacer(Modifier.height(8.dp))
+
+        // Sauvegarder
+        SettingButton("↑", "Sauvegarder les données", c, onExport)
+        Spacer(Modifier.height(8.dp))
+
+        // Restaurer
+        SettingButton("↓", "Restaurer les données", c, onImport)
         Spacer(Modifier.height(40.dp))
     }
 }
 
 @Composable
 fun SectionLabel(text: String, c: GainzThemeColors) {
-    Text(text.uppercase(), color = c.textMuted, fontSize = 11.sp,
-        fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    Text(text.uppercase(), color = c.textMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+}
+
+@Composable
+fun SettingButton(icon: String, label: String, c: GainzThemeColors, onClick: () -> Unit) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = c.surface,
+        border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(icon, color = c.accent, fontSize = 18.sp)
+            Text(label, color = c.text, fontSize = 15.sp)
+        }
+    }
 }
 
 @Composable
 fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = c.surface,
-        border = BorderStroke(1.dp, c.border),
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = c.surface,
+        border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
