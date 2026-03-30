@@ -385,8 +385,19 @@ fun SetRow(
     var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
     var notesText by remember(set.id) { mutableStateOf(set.notes) }
 
+    // Synchronise weightText depuis le modèle quand le poids change de façon externe
+    // (ex : propagation depuis une série précédente).
+    // On ne met à jour que si le texte local ne représente pas déjà la valeur du modèle,
+    // pour ne pas écraser ce que l'utilisateur est en train de saisir (ex : "75." en cours).
+    LaunchedEffect(set.weightKg) {
+        if (weightText.toDoubleOrNull() != set.weightKg) {
+            weightText = set.weightKg?.let {
+                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+            } ?: ""
+        }
+    }
+
     // Le bouton ⬇ est visible si et seulement si weightText est non-vide
-    // (state local, pas set.weightKg — évite le bug avec les templates)
     val showPropagate = weightText.isNotEmpty()
 
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
