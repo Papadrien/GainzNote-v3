@@ -344,7 +344,9 @@ fun ExerciseCard(
 
         exercise.sets.forEachIndexed { i, set ->
             SetRow(index = i, set = set, c = c,
-                onUpdate = { w, r, n -> vm.updateSet(exercise.id, set.id, weight = w, reps = r, notes = n) },
+                onWeightChange = { w -> vm.updateSetWeight(exercise.id, set.id, w) },
+                onRepsChange = { r -> vm.updateSetReps(exercise.id, set.id, r) },
+                onNotesChange = { n -> vm.updateSetNotes(exercise.id, set.id, n) },
                 onPropagate = { vm.propagateWeight(exercise.id, set.id) },
                 onRemove = { vm.removeSet(exercise.id, set.id) })
         }
@@ -361,13 +363,32 @@ fun ExerciseCard(
 }
 
 // ─── SetRow ───────────────────────────────────────────────────────────────────
+// State local par champ pour éviter le bug de suppression du dernier caractère.
+// La condition d'affichage du bouton ⬇ est basée sur weightText (state local),
+// pas sur set.weightKg (modèle), ce qui règle le bug placeholder.
 
 @Composable
 fun SetRow(
     index: Int, set: TrainingSet, c: GainzThemeColors,
-    onUpdate: (Double?, Int?, String?) -> Unit,
-    onPropagate: () -> Unit, onRemove: () -> Unit
+    onWeightChange: (Double?) -> Unit,
+    onRepsChange: (Int?) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onPropagate: () -> Unit,
+    onRemove: () -> Unit
 ) {
+    // State local initialisé depuis le modèle (keyed sur set.id pour reset si nouvelle série)
+    var weightText by remember(set.id) {
+        mutableStateOf(set.weightKg?.let {
+            if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+        } ?: "")
+    }
+    var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
+    var notesText by remember(set.id) { mutableStateOf(set.notes) }
+
+    // Le bouton ⬇ est visible si et seulement si weightText est non-vide
+    // (state local, pas set.weightKg — évite le bug avec les templates)
+    val showPropagate = weightText.isNotEmpty()
+
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -375,14 +396,6 @@ fun SetRow(
         Text("${index + 1}", color = c.textMuted, fontSize = 12.sp, modifier = Modifier.width(24.dp))
 
         // ── Poids ─────────────────────────────────────────────────────────────
-        // On utilise un state local pour éviter le bug de suppression du dernier caractère.
-        // Le state local absorbe la frappe en temps réel ; on ne notifie le VM
-        // que quand la valeur parsée change, ce qui évite le re-render intempestif.
-        var weightText by remember(set.id) {
-            mutableStateOf(set.weightKg?.let {
-                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-            } ?: "")
-        }
         CompactField(
             localValue = weightText,
             hint = "0",
@@ -391,12 +404,12 @@ fun SetRow(
             modifier = Modifier.weight(1f).height(34.dp),
             onLocalChange = { raw ->
                 weightText = raw
-                onUpdate(raw.toDoubleOrNull(), null, null)
+                // Toujours notifier le VM, y compris null (champ vidé)
+                onWeightChange(raw.toDoubleOrNull())
             }
         )
 
         // ── Reps ──────────────────────────────────────────────────────────────
-        var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
         CompactField(
             localValue = repsText,
             hint = set.repsPlaceholder?.toString() ?: "0",
@@ -406,12 +419,11 @@ fun SetRow(
             modifier = Modifier.weight(1f).height(34.dp),
             onLocalChange = { raw ->
                 repsText = raw
-                onUpdate(null, raw.toIntOrNull(), null)
+                onRepsChange(raw.toIntOrNull())
             }
         )
 
         // ── Notes ─────────────────────────────────────────────────────────────
-        var notesText by remember(set.id) { mutableStateOf(set.notes) }
         CompactField(
             localValue = notesText,
             hint = "…",
@@ -419,15 +431,19 @@ fun SetRow(
             modifier = Modifier.weight(1.5f).height(34.dp),
             onLocalChange = { raw ->
                 notesText = raw
-                onUpdate(null, null, raw)
+                onNotesChange(raw)
             }
         )
 
-        // ── Bouton propager (visible seulement si poids renseigné) ────────────
+        // ── Bouton propager ────────────────────────────────────────────────────
+        // Visible seulement si weightText non-vide (état local, pas le modèle)
         Box(Modifier.width(32.dp).height(34.dp), contentAlignment = Alignment.Center) {
-            if (set.weightKg != null) {
-                Box(Modifier.size(28.dp).clickable { onPropagate() },
-                    contentAlignment = Alignment.Center) {
+            if (showPropagate) {
+                Box(Modifier.size(28.dp).clickable {
+                    // Sync le poids dans le modèle avant de propager
+                    onWeightChange(weightText.toDoubleOrNull())
+                    onPropagate()
+                }, contentAlignment = Alignment.Center) {
                     Text("⬇", color = c.textSec, fontSize = 14.sp)
                 }
             }

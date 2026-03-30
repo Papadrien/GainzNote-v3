@@ -31,20 +31,24 @@ class WorkoutViewModel(
             repo.getWorkoutById(templateId)?.let { t ->
                 _state.value = _state.value.copy(
                     title = t.title,
-                    notes = "",  // ← on ne copie PAS les notes de l'entraînement précédent
+                    notes = "",
                     exercises = t.exercises.map { ex ->
                         ex.copy(
                             id = newId(),
                             supersetWith = null,
                             sets = ex.sets.map { s ->
-                                s.copy(id = newId(), reps = null, repsPlaceholder = s.reps)
+                                s.copy(
+                                    id = newId(),
+                                    reps = null,
+                                    repsPlaceholder = s.reps,
+                                    // weightKg conservé depuis le template
+                                )
                             }
                         )
                     }
                 )
             }
         }
-        // Autosave toutes les 30s
         scope.launch {
             while (true) {
                 kotlinx.coroutines.delay(30_000)
@@ -83,15 +87,24 @@ class WorkoutViewModel(
             ex.copy(sets = ex.sets.filter { it.id != setId }) }
     }
 
-    fun updateSet(exId: String, setId: String, weight: Double? = null,
-                  clearWeight: Boolean = false, reps: Int? = null,
-                  clearReps: Boolean = false, notes: String? = null) = updateExercises {
+    // weight=null signifie "effacer le poids", on utilise un sentinel distinct
+    // pour "ne pas toucher au poids" → on passe un Optional via sealed class implicite
+    // Solution simple : weight est nullable et clearWeight indique l'intention
+    fun updateSetWeight(exId: String, setId: String, weight: Double?) = updateExercises {
         map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
-            if (s.id != setId) s else s.copy(
-                weightKg = if (clearWeight) null else weight ?: s.weightKg,
-                reps = if (clearReps) null else reps ?: s.reps,
-                notes = notes ?: s.notes
-            )
+            if (s.id != setId) s else s.copy(weightKg = weight)
+        })}
+    }
+
+    fun updateSetReps(exId: String, setId: String, reps: Int?) = updateExercises {
+        map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
+            if (s.id != setId) s else s.copy(reps = reps)
+        })}
+    }
+
+    fun updateSetNotes(exId: String, setId: String, notes: String) = updateExercises {
+        map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
+            if (s.id != setId) s else s.copy(notes = notes)
         })}
     }
 
@@ -99,7 +112,11 @@ class WorkoutViewModel(
         map { ex -> if (ex.id != exId) ex else {
             val idx = ex.sets.indexOfFirst { it.id == setId }
             val w = ex.sets.getOrNull(idx)?.weightKg
-            ex.copy(sets = ex.sets.mapIndexed { i, s -> if (i > idx) s.copy(weightKg = w) else s })
+            // Ne propage que si le poids source est non-null
+            if (w == null) ex
+            else ex.copy(sets = ex.sets.mapIndexed { i, s ->
+                if (i > idx) s.copy(weightKg = w) else s
+            })
         }}
     }
 
