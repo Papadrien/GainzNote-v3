@@ -21,10 +21,12 @@ import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
 
 @Composable
 fun WorkoutScreen(
     repo: WorkoutRepository,
+    darkTheme: Boolean,
     templateId: String?,
     onBack: () -> Unit,
     onFinished: () -> Unit
@@ -32,7 +34,7 @@ fun WorkoutScreen(
     val scope = rememberCoroutineScope()
     val vm = remember { WorkoutViewModel(repo, scope, templateId) }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(true)
+    val c = GainzThemeColors(darkTheme)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showSupersetPicker by remember { mutableStateOf<String?>(null) }
     var showAddSetsFor by remember { mutableStateOf<String?>(null) }
@@ -43,7 +45,7 @@ fun WorkoutScreen(
 
     LaunchedEffect(chronoStart) {
         while (chronoStart != null) {
-            val elapsed = (kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - chronoStart!!) / 1000L
+            val elapsed = (Clock.System.now().toEpochMilliseconds() - chronoStart!!) / 1000L
             val m = elapsed / 60
             val s = elapsed % 60
             chronoDisplay = "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
@@ -86,7 +88,7 @@ fun WorkoutScreen(
                                     chronoStart = null
                                     chronoDisplay = "00:00"
                                 } else {
-                                    chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+                                    chronoStart = Clock.System.now().toEpochMilliseconds()
                                 }
                             }
                             .padding(horizontal = 12.dp, vertical = 8.dp),

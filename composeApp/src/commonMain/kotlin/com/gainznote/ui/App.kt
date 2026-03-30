@@ -22,7 +22,6 @@ fun App(
     onExit: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
-    // Stack de navigation — le premier élément est toujours Home
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.last()
     var darkTheme by remember { mutableStateOf(true) }
@@ -33,7 +32,6 @@ fun App(
         else onExit()
     }
 
-    // Intercepte le bouton retour Android/iOS
     BackHandler(enabled = backStack.size > 1) { navigateBack() }
 
     GainzTheme(dark = darkTheme) {
@@ -48,6 +46,7 @@ fun App(
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
+                darkTheme = darkTheme,
                 templateId = s.templateId,
                 onBack = { navigateBack() },
                 onFinished = {
@@ -57,6 +56,7 @@ fun App(
             )
             Screen.History -> HistoryScreen(
                 repo = repo,
+                darkTheme = darkTheme,
                 onBack = { navigateBack() },
                 onOpenDetail = { id -> navigateTo(Screen.Detail(id)) },
                 onUseAsTemplate = { id ->
@@ -67,6 +67,7 @@ fun App(
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
+                darkTheme = darkTheme,
                 workoutId = s.workoutId,
                 onBack = { navigateBack() },
                 onUseAsTemplate = { id ->
@@ -80,6 +81,5 @@ fun App(
     }
 }
 
-// expect/actual pour BackHandler multiplateforme
 @Composable
 expect fun BackHandler(enabled: Boolean, onBack: () -> Unit)

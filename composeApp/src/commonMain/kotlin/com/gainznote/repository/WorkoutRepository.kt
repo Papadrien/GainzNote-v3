@@ -14,23 +14,51 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
     private val q = db.gainzNoteQueries
 
     suspend fun getAllWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
-        q.getAllWorkouts().executeAsList().map { buildWorkout(it.id) }
+        q.getAllWorkouts().executeAsList().map { row -> buildWorkout(row.id, row.title, row.notes, row.started_at, row.finished_at) }
     }
 
     suspend fun getWorkoutById(id: String): Workout? = withContext(Dispatchers.IO) {
-        q.getWorkoutById(id).executeAsOneOrNull()?.let { buildWorkout(it.id) }
+        q.getWorkoutById(id).executeAsOneOrNull()?.let { row ->
+            buildWorkout(row.id, row.title, row.notes, row.started_at, row.finished_at)
+        }
     }
 
-    private fun buildWorkout(id: String): Workout {
-        val row = q.getWorkoutById(id).executeAsOne()
+    private fun buildWorkout(
+        id: String,
+        title: String,
+        notes: String,
+        startedAt: String,
+        finishedAt: String?
+    ): Workout {
         val exercises = q.getExercisesForWorkout(id).executeAsList().map { ex ->
             val sets = q.getSetsForExercise(ex.id).executeAsList().map { s ->
-                TrainingSet(s.id, s.exercise_id, s.position.toInt(),
-                    s.weight_kg, s.reps?.toInt(), s.reps_placeholder?.toInt(), s.notes)
+                TrainingSet(
+                    id            = s.id,
+                    exerciseId    = s.exercise_id,
+                    position      = s.position.toInt(),
+                    weightKg      = s.weight_kg,
+                    reps          = s.reps?.toInt(),
+                    repsPlaceholder = s.reps_placeholder?.toInt(),
+                    notes         = s.notes
+                )
             }
-            Exercise(ex.id, ex.workout_id, ex.name, ex.position.toInt(), ex.superset_with, sets)
+            Exercise(
+                id          = ex.id,
+                workoutId   = ex.workout_id,
+                name        = ex.name,
+                position    = ex.position.toInt(),
+                supersetWith = ex.superset_with,
+                sets        = sets
+            )
         }
-        return Workout(row.id, row.title, row.notes, row.started_at, row.finished_at, exercises)
+        return Workout(
+            id         = id,
+            title      = title,
+            notes      = notes,
+            startedAt  = startedAt,
+            finishedAt = finishedAt,
+            exercises  = exercises
+        )
     }
 
     suspend fun saveWorkout(workout: Workout) = withContext(Dispatchers.IO) {
