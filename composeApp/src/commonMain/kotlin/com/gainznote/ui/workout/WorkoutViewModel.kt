@@ -5,25 +5,14 @@ import com.gainznote.model.TrainingSet
 import com.gainznote.model.Workout
 import com.gainznote.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
-fun newId(): String = buildString {
-    val hex = "0123456789abcdef"
-    repeat(8)  { append(hex.random()) }; append('-')
-    repeat(4)  { append(hex.random()) }; append('-')
-    append('4'); repeat(3) { append(hex.random()) }; append('-')
-    append(listOf('8','9','a','b').random()); repeat(3) { append(hex.random()) }; append('-')
-    repeat(12) { append(hex.random()) }
-}
-
+fun newId() = Clock.System.now().toEpochMilliseconds().toString() + (1000..9999).random()
 fun makeSet(exId: String = "", pos: Int = 0, placeholder: Int? = null) =
     TrainingSet(newId(), exId, pos, repsPlaceholder = placeholder)
-
 fun makeExercise(workoutId: String, pos: Int) =
     Exercise(newId(), workoutId, "", pos, sets = listOf(makeSet()))
 
@@ -39,11 +28,11 @@ class WorkoutViewModel(
 
     init {
         if (templateId != null) scope.launch {
-            repo.getWorkoutById(templateId)?.let { template ->
+            repo.getWorkoutById(templateId)?.let { t ->
                 _state.value = _state.value.copy(
-                    title = template.title,
+                    title = t.title,
                     notes = "",
-                    exercises = template.exercises.map { ex ->
+                    exercises = t.exercises.map { ex ->
                         ex.copy(
                             id = newId(),
                             supersetWith = null,
@@ -52,6 +41,7 @@ class WorkoutViewModel(
                                     id = newId(),
                                     reps = null,
                                     repsPlaceholder = s.reps,
+                                    // weightKg conservé depuis le template
                                 )
                             }
                         )
@@ -59,11 +49,10 @@ class WorkoutViewModel(
                 )
             }
         }
-
-        @OptIn(FlowPreview::class)
         scope.launch {
-            state.debounce(10_000).collect { workout ->
-                repo.saveWorkout(workout)
+            while (true) {
+                kotlinx.coroutines.delay(30_000)
+                repo.saveWorkout(_state.value)
             }
         }
     }
@@ -89,77 +78,55 @@ class WorkoutViewModel(
         updateExercises { map { if (it.id == id) it.copy(name = name) else it } }
 
     fun addSets(exId: String, count: Int = 1) = updateExercises {
-        map { ex ->
-            if (ex.id != exId) ex
-            else ex.copy(sets = ex.sets + List(count) { makeSet(exId) })
-        }
+        map { if (it.id != exId) it else
+            it.copy(sets = it.sets + List(count) { makeSet(exId) }) }
     }
 
     fun removeSet(exId: String, setId: String) = updateExercises {
-        map { ex ->
-            if (ex.id != exId || ex.sets.size <= 1) ex
-            else ex.copy(sets = ex.sets.filter { it.id != setId })
-        }
+        map { ex -> if (ex.id != exId || ex.sets.size <= 1) ex else
+            ex.copy(sets = ex.sets.filter { it.id != setId }) }
     }
 
+    // weight=null signifie "effacer le poids", on utilise un sentinel distinct
+    // pour "ne pas toucher au poids" → on passe un Optional via sealed class implicite
+    // Solution simple : weight est nullable et clearWeight indique l'intention
     fun updateSetWeight(exId: String, setId: String, weight: Double?) = updateExercises {
-        map { ex ->
-            if (ex.id != exId) ex
-            else ex.copy(sets = ex.sets.map { s ->
-                if (s.id != setId) s else s.copy(weightKg = weight)
-            })
-        }
+        map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
+            if (s.id != setId) s else s.copy(weightKg = weight)
+        })}
     }
 
     fun updateSetReps(exId: String, setId: String, reps: Int?) = updateExercises {
-        map { ex ->
-            if (ex.id != exId) ex
-            else ex.copy(sets = ex.sets.map { s ->
-                if (s.id != setId) s else s.copy(reps = reps)
-            })
-        }
+        map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
+            if (s.id != setId) s else s.copy(reps = reps)
+        })}
     }
 
     fun updateSetNotes(exId: String, setId: String, notes: String) = updateExercises {
-        map { ex ->
-            if (ex.id != exId) ex
-            else ex.copy(sets = ex.sets.map { s ->
-                if (s.id != setId) s else s.copy(notes = notes)
-            })
-        }
+        map { ex -> if (ex.id != exId) ex else ex.copy(sets = ex.sets.map { s ->
+            if (s.id != setId) s else s.copy(notes = notes)
+        })}
     }
 
     fun propagateWeight(exId: String, setId: String) = updateExercises {
-        map { ex ->
-            if (ex.id != exId) ex
-            else {
-                val idx = ex.sets.indexOfFirst { it.id == setId }
-                val w = ex.sets.getOrNull(idx)?.weightKg
-                if (w == null) ex
-                else ex.copy(sets = ex.sets.mapIndexed { i, s ->
-                    if (i > idx) s.copy(weightKg = w) else s
-                })
-            }
-        }
+        map { ex -> if (ex.id != exId) ex else {
+            val idx = ex.sets.indexOfFirst { it.id == setId }
+            val w = ex.sets.getOrNull(idx)?.weightKg
+            // Ne propage que si le poids source est non-null
+            if (w == null) ex
+            else ex.copy(sets = ex.sets.mapIndexed { i, s ->
+                if (i > idx) s.copy(weightKg = w) else s
+            })
+        }}
     }
 
     fun linkSuperset(aId: String, bId: String) = updateExercises {
-        map { ex ->
-            when (ex.id) {
-                aId  -> ex.copy(supersetWith = bId)
-                bId  -> ex.copy(supersetWith = aId)
-                else -> ex
-            }
-        }
+        map { when (it.id) { aId -> it.copy(supersetWith = bId); bId -> it.copy(supersetWith = aId); else -> it } }
     }
 
     fun unlinkSuperset(exId: String) {
         val partnerId = _state.value.exercises.firstOrNull { it.id == exId }?.supersetWith
-        updateExercises {
-            map { ex ->
-                if (ex.id == exId || ex.id == partnerId) ex.copy(supersetWith = null) else ex
-            }
-        }
+        updateExercises { map { if (it.id == exId || it.id == partnerId) it.copy(supersetWith = null) else it } }
     }
 
     fun finish(onDone: () -> Unit) = scope.launch {

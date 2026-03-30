@@ -16,12 +16,11 @@ import com.gainznote.ui.theme.GainzThemeColors
 @Composable
 fun HistoryScreen(
     repo: WorkoutRepository,
-    darkTheme: Boolean,
     onBack: () -> Unit,
     onOpenDetail: (String) -> Unit,
     onUseAsTemplate: (String) -> Unit
 ) {
-    val c = GainzThemeColors(darkTheme)
+    val c = GainzThemeColors(true)
     var workouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
