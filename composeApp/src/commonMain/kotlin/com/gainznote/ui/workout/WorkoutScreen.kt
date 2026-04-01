@@ -13,12 +13,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.*
 import com.gainznote.model.Exercise
 import com.gainznote.model.TrainingSet
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
+import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.delay
 
@@ -26,19 +28,22 @@ import kotlinx.coroutines.delay
 fun WorkoutScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
+    blackBg: Boolean = false,
     templateId: String?,
+    resumeId: String? = null,
     onBack: () -> Unit,
     onFinished: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val vm = remember { WorkoutViewModel(repo, scope, templateId) }
+    // Key sur resumeId+templateId pour recréer le VM si on change d'entraînement
+    val vm = remember(resumeId, templateId) { WorkoutViewModel(repo, scope, templateId, resumeId) }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(darkTheme)
+    val c = GainzThemeColors(darkTheme, blackBg)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showSupersetPicker by remember { mutableStateOf<String?>(null) }
     var showAddSetsFor by remember { mutableStateOf<String?>(null) }
 
-    // Chronomètre
+    // ── Chronomètre ───────────────────────────────────────────────────────────
     var chronoStart by remember { mutableStateOf<Long?>(null) }
     var chronoDisplay by remember { mutableStateOf("00:00") }
     LaunchedEffect(chronoStart) {
@@ -49,85 +54,96 @@ fun WorkoutScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
+    Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
 
-            // ── TopBar ────────────────────────────────────────────────────────
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                    Text("Démarré à ${formatDisplayDate(workout.startedAt)}", color = c.textMuted, fontSize = 11.sp)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    val chronoActive = chronoStart != null
-                    Box(
-                        Modifier
-                            .background(if (chronoActive) c.accentDim else c.surfaceAlt, RoundedCornerShape(8.dp))
-                            .border(1.dp, if (chronoActive) c.accent else c.border, RoundedCornerShape(8.dp))
-                            .clickable {
-                                if (chronoActive) { chronoStart = null; chronoDisplay = "00:00" }
-                                else chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("⏱", fontSize = 16.sp, color = if (chronoActive) c.accent else c.textSec)
-                    }
-                    Button(onClick = { showFinishDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = c.accent),
-                        shape = RoundedCornerShape(10.dp)) {
-                        Text("Terminer", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
+        // ── TopBar ────────────────────────────────────────────────────────────
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically) {
+            Column {
+                Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                // Jour en toutes lettres
+                Text("Démarré ${formatDisplayDateFull(workout.startedAt)}", color = c.textMuted, fontSize = 11.sp)
             }
-
-            HorizontalDivider(color = c.border, thickness = 0.5.dp)
-
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                GainzTextField(value = workout.title, placeholder = "Titre de l'entraînement",
-                    textSize = 22.sp, bold = true, c = c, onValueChange = vm::updateTitle)
-                Spacer(Modifier.height(8.dp))
-                GainzTextField(value = workout.notes, placeholder = "Notes générales…",
-                    c = c, onValueChange = vm::updateNotes, minLines = 2)
-                Spacer(Modifier.height(20.dp))
-
-                workout.exercises.forEachIndexed { idx, ex ->
-                    ExerciseCard(
-                        exercise = ex,
-                        isFirst = idx == 0,
-                        isSupersetMember = ex.supersetWith != null,
-                        c = c, vm = vm,
-                        allExercises = workout.exercises,
-                        onPickSuperset = { showSupersetPicker = ex.id },
-                        onAddMultiple = { showAddSetsFor = ex.id }
-                    )
-                    Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                val chronoActive = chronoStart != null
+                Box(
+                    Modifier
+                        .background(if (chronoActive) c.accentDim else c.surfaceAlt, RoundedCornerShape(8.dp))
+                        .border(1.dp, if (chronoActive) c.accent else c.border, RoundedCornerShape(8.dp))
+                        .clickable {
+                            if (chronoActive) { chronoStart = null; chronoDisplay = "00:00" }
+                            else chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("⏱", fontSize = 16.sp, color = if (chronoActive) c.accent else c.textSec)
                 }
-
-                OutlinedButton(onClick = vm::addExercise,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, c.border),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = c.accent)) {
-                    Text("+ Ajouter un exercice", fontWeight = FontWeight.SemiBold)
+                Button(onClick = { showFinishDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.accent),
+                    shape = RoundedCornerShape(10.dp)) {
+                    Text("Terminer", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                 }
-                Spacer(Modifier.height(40.dp))
             }
         }
 
-        // Chronomètre flottant
-        AnimatedVisibility(visible = chronoStart != null,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            enter = fadeIn() + slideInVertically { it },
-            exit = fadeOut() + slideOutVertically { it }) {
-            Box(Modifier.background(c.surface, RoundedCornerShape(12.dp))
-                .border(1.5.dp, c.accent, RoundedCornerShape(12.dp))
-                .padding(horizontal = 18.dp, vertical = 12.dp)) {
-                Text(chronoDisplay, color = c.accent, fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        // ── Chrono inline — juste sous la topbar, toujours visible même avec le clavier ──
+        // Positionné dans le flux normal (pas flottant) donc reste visible même si le contenu
+        // est décalé par le clavier. S'affiche/masque avec animation.
+        AnimatedVisibility(
+            visible = chronoStart != null,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(c.accentDim)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "⏱  $chronoDisplay",
+                    color = c.accent,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
             }
+        }
+
+        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+            GainzTextField(value = workout.title, placeholder = "Titre de l'entraînement",
+                textSize = 22.sp, bold = true, c = c, onValueChange = vm::updateTitle,
+                capitalization = KeyboardCapitalization.Sentences)
+            Spacer(Modifier.height(8.dp))
+            GainzTextField(value = workout.notes, placeholder = "Notes générales…",
+                c = c, onValueChange = vm::updateNotes, minLines = 2,
+                capitalization = KeyboardCapitalization.Sentences)
+            Spacer(Modifier.height(20.dp))
+
+            workout.exercises.forEachIndexed { idx, ex ->
+                ExerciseCard(
+                    exercise = ex, isFirst = idx == 0,
+                    isSupersetMember = ex.supersetWith != null,
+                    c = c, vm = vm, allExercises = workout.exercises,
+                    onPickSuperset = { showSupersetPicker = ex.id },
+                    onAddMultiple = { showAddSetsFor = ex.id }
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+
+            OutlinedButton(onClick = vm::addExercise,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, c.border),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = c.accent)) {
+                Text("+ Ajouter un exercice", fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(40.dp))
         }
     }
 
@@ -193,12 +209,16 @@ fun WorkoutScreen(
 // ─── GainzTextField ───────────────────────────────────────────────────────────
 
 @Composable
-fun GainzTextField(value: String, placeholder: String, c: GainzThemeColors,
-                   onValueChange: (String) -> Unit, textSize: TextUnit = 15.sp,
-                   bold: Boolean = false, minLines: Int = 1) {
+fun GainzTextField(
+    value: String, placeholder: String, c: GainzThemeColors,
+    onValueChange: (String) -> Unit, textSize: TextUnit = 15.sp,
+    bold: Boolean = false, minLines: Int = 1,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.Sentences
+) {
     BasicTextField(value = value, onValueChange = onValueChange, minLines = minLines,
         textStyle = TextStyle(color = c.text, fontSize = textSize,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal),
+        keyboardOptions = KeyboardOptions(capitalization = capitalization),
         cursorBrush = SolidColor(c.accent),
         decorationBox = { inner ->
             Box(Modifier.fillMaxWidth().border(1.dp, c.border, RoundedCornerShape(12.dp)).padding(12.dp)) {
@@ -212,21 +232,15 @@ fun GainzTextField(value: String, placeholder: String, c: GainzThemeColors,
 
 @Composable
 fun ExerciseCard(
-    exercise: Exercise,
-    isFirst: Boolean,
-    isSupersetMember: Boolean,
-    c: GainzThemeColors,
-    vm: WorkoutViewModel,
-    allExercises: List<Exercise>,
-    onPickSuperset: () -> Unit,
-    onAddMultiple: () -> Unit
+    exercise: Exercise, isFirst: Boolean, isSupersetMember: Boolean,
+    c: GainzThemeColors, vm: WorkoutViewModel, allExercises: List<Exercise>,
+    onPickSuperset: () -> Unit, onAddMultiple: () -> Unit
 ) {
     Column(Modifier.fillMaxWidth()
         .border(if (isSupersetMember) 2.dp else 1.dp,
             if (isSupersetMember) c.superset else c.border, RoundedCornerShape(14.dp))
         .background(c.surface, RoundedCornerShape(14.dp))) {
 
-        // Header
         Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             if (isSupersetMember) {
@@ -236,10 +250,12 @@ fun ExerciseCard(
                 }
                 Spacer(Modifier.width(8.dp))
             }
+            // Majuscule Words pour les noms d'exercices
             BasicTextField(value = exercise.name,
                 onValueChange = { vm.updateExerciseName(exercise.id, it) },
                 modifier = Modifier.weight(1f),
                 textStyle = TextStyle(color = c.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 cursorBrush = SolidColor(c.accent), singleLine = true,
                 decorationBox = { inner ->
                     if (exercise.name.isEmpty()) Text("Nom de l'exercice", color = c.textMuted, fontSize = 15.sp)
@@ -247,12 +263,8 @@ fun ExerciseCard(
                 })
             var menuOpen by remember { mutableStateOf(false) }
             Box {
-                IconButton(onClick = { menuOpen = true }) {
-                    Text("⋮", color = c.textSec, fontSize = 20.sp)
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false },
-                    containerColor = c.surface) {
-                    // Option déplacer vers le haut (masquée pour le premier)
+                IconButton(onClick = { menuOpen = true }) { Text("⋮", color = c.textSec, fontSize = 20.sp) }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, containerColor = c.surface) {
                     if (!isFirst)
                         DropdownMenuItem(text = { Text("↑  Déplacer vers le haut", color = c.text) },
                             onClick = { vm.moveExerciseUp(exercise.id); menuOpen = false })
@@ -275,7 +287,7 @@ fun ExerciseCard(
             Text("kg", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("reps", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("note", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
-            Spacer(Modifier.width(56.dp))
+            Spacer(Modifier.width(64.dp))
         }
 
         exercise.sets.forEachIndexed { i, set ->
@@ -313,7 +325,6 @@ fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
     var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
     var notesText by remember(set.id) { mutableStateOf(set.notes) }
 
-    // Sync modèle → local lors d'une propagation externe
     LaunchedEffect(set.weightKg) {
         if (weightText.toDoubleOrNull() != set.weightKg) {
             weightText = set.weightKg?.let {
@@ -345,19 +356,23 @@ fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
             modifier = Modifier.weight(1.5f).height(34.dp),
             onLocalChange = { raw -> notesText = raw; onNotesChange(raw) })
 
-        // Bouton propager — visible seulement si poids non vide
-        Box(Modifier.width(32.dp).height(34.dp), contentAlignment = Alignment.Center) {
+        // ⬇ Propager — fond accentDim, même style que le bouton supprimer
+        Box(Modifier.width(30.dp).height(34.dp), contentAlignment = Alignment.Center) {
             if (showPropagate) {
-                Box(Modifier.size(28.dp).clickable {
-                    onWeightChange(weightText.toDoubleOrNull())
-                    onPropagate()
-                }, contentAlignment = Alignment.Center) {
-                    Text("⬇", color = c.textSec, fontSize = 14.sp)
+                Box(Modifier.size(28.dp)
+                    .background(c.accentDim, RoundedCornerShape(6.dp))
+                    .clickable {
+                        onWeightChange(weightText.toDoubleOrNull())
+                        onPropagate()
+                    }, contentAlignment = Alignment.Center) {
+                    Text("⬇", color = c.accent, fontSize = 13.sp)
                 }
+            } else {
+                Spacer(Modifier.size(28.dp))
             }
         }
 
-        // Bouton supprimer — croix blanche sur fond danger
+        // ✕ Supprimer — fond danger, croix blanche
         Box(Modifier.size(28.dp)
             .background(c.danger, RoundedCornerShape(6.dp))
             .clickable { onRemove() },

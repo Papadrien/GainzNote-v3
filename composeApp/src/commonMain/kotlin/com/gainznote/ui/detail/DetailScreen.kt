@@ -23,12 +23,13 @@ import kotlinx.coroutines.launch
 fun DetailScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
+    blackBg: Boolean = false,
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
     onDeleted: () -> Unit
 ) {
-    val c = GainzThemeColors(darkTheme)
+    val c = GainzThemeColors(darkTheme, blackBg)
     val scope = rememberCoroutineScope()
     var workout by remember { mutableStateOf<Workout?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -43,11 +44,8 @@ fun DetailScreen(
                 Text("←", color = c.accent, fontSize = 22.sp)
             }
             if (workout != null) {
-                // Icône poubelle Material
                 IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(imageVector = Icons.Default.Delete,
-                        contentDescription = "Supprimer",
-                        tint = c.danger)
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Supprimer", tint = c.danger)
                 }
             }
         }
@@ -108,11 +106,14 @@ fun DetailScreen(
 
 @Composable
 fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
+    // Bordure violette si superset — cohérent avec la vue entraînement en cours
+    val isSuperset = exercise.supersetWith != null
     Column(Modifier.fillMaxWidth()
-        .border(1.dp, c.border, RoundedCornerShape(12.dp))
+        .border(if (isSuperset) 2.dp else 1.dp,
+            if (isSuperset) c.superset else c.border, RoundedCornerShape(12.dp))
         .background(c.surface, RoundedCornerShape(12.dp))) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (exercise.supersetWith != null) {
+            if (isSuperset) {
                 Box(Modifier.background(c.supersetDim, RoundedCornerShape(5.dp))
                     .padding(horizontal = 5.dp, vertical = 2.dp)) {
                     Text("SS", color = c.superset, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -122,7 +123,7 @@ fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
             Text(exercise.name.ifBlank { "Exercice sans nom" }, color = c.text,
                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
-        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+        HorizontalDivider(color = if (isSuperset) c.superset.copy(alpha = 0.3f) else c.border, thickness = 0.5.dp)
         Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
             Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(28.dp))
             Text("Poids", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))

@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 
 sealed class Screen {
     data object Home : Screen()
-    data class Workout(val templateId: String? = null) : Screen()
+    // templateId = depuis un modèle, resumeId = reprendre un en cours
+    data class Workout(val templateId: String? = null, val resumeId: String? = null) : Screen()
     data object History : Screen()
     data class Detail(val workoutId: String) : Screen()
 }
@@ -28,9 +29,9 @@ fun App(
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.last()
     var darkTheme by remember { mutableStateOf(true) }
+    var blackBg by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // Contrôle couleur status bar selon le thème
     SystemBarsEffect(darkTheme)
 
     fun navigateTo(screen: Screen) = backStack.add(screen)
@@ -38,31 +39,27 @@ fun App(
 
     BackHandler(enabled = backStack.size > 1) { navigateBack() }
 
-    GainzTheme(dark = darkTheme) {
+    GainzTheme(dark = darkTheme, blackBg = blackBg) {
         when (val s = currentScreen) {
             Screen.Home -> HomeScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                onToggleTheme = { darkTheme = !darkTheme },
+                blackBg = blackBg,
+                onToggleTheme = { darkTheme = !darkTheme; if (!darkTheme) blackBg = false },
+                onToggleBlackBg = { blackBg = !blackBg },
                 onNewWorkout = { navigateTo(Screen.Workout()) },
                 onHistory = { navigateTo(Screen.History) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
-                onExport = {
-                    scope.launch {
-                        val json = repo.exportJson()
-                        onExportReady(json)
-                    }
-                },
-                onImport = {
-                    onImportRequest { json ->
-                        scope.launch { repo.importJson(json) }
-                    }
-                }
+                onResumeWorkout = { id -> navigateTo(Screen.Workout(resumeId = id)) },
+                onExport = { scope.launch { val json = repo.exportJson(); onExportReady(json) } },
+                onImport = { onImportRequest { json -> scope.launch { repo.importJson(json) } } }
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
                 darkTheme = darkTheme,
+                blackBg = blackBg,
                 templateId = s.templateId,
+                resumeId = s.resumeId,
                 onBack = { navigateBack() },
                 onFinished = { backStack.clear(); backStack.add(Screen.Home) }
             )
@@ -73,17 +70,18 @@ fun App(
                 onOpenDetail = { id -> navigateTo(Screen.Detail(id)) },
                 onUseAsTemplate = { id ->
                     backStack.clear(); backStack.add(Screen.Home)
-                    navigateTo(Screen.Workout(id))
+                    navigateTo(Screen.Workout(templateId = id))
                 }
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
                 darkTheme = darkTheme,
+                blackBg = blackBg,
                 workoutId = s.workoutId,
                 onBack = { navigateBack() },
                 onUseAsTemplate = { id ->
                     backStack.clear(); backStack.add(Screen.Home)
-                    navigateTo(Screen.Workout(id))
+                    navigateTo(Screen.Workout(templateId = id))
                 },
                 onDeleted = { navigateBack() }
             )

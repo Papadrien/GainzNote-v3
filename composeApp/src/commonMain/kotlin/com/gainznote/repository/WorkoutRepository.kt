@@ -19,6 +19,14 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
         q.getAllWorkouts().executeAsList().map { buildWorkout(it.id) }
     }
 
+    suspend fun getFinishedWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
+        q.getFinishedWorkouts().executeAsList().map { buildWorkout(it.id) }
+    }
+
+    suspend fun getInProgressWorkouts(): List<Workout> = withContext(Dispatchers.IO) {
+        q.getInProgressWorkouts().executeAsList().map { buildWorkout(it.id) }
+    }
+
     suspend fun getWorkoutById(id: String): Workout? = withContext(Dispatchers.IO) {
         q.getWorkoutById(id).executeAsOneOrNull()?.let { buildWorkout(it.id) }
     }

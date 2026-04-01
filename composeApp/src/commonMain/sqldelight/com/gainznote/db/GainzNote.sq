@@ -65,3 +65,11 @@ VALUES (:id, :exercise_id, :position, :weight_kg, :reps, :reps_placeholder, :not
 
 deleteSetsForExercise:
 DELETE FROM training_set WHERE exercise_id=:exercise_id;
+
+-- Entraînements en cours (sans finished_at)
+getInProgressWorkouts:
+SELECT * FROM workout WHERE finished_at IS NULL ORDER BY started_at DESC;
+
+-- Entraînements terminés
+getFinishedWorkouts:
+SELECT * FROM workout WHERE finished_at IS NOT NULL ORDER BY started_at DESC;

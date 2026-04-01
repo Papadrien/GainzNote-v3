@@ -21,7 +21,8 @@ fun makeExercise(workoutId: String, pos: Int) =
 class WorkoutViewModel(
     private val repo: WorkoutRepository,
     private val scope: CoroutineScope,
-    templateId: String?
+    private val templateId: String?,
+    private val resumeId: String? = null  // reprendre un entraînement en cours
 ) {
     private val _state = MutableStateFlow(
         Workout(newId(), "", "", Clock.System.now().toString())
@@ -29,39 +30,48 @@ class WorkoutViewModel(
     val state: StateFlow<Workout> = _state
 
     init {
-        if (templateId != null) scope.launch {
-            repo.getWorkoutById(templateId)?.let { t ->
-                // Construire une map ancien_id → nouveau_id pour remapper les supersets
-                val idMap = t.exercises.associate { ex -> ex.id to newId() }
-                _state.value = _state.value.copy(
-                    title = t.title,
-                    notes = "",  // on ne copie pas les notes
-                    exercises = t.exercises.map { ex ->
-                        ex.copy(
-                            id = idMap[ex.id]!!,
-                            // Conserver le superset en remappant l'ID du partenaire
-                            supersetWith = ex.supersetWith?.let { idMap[it] },
-                            sets = ex.sets.map { s ->
-                                s.copy(
-                                    id = newId(),
-                                    reps = null,
-                                    repsPlaceholder = s.reps
+        when {
+            resumeId != null -> {
+                // Reprendre un entraînement en cours existant
+                scope.launch {
+                    repo.getWorkoutById(resumeId)?.let { existing ->
+                        _state.value = existing
+                    }
+                }
+            }
+            templateId != null -> {
+                scope.launch {
+                    repo.getWorkoutById(templateId)?.let { t ->
+                        val idMap = t.exercises.associate { ex -> ex.id to newId() }
+                        _state.value = _state.value.copy(
+                            title = t.title,
+                            notes = "",
+                            exercises = t.exercises.map { ex ->
+                                ex.copy(
+                                    id = idMap[ex.id]!!,
+                                    supersetWith = ex.supersetWith?.let { idMap[it] },
+                                    sets = ex.sets.map { s ->
+                                        s.copy(id = newId(), reps = null, repsPlaceholder = s.reps)
+                                    }
                                 )
                             }
                         )
                     }
-                )
+                    // Sauvegarder immédiatement comme "en cours" (finishedAt = null)
+                    repo.saveWorkout(_state.value)
+                }
+            }
+            else -> {
+                // Nouvel entraînement vide — sauvegarder immédiatement pour apparaître dans "en cours"
+                scope.launch { repo.saveWorkout(_state.value) }
             }
         }
 
-        // Autosave : sauvegarde 2s après chaque modification
+        // Autosave : 2s après chaque modification
         @OptIn(FlowPreview::class)
         scope.launch {
             _state.debounce(2000).collect { workout ->
-                // Sauvegarder uniquement si l'entraînement a du contenu
-                if (workout.title.isNotEmpty() || workout.exercises.isNotEmpty()) {
-                    repo.saveWorkout(workout)
-                }
+                repo.saveWorkout(workout)
             }
         }
     }
@@ -86,7 +96,6 @@ class WorkoutViewModel(
     fun updateExerciseName(id: String, name: String) =
         updateExercises { map { if (it.id == id) it.copy(name = name) else it } }
 
-    // Intervertit l'exercice avec celui du dessus
     fun moveExerciseUp(id: String) = updateExercises {
         val idx = indexOfFirst { it.id == id }
         if (idx <= 0) return@updateExercises this
@@ -96,8 +105,7 @@ class WorkoutViewModel(
     }
 
     fun addSets(exId: String, count: Int = 1) = updateExercises {
-        map { if (it.id != exId) it else
-            it.copy(sets = it.sets + List(count) { makeSet(exId) }) }
+        map { if (it.id != exId) it else it.copy(sets = it.sets + List(count) { makeSet(exId) }) }
     }
 
     fun removeSet(exId: String, setId: String) = updateExercises {
@@ -128,9 +136,7 @@ class WorkoutViewModel(
             val idx = ex.sets.indexOfFirst { it.id == setId }
             val w = ex.sets.getOrNull(idx)?.weightKg
             if (w == null) ex
-            else ex.copy(sets = ex.sets.mapIndexed { i, s ->
-                if (i > idx) s.copy(weightKg = w) else s
-            })
+            else ex.copy(sets = ex.sets.mapIndexed { i, s -> if (i > idx) s.copy(weightKg = w) else s })
         }}
     }
 
@@ -143,6 +149,7 @@ class WorkoutViewModel(
         updateExercises { map { if (it.id == exId || it.id == partnerId) it.copy(supersetWith = null) else it } }
     }
 
+    // Terminer : marque finishedAt → disparaît de la section "En cours"
     fun finish(onDone: () -> Unit) = scope.launch {
         repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
         onDone()
