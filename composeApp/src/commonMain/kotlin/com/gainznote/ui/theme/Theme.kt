@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 object GainzColors {
     // ── Dark ──────────────────────────────────────────────────────────────────
     val AccentDark        = Color(0xFF4DB8FF)
-    val AccentDimDark     = Color(0xFF0A2040)
+    val AccentDimDark     = Color(0xFF0E3975)  // assez clair pour être visible en dark
     val BackgroundDark    = Color(0xFF0A1628)
     val BackgroundBlack   = Color(0xFF000000) // fond noir pur
     val SurfaceDark       = Color(0xFF112240)

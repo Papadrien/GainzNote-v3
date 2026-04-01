@@ -1,12 +1,16 @@
 package com.gainznote.android
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.repository.WorkoutRepository
@@ -16,7 +20,9 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private var pendingExportJson: String? = null
+    private var onJsonReadCallback: ((String) -> Unit)? = null
 
+    // ── Launcher export ───────────────────────────────────────────────────────
     private val exportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri: Uri? ->
@@ -32,9 +38,7 @@ class MainActivity : ComponentActivity() {
         pendingExportJson = null
     }
 
-    // Callback appelé une fois que le JSON a été lu depuis le fichier
-    private var onJsonReadCallback: ((String) -> Unit)? = null
-
+    // ── Launcher import ───────────────────────────────────────────────────────
     private val importLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -52,6 +56,46 @@ class MainActivity : ComponentActivity() {
         onJsonReadCallback = null
     }
 
+    // ── Launcher permission notifications ─────────────────────────────────────
+    private val notifPermLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(
+                this,
+                "Autorisation notification refusée — la notification chrono ne s'affichera pas",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    // ── Service chrono ────────────────────────────────────────────────────────
+
+    private fun startChronoService(startTimeMs: Long) {
+        // Demander la permission POST_NOTIFICATIONS sur Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val perm = android.Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                notifPermLauncher.launch(perm)
+                return
+            }
+        }
+        val intent = Intent(this, ChronoForegroundService::class.java).apply {
+            action = ChronoForegroundService.ACTION_START
+            putExtra(ChronoForegroundService.EXTRA_START_TIME, startTimeMs)
+        }
+        ContextCompat.startForegroundService(this, intent)
+    }
+
+    private fun stopChronoService() {
+        val intent = Intent(this, ChronoForegroundService::class.java).apply {
+            action = ChronoForegroundService.ACTION_STOP
+        }
+        startService(intent)
+    }
+
+    // ── onCreate ──────────────────────────────────────────────────────────────
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -67,26 +111,36 @@ class MainActivity : ComponentActivity() {
                     exportLauncher.launch("gainznote_sauvegarde.json")
                 },
                 onImportRequest = { composableCallback ->
-                    // Étape 1 : lire le fichier
                     onJsonReadCallback = { json ->
-                        // Étape 2 : vérifier s'il y a des données existantes
                         lifecycleScope.launch {
                             val hasData = repo.hasWorkouts()
                             if (hasData) {
-                                // Étape 3 : dialogue merge / écraser
                                 showImportChoiceDialog(json, repo, composableCallback)
                             } else {
-                                // Pas de données → importer directement
                                 composableCallback(json)
-                                Toast.makeText(this@MainActivity, "Données restaurées ✓", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Données restaurées ✓",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }
                     importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                }
+                },
+                onChronoStart = { startTimeMs -> startChronoService(startTimeMs) },
+                onChronoStop = { stopChronoService() }
             )
         }
     }
+
+    override fun onDestroy() {
+        // Arrêter le service si l'activité est détruite
+        stopChronoService()
+        super.onDestroy()
+    }
+
+    // ── Dialogue merge / écraser ──────────────────────────────────────────────
 
     private fun showImportChoiceDialog(
         json: String,
@@ -105,9 +159,17 @@ class MainActivity : ComponentActivity() {
                     try {
                         repo.deleteAllWorkouts()
                         composableCallback(json)
-                        Toast.makeText(this@MainActivity, "Données remplacées ✓", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Données remplacées ✓",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } catch (e: Exception) {
-                        Toast.makeText(this@MainActivity, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Erreur lors de l'import",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }

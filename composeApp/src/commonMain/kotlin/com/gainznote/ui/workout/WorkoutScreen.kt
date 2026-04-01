@@ -32,7 +32,10 @@ fun WorkoutScreen(
     templateId: String?,
     resumeId: String? = null,
     onBack: () -> Unit,
-    onFinished: () -> Unit
+    onFinished: () -> Unit,
+    chronoNotifEnabled: Boolean = false,
+    onChronoStart: (Long) -> Unit = {},
+    onChronoStop: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     // Key sur resumeId+templateId pour recréer le VM si on change d'entraînement
@@ -154,7 +157,7 @@ fun WorkoutScreen(
             title = { Text("Terminer l'entraînement ?", color = c.text) },
             text = { Text("${workout.exercises.size} exercice(s) · ${workout.exercises.sumOf { it.sets.size }} série(s)", color = c.textSec) },
             confirmButton = {
-                Button(onClick = { showFinishDialog = false; vm.finish(onFinished) },
+                Button(onClick = { showFinishDialog = false; if (chronoNotifEnabled) onChronoStop(); vm.finish(onFinished) },
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
                     Text("Terminer ✓", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                 }

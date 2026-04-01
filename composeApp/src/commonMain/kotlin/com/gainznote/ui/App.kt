@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 
 sealed class Screen {
     data object Home : Screen()
-    // templateId = depuis un modèle, resumeId = reprendre un en cours
     data class Workout(val templateId: String? = null, val resumeId: String? = null) : Screen()
     data object History : Screen()
     data class Detail(val workoutId: String) : Screen()
@@ -23,14 +22,21 @@ fun App(
     driverFactory: DatabaseDriverFactory,
     onExit: () -> Unit = {},
     onExportReady: (String) -> Unit = {},
-    onImportRequest: ((String) -> Unit) -> Unit = {}
+    onImportRequest: ((String) -> Unit) -> Unit = {},
+    // Callbacks notification chrono (implémentés côté Android)
+    onChronoStart: (Long) -> Unit = {},
+    onChronoStop: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.last()
     var darkTheme by remember { mutableStateOf(true) }
     var blackBg by remember { mutableStateOf(false) }
+    var chronoNotifEnabled by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // Clé qui s'incrémente après chaque import pour forcer le rechargement de HomeScreen
+    var refreshKey by remember { mutableStateOf(0) }
 
     SystemBarsEffect(darkTheme)
 
@@ -45,14 +51,25 @@ fun App(
                 repo = repo,
                 darkTheme = darkTheme,
                 blackBg = blackBg,
+                chronoNotifEnabled = chronoNotifEnabled,
                 onToggleTheme = { darkTheme = !darkTheme; if (!darkTheme) blackBg = false },
                 onToggleBlackBg = { blackBg = !blackBg },
+                onToggleChronoNotif = { chronoNotifEnabled = !chronoNotifEnabled },
                 onNewWorkout = { navigateTo(Screen.Workout()) },
                 onHistory = { navigateTo(Screen.History) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
                 onResumeWorkout = { id -> navigateTo(Screen.Workout(resumeId = id)) },
                 onExport = { scope.launch { val json = repo.exportJson(); onExportReady(json) } },
-                onImport = { onImportRequest { json -> scope.launch { repo.importJson(json) } } }
+                onImport = {
+                    onImportRequest { json ->
+                        scope.launch {
+                            repo.importJson(json)
+                            // Incrémenter refreshKey pour recharger HomeScreen après import
+                            refreshKey++
+                        }
+                    }
+                },
+                refreshKey = refreshKey
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
@@ -61,7 +78,10 @@ fun App(
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 onBack = { navigateBack() },
-                onFinished = { backStack.clear(); backStack.add(Screen.Home) }
+                onFinished = { backStack.clear(); backStack.add(Screen.Home) },
+                chronoNotifEnabled = chronoNotifEnabled,
+                onChronoStart = onChronoStart,
+                onChronoStop = onChronoStop
             )
             Screen.History -> HistoryScreen(
                 repo = repo,
