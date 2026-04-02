@@ -75,8 +75,17 @@ fun WorkoutScreen(
                         .background(if (chronoActive) c.accentDim else c.surfaceAlt, RoundedCornerShape(8.dp))
                         .border(1.dp, if (chronoActive) c.accent else c.border, RoundedCornerShape(8.dp))
                         .clickable {
-                            if (chronoActive) { chronoStart = null; chronoDisplay = "00:00" }
-                            else chronoStart = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+                            if (chronoActive) {
+                                // Arrêter le chrono
+                                chronoStart = null
+                                chronoDisplay = "00:00"
+                                if (chronoNotifEnabled) onChronoStop()
+                            } else {
+                                // Démarrer le chrono
+                                val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+                                chronoStart = now
+                                if (chronoNotifEnabled) onChronoStart(now)
+                            }
                         }
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center

@@ -22,6 +22,7 @@ sqldelight-native-driver   = { module = "app.cash.sqldelight:native-driver",    
 
 androidx-activity-compose  = { module = "androidx.activity:activity-compose",          version = "1.9.3" }
 androidx-core-ktx         = { module = "androidx.core:core-ktx",                           version = "1.13.1" }
+androidx-splashscreen     = { module = "androidx.core:core-splashscreen",               version = "1.0.1" }
 androidx-appcompat         = { module = "androidx.appcompat:appcompat",                   version = "1.7.0" }
 navigation-compose         = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 

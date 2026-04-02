@@ -37,7 +37,6 @@ fun HomeScreen(
     var recentWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
     var inProgressWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
 
-    // Rechargement à chaque fois que refreshKey change (ex: après import)
     LaunchedEffect(refreshKey) {
         recentWorkouts = repo.getFinishedWorkouts().take(3)
         inProgressWorkouts = repo.getInProgressWorkouts()
@@ -48,14 +47,15 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
     ) {
         Spacer(Modifier.height(24.dp))
-        Text("GainzNote", color = c.accent, fontSize = 34.sp,
-            fontWeight = FontWeight.Black, letterSpacing = (-1).sp)
+        Text(
+            "GainzNote", color = c.accent, fontSize = 34.sp,
+            fontWeight = FontWeight.Black, letterSpacing = (-1).sp
+        )
         Text("Ton carnet de musculation", color = c.textMuted, fontSize = 13.sp)
         Spacer(Modifier.height(28.dp))
 
         Button(
-            onClick = onNewWorkout,
-            modifier = Modifier.fillMaxWidth().height(58.dp),
+            onClick = onNewWorkout, modifier = Modifier.fillMaxWidth().height(58.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = c.accent)
         ) {
@@ -72,7 +72,7 @@ fun HomeScreen(
             SectionLabel("En cours", c)
             Spacer(Modifier.height(8.dp))
             inProgressWorkouts.forEach { w ->
-                InProgressCard(workout = w, c = c, onClick = { onResumeWorkout(w.id) })
+                InProgressCard(w, c) { onResumeWorkout(w.id) }
                 Spacer(Modifier.height(8.dp))
             }
             Spacer(Modifier.height(20.dp))
@@ -102,12 +102,13 @@ fun HomeScreen(
         SectionLabel("Paramètres", c)
         Spacer(Modifier.height(12.dp))
 
+        // ─ Bloc Thème ─────────────────────────────────────────────────────────
         Surface(
             shape = RoundedCornerShape(12.dp), color = c.surface,
             border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
         ) {
             Column {
-                // Mode sombre — switch ancré à droite avec fillMaxWidth sur la Row
+                // Mode sombre
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,13 +118,11 @@ fun HomeScreen(
                     Switch(
                         checked = darkTheme, onCheckedChange = { onToggleTheme() },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent,
-                            checkedTrackColor = c.accentDim
+                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
                         )
                     )
                 }
-
-                // Fond noir — visible seulement en mode sombre, sans sous-titre
+                // Fond noir — visible seulement en mode sombre
                 if (darkTheme) {
                     HorizontalDivider(
                         color = c.border, thickness = 0.5.dp,
@@ -138,42 +137,43 @@ fun HomeScreen(
                         Switch(
                             checked = blackBg, onCheckedChange = { onToggleBlackBg() },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = c.accent,
-                                checkedTrackColor = c.accentDim
+                                checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
                             )
                         )
                     }
-                }
-
-                // Notification chronomètre
-                HorizontalDivider(
-                    color = c.border, thickness = 0.5.dp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("Notification chronomètre", color = c.text, fontSize = 15.sp)
-                        Text(
-                            "Affiche le temps de repos dans les notifications",
-                            color = c.textMuted, fontSize = 11.sp
-                        )
-                    }
-                    Switch(
-                        checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent,
-                            checkedTrackColor = c.accentDim
-                        )
-                    )
                 }
             }
         }
         Spacer(Modifier.height(8.dp))
 
+        // ─ Bloc Notification (séparé du thème) ───────────────────────────────
+        Surface(
+            shape = RoundedCornerShape(12.dp), color = c.surface,
+            border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text("Notification chronomètre", color = c.text, fontSize = 15.sp)
+                    Text(
+                        "Affiche le temps de repos dans les notifications",
+                        color = c.textMuted, fontSize = 11.sp
+                    )
+                }
+                Switch(
+                    checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                    )
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // ─ Export / Import ────────────────────────────────────────────────────
         SettingButton("↑", "Sauvegarder les données", c, onExport)
         Spacer(Modifier.height(8.dp))
         SettingButton("↓", "Restaurer les données", c, onImport)
@@ -266,8 +266,6 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
         }
     }
 }
-
-// ─── Formatage des dates ──────────────────────────────────────────────────────
 
 fun formatDisplayDate(iso: String): String = try {
     val instant = Instant.parse(iso)

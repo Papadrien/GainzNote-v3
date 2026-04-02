@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.repository.WorkoutRepository
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
     private var pendingExportJson: String? = null
     private var onJsonReadCallback: ((String) -> Unit)? = null
 
-    // ── Launcher export ───────────────────────────────────────────────────────
+    // ── Export ────────────────────────────────────────────────────────────────
     private val exportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri: Uri? ->
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
         pendingExportJson = null
     }
 
-    // ── Launcher import ───────────────────────────────────────────────────────
+    // ── Import ────────────────────────────────────────────────────────────────
     private val importLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -56,14 +57,14 @@ class MainActivity : ComponentActivity() {
         onJsonReadCallback = null
     }
 
-    // ── Launcher permission notifications ─────────────────────────────────────
+    // ── Permission notifications ──────────────────────────────────────────────
     private val notifPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) {
             Toast.makeText(
                 this,
-                "Autorisation notification refusée — la notification chrono ne s'affichera pas",
+                "Autorisation refusée — la notification chrono ne s'affichera pas",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -72,10 +73,10 @@ class MainActivity : ComponentActivity() {
     // ── Service chrono ────────────────────────────────────────────────────────
 
     private fun startChronoService(startTimeMs: Long) {
-        // Demander la permission POST_NOTIFICATIONS sur Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val perm = android.Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                // Demander la permission puis relancer
                 notifPermLauncher.launch(perm)
                 return
             }
@@ -97,6 +98,8 @@ class MainActivity : ComponentActivity() {
     // ── onCreate ──────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Splash screen — doit être appelé AVANT super.onCreate
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -118,29 +121,22 @@ class MainActivity : ComponentActivity() {
                                 showImportChoiceDialog(json, repo, composableCallback)
                             } else {
                                 composableCallback(json)
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Données restaurées ✓",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(this@MainActivity, "Données restaurées ✓", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                     importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                 },
                 onChronoStart = { startTimeMs -> startChronoService(startTimeMs) },
-                onChronoStop = { stopChronoService() }
+                onChronoStop  = { stopChronoService() }
             )
         }
     }
 
     override fun onDestroy() {
-        // Arrêter le service si l'activité est détruite
         stopChronoService()
         super.onDestroy()
     }
-
-    // ── Dialogue merge / écraser ──────────────────────────────────────────────
 
     private fun showImportChoiceDialog(
         json: String,
@@ -159,17 +155,9 @@ class MainActivity : ComponentActivity() {
                     try {
                         repo.deleteAllWorkouts()
                         composableCallback(json)
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Données remplacées ✓",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(this@MainActivity, "Données remplacées ✓", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Erreur lors de l'import",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this@MainActivity, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
                     }
                 }
             }
