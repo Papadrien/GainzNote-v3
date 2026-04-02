@@ -64,6 +64,9 @@ fun App(
                     onImportRequest { json ->
                         scope.launch {
                             repo.importJson(json)
+                            // Forcer un retour à l'accueil pour afficher immédiatement les données restaurées
+                            backStack.clear()
+                            backStack.add(Screen.Home)
                             // Incrémenter refreshKey pour recharger HomeScreen après import
                             refreshKey++
                         }
