@@ -34,9 +34,11 @@ class ChronoForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                // Annuler toute coroutine de tick en cours avant d'en démarrer une nouvelle.
+                // Évite les duplications si ACTION_START est reçu deux fois de suite.
+                scope.coroutineContext.cancelChildren()
                 startTimeMs = intent.getLongExtra(EXTRA_START_TIME, System.currentTimeMillis())
                 val notif = buildNotif("00:00")
-                // API 34+ requires foreground service type
                 if (Build.VERSION.SDK_INT >= 34) {
                     ServiceCompat.startForeground(
                         this, NOTIF_ID, notif,

@@ -83,9 +83,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
 
     suspend fun saveAppSettings(settings: AppSettings) = withContext(Dispatchers.IO) {
         q.upsertAppSettings(
-            dark_theme = if (settings.darkTheme) 1 else 0,
-            black_bg = if (settings.blackBg) 1 else 0,
-            chrono_notif_enabled = if (settings.chronoNotifEnabled) 1 else 0
+            dark_theme = if (settings.darkTheme) 1L else 0L,
+            black_bg = if (settings.blackBg) 1L else 0L,
+            chrono_notif_enabled = if (settings.chronoNotifEnabled) 1L else 0L
         )
     }
 

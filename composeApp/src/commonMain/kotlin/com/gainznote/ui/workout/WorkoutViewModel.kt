@@ -25,7 +25,10 @@ class WorkoutViewModel(
     private val resumeId: String? = null  // reprendre un entraînement en cours
 ) {
     private val _state = MutableStateFlow(
-        Workout(newId(), "", "", Clock.System.now().toString())
+        // En mode resume, utiliser le resumeId comme ID initial pour éviter
+        // que l'autosave (debounce 2s) sauvegarde un état vide sous un ID temporaire
+        // avant que getWorkoutById ait eu le temps de charger le vrai entraînement.
+        Workout(resumeId ?: newId(), "", "", Clock.System.now().toString())
     )
     val state: StateFlow<Workout> = _state
 
@@ -37,6 +40,8 @@ class WorkoutViewModel(
                     repo.getWorkoutById(resumeId)?.let { existing ->
                         _state.value = existing
                     }
+                    // Si le workout n'existe plus (supprimé), on repart d'un état vide
+                    // avec l'ID correct, sans écraser quoi que ce soit d'autre
                 }
             }
             templateId != null -> {

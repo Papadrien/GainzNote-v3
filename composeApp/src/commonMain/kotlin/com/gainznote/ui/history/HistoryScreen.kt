@@ -26,7 +26,7 @@ fun HistoryScreen(
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        workouts = repo.getAllWorkouts()
+        workouts = repo.getFinishedWorkouts()
         loading = false
     }
 

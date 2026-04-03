@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.*
 import com.gainznote.model.Exercise
 import com.gainznote.model.TrainingSet
 import com.gainznote.repository.WorkoutRepository
-import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.delay
