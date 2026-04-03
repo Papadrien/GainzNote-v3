@@ -24,10 +24,19 @@ android {
         versionCode = 1
         versionName = "1.0.0"
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_PATH")?.let { rootProject.file(it) } ?: file("keystore/gainznote-release.jks"))
+            storePassword = System.getenv("STORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: "GainzNote-key"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

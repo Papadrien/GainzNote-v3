@@ -45,8 +45,8 @@ echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 echo "==> local.properties updated."
 
 # Run the build
-echo "==> Starting Gradle build..."
-./gradlew --no-daemon --no-configuration-cache :androidApp:assembleDebug
+echo "==> Starting Gradle build (signed release)..."
+./gradlew --no-daemon --no-configuration-cache :androidApp:assembleRelease
 
 echo "==> Build complete!"
 find . -name "*.apk" -path "*/outputs/*" 2>/dev/null

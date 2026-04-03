@@ -27,3 +27,11 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bash setup_and_build.sh"
+
+[userenv]
+
+[userenv.shared]
+KEYSTORE_PATH = "androidApp/keystore/gainznote-release.jks"
+KEY_ALIAS = "GainzNote-key"
+STORE_PASSWORD = "gainznote_store_2024"
+KEY_PASSWORD = "gainznote_store_2024"
