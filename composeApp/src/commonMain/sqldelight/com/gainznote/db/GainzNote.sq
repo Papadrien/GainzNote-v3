@@ -24,6 +24,13 @@ CREATE TABLE training_set (
     notes            TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE app_settings (
+    id                    INTEGER NOT NULL PRIMARY KEY,
+    dark_theme            INTEGER NOT NULL DEFAULT 1,
+    black_bg              INTEGER NOT NULL DEFAULT 0,
+    chrono_notif_enabled  INTEGER NOT NULL DEFAULT 0
+);
+
 -- Workouts
 getAllWorkouts:
 SELECT * FROM workout ORDER BY started_at DESC;
@@ -73,3 +80,12 @@ SELECT * FROM workout WHERE finished_at IS NULL ORDER BY started_at DESC;
 -- Entraînements terminés
 getFinishedWorkouts:
 SELECT * FROM workout WHERE finished_at IS NOT NULL ORDER BY started_at DESC;
+
+
+-- Paramètres applicatifs
+getAppSettings:
+SELECT * FROM app_settings WHERE id = 1;
+
+upsertAppSettings:
+INSERT OR REPLACE INTO app_settings(id, dark_theme, black_bg, chrono_notif_enabled)
+VALUES (1, :dark_theme, :black_bg, :chrono_notif_enabled);
