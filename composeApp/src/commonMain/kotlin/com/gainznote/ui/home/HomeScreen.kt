@@ -3,6 +3,8 @@ package com.gainznote.ui.home
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -29,6 +31,7 @@ fun HomeScreen(
     onHistory: () -> Unit,
     onOpenWorkout: (String) -> Unit,
     onResumeWorkout: (String) -> Unit = {},
+    onDeleteInProgressWorkout: (String) -> Unit = {},
     onExport: () -> Unit = {},
     onImport: () -> Unit = {},
     refreshKey: Int = 0
@@ -72,7 +75,12 @@ fun HomeScreen(
             SectionLabel("En cours", c)
             Spacer(Modifier.height(8.dp))
             inProgressWorkouts.forEach { w ->
-                InProgressCard(w, c) { onResumeWorkout(w.id) }
+                InProgressCard(
+                    workout = w,
+                    c = c,
+                    onClick = { onResumeWorkout(w.id) },
+                    onDelete = { onDeleteInProgressWorkout(w.id) }
+                )
                 Spacer(Modifier.height(8.dp))
             }
             Spacer(Modifier.height(20.dp))
@@ -192,7 +200,12 @@ fun SectionLabel(text: String, c: GainzThemeColors) {
 }
 
 @Composable
-fun InProgressCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
+fun InProgressCard(
+    workout: Workout,
+    c: GainzThemeColors,
+    onClick: () -> Unit,
+    onDelete: () -> Unit = {}
+) {
     Surface(
         onClick = onClick, shape = RoundedCornerShape(12.dp), color = c.accentDim,
         border = BorderStroke(1.5.dp, c.accent), modifier = Modifier.fillMaxWidth()
@@ -220,7 +233,19 @@ fun InProgressCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
                     color = c.textSec, fontSize = 12.sp
                 )
             }
-            Text("▶", color = c.accent, fontSize = 18.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Supprimer l'entraînement en cours",
+                        tint = c.danger
+                    )
+                }
+                Text("▶", color = c.accent, fontSize = 18.sp)
+            }
         }
     }
 }

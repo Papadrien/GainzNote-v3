@@ -2,6 +2,7 @@ package com.gainznote.ui
 
 import androidx.compose.runtime.*
 import com.gainznote.db.DatabaseDriverFactory
+import com.gainznote.model.AppSettings
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.detail.DetailScreen
 import com.gainznote.ui.history.HistoryScreen
@@ -33,7 +34,29 @@ fun App(
     var darkTheme by remember { mutableStateOf(true) }
     var blackBg by remember { mutableStateOf(false) }
     var chronoNotifEnabled by remember { mutableStateOf(false) }
+    var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        val settings = repo.getAppSettings()
+        darkTheme = settings.darkTheme
+        blackBg = settings.blackBg
+        chronoNotifEnabled = settings.chronoNotifEnabled
+        settingsLoaded = true
+    }
+
+    fun persistSettings() {
+        if (!settingsLoaded) return
+        scope.launch {
+            repo.saveAppSettings(
+                AppSettings(
+                    darkTheme = darkTheme,
+                    blackBg = blackBg,
+                    chronoNotifEnabled = chronoNotifEnabled
+                )
+            )
+        }
+    }
 
     // Clé qui s'incrémente après chaque import pour forcer le rechargement de HomeScreen
     var refreshKey by remember { mutableStateOf(0) }
@@ -52,13 +75,29 @@ fun App(
                 darkTheme = darkTheme,
                 blackBg = blackBg,
                 chronoNotifEnabled = chronoNotifEnabled,
-                onToggleTheme = { darkTheme = !darkTheme; if (!darkTheme) blackBg = false },
-                onToggleBlackBg = { blackBg = !blackBg },
-                onToggleChronoNotif = { chronoNotifEnabled = !chronoNotifEnabled },
+                onToggleTheme = {
+                    darkTheme = !darkTheme
+                    if (!darkTheme) blackBg = false
+                    persistSettings()
+                },
+                onToggleBlackBg = {
+                    blackBg = !blackBg
+                    persistSettings()
+                },
+                onToggleChronoNotif = {
+                    chronoNotifEnabled = !chronoNotifEnabled
+                    persistSettings()
+                },
                 onNewWorkout = { navigateTo(Screen.Workout()) },
                 onHistory = { navigateTo(Screen.History) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
                 onResumeWorkout = { id -> navigateTo(Screen.Workout(resumeId = id)) },
+                onDeleteInProgressWorkout = { id ->
+                    scope.launch {
+                        repo.deleteWorkout(id)
+                        refreshKey++
+                    }
+                },
                 onExport = { scope.launch { val json = repo.exportJson(); onExportReady(json) } },
                 onImport = {
                     onImportRequest { json ->

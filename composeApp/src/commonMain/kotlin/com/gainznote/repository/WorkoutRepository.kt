@@ -2,6 +2,7 @@ package com.gainznote.repository
 
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.db.GainzNoteDatabase
+import com.gainznote.model.AppSettings
 import com.gainznote.model.Exercise
 import com.gainznote.model.TrainingSet
 import com.gainznote.model.Workout
@@ -68,6 +69,24 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
 
     suspend fun hasWorkouts(): Boolean = withContext(Dispatchers.IO) {
         q.getAllWorkouts().executeAsList().isNotEmpty()
+    }
+
+    suspend fun getAppSettings(): AppSettings = withContext(Dispatchers.IO) {
+        q.getAppSettings().executeAsOneOrNull()?.let {
+            AppSettings(
+                darkTheme = it.dark_theme != 0L,
+                blackBg = it.black_bg != 0L,
+                chronoNotifEnabled = it.chrono_notif_enabled != 0L
+            )
+        } ?: AppSettings()
+    }
+
+    suspend fun saveAppSettings(settings: AppSettings) = withContext(Dispatchers.IO) {
+        q.upsertAppSettings(
+            dark_theme = if (settings.darkTheme) 1 else 0,
+            black_bg = if (settings.blackBg) 1 else 0,
+            chrono_notif_enabled = if (settings.chronoNotifEnabled) 1 else 0
+        )
     }
 
     // ─── Export JSON ──────────────────────────────────────────────────────────
