@@ -31,6 +31,15 @@ definitions:
 
   # ── Scripts partagés ─────────────────────────────────────────────────────
   scripts:
+    - &remove_v1_registrant
+      name: 🧹 Remove legacy v1 plugin registrant
+      script: |
+        rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+        rm -rf android/app/src/main/java/io/flutter/plugins
+        rm -rf android/app/src/main/java/io/flutter
+        rm -rf android/app/src/main/java/io
+        echo "v1 registrant removed (if it existed)"
+
     - &get_dependencies
       name: 📦 Get Flutter dependencies
       script: flutter pub get
@@ -85,6 +94,7 @@ workflows:
           include: true
 
     scripts:
+      - *remove_v1_registrant
       - *get_dependencies
       - *run_code_gen
       - *analyze
@@ -126,6 +136,7 @@ workflows:
           include: true
 
     scripts:
+      - *remove_v1_registrant
       - *get_dependencies
       - *run_code_gen
       - *analyze
@@ -304,6 +315,7 @@ workflows:
           include: true
 
     scripts:
+      - *remove_v1_registrant
       - *get_dependencies
       - *run_code_gen
       - *analyze
