@@ -21,9 +21,11 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
 
 android {
     namespace "com.animaltimer.app"
@@ -85,13 +87,6 @@ android {
         }
     }
 
-    // ── Flavors (optionnel — pour dev/staging/prod) ──────────────────────────
-    // flavorDimensions "environment"
-    // productFlavors {
-    //     development { dimension "environment"; applicationIdSuffix ".debug" }
-    //     production  { dimension "environment" }
-    // }
-
     lintOptions {
         disable 'InvalidPackage'
     }
@@ -102,7 +97,7 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
     implementation 'androidx.multidex:multidex:2.0.1'
     // flutter_foreground_task
     implementation 'androidx.core:core:1.9.0'
