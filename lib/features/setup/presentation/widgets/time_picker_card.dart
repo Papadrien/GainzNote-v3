@@ -78,40 +78,57 @@ class _ColState extends State<_Col> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: widget.color.withOpacity(0.4), width: 2),
+              border: Border.all(
+                color: widget.color.withOpacity(0.4), width: 2),
             ),
-            child: CupertinoPicker.builder(
-              scrollController: _ctrl,
-              itemExtent: 52,
-              diameterRatio: 1.2,
-              squeeze: 1.0,
-              useMagnifier: true,
-              magnification: 1.15,
-              selectionOverlay: Container(
-                decoration: BoxDecoration(
-                  border: Border.symmetric(horizontal: BorderSide(
-                    color: widget.color.withOpacity(0.2), width: 1.5)),
+            // Block scroll propagation to parent SingleChildScrollView
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (_) => true,
+              child: GestureDetector(
+                // Capture vertical drags so parent doesn't get them
+                onVerticalDragStart: (_) {},
+                onVerticalDragUpdate: (_) {},
+                onVerticalDragEnd: (_) {},
+                behavior: HitTestBehavior.opaque,
+                child: CupertinoPicker.builder(
+                  scrollController: _ctrl,
+                  itemExtent: 52,
+                  diameterRatio: 1.2,
+                  squeeze: 1.0,
+                  useMagnifier: true,
+                  magnification: 1.15,
+                  backgroundColor: Colors.transparent,
+                  selectionOverlay: Container(
+                    decoration: BoxDecoration(
+                      border: Border.symmetric(
+                        horizontal: BorderSide(
+                          color: widget.color.withOpacity(0.25),
+                          width: 1.5)),
+                    ),
+                  ),
+                  onSelectedItemChanged: widget.onChanged,
+                  childCount: widget.max + 1,
+                  itemBuilder: (context, index) {
+                    return Center(child: Text(
+                      '$index',
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: index == widget.value
+                            ? widget.color
+                            : AppColors.pencilFaint,
+                      ),
+                    ));
+                  },
                 ),
               ),
-              onSelectedItemChanged: widget.onChanged,
-              childCount: widget.max + 1,
-              itemBuilder: (context, index) {
-                final sel = index == widget.value;
-                return Center(child: Text(
-                  '$index',
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: sel ? 36 : 22,
-                    fontWeight: FontWeight.w900,
-                    color: sel ? widget.color : AppColors.pencilFaint,
-                  ),
-                ));
-              },
             ),
           ),
           const SizedBox(height: 8),
-          Text(widget.label, style: TextStyle(fontFamily: 'Nunito',
-            fontSize: 13, fontWeight: FontWeight.w700,
+          Text(widget.label, style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 13,
+            fontWeight: FontWeight.w700,
             color: widget.color, letterSpacing: 0.5)),
         ],
       ),
