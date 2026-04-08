@@ -12,6 +12,7 @@ import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/radial_progress.dart';
 import '../widgets/timer_display.dart';
+import 'finish_screen.dart';
 
 class TimerScreen extends ConsumerStatefulWidget {
   const TimerScreen({super.key});
@@ -66,10 +67,15 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
           prev?.status != TimerStatus.finished) {
         HapticFeedback.heavyImpact();
         ref.read(audioServiceProvider).stopAll();
-        ref.read(audioServiceProvider)
-            .playEndSound(animal.endSoundPath, volume: settings.volume);
         notifications.cancelAll();
-        _showFinishDialog();
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const FinishScreen(),
+            transitionsBuilder: (_, anim, __, child) =>
+                FadeTransition(opacity: anim, child: child),
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
       }
     });
 
@@ -213,64 +219,6 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     );
   }
 
-  void _showFinishDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.elasticOut,
-          builder: (_, scale, child) =>
-              Transform.scale(scale: scale, child: child),
-          child: Container(
-            width: 280,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: AppColors.paper,
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.15), blurRadius: 30)
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('\u{1F389}', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 16),
-                Text("C'est fini !",
-                    style: AppTextStyles.buttonLabelDark.copyWith(fontSize: 28)),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  },
-                  child: Container(
-                    width: 120, height: 52,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGreen,
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    child: const Center(
-                      child: Text('OK', style: TextStyle(
-                        fontFamily: 'Nunito', fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      )),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _ControlPillButton extends StatefulWidget {
   final String label;
