@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/animal_display.dart';
-import '../../../../shared/widgets/sketchy_painter.dart';
 import '../../providers/setup_provider.dart';
 
+/// Grand animal centré avec un badge "swap" (horloge + flèche) en bas à droite,
+/// conforme à la maquette.
 class AnimalSelector extends ConsumerWidget {
   const AnimalSelector({super.key});
 
@@ -17,50 +18,55 @@ class AnimalSelector extends ConsumerWidget {
         HapticFeedback.selectionClick();
         ref.read(setupProvider.notifier).nextAnimal();
       },
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            transitionBuilder: (child, anim) => ScaleTransition(
-              scale: anim,
-              child: FadeTransition(opacity: anim, child: child),
-            ),
-            child: SizedBox(
-              key: ValueKey(animal.id),
-              width: 170,
-              height: 170,
-              child: CustomPaint(
-                painter: SketchyCirclePainter(
-                  strokeColor: AppColors.pencilDark,
-                  fillColor: animal.primaryColor.withOpacity(0.35),
-                  strokeWidth: 2.5,
-                  seed: animal.id.hashCode,
+      child: SizedBox(
+        width: 200,
+        height: 200,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Main animal display
+            Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                transitionBuilder: (child, anim) => ScaleTransition(
+                  scale: anim,
+                  child: FadeTransition(opacity: anim, child: child),
                 ),
-                child: Center(
-                  child: AnimalDisplay(
-                    animal: animal,
-                    size: 120,
-                    animate: true,
-                  ),
+                child: AnimalDisplay(
+                  key: ValueKey(animal.id),
+                  animal: animal,
+                  size: 180,
+                  animate: true,
                 ),
               ),
             ),
-          ),
-          // Swap button — petit cercle crayon
-          CustomPaint(
-            painter: SketchyCirclePainter(
-              strokeColor: AppColors.pencilDark,
-              fillColor: animal.secondaryColor.withOpacity(0.5),
-              strokeWidth: 2.0,
-              seed: 999,
+            // Swap badge — bottom right, circular with clock icon
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: animal.secondaryColor.withOpacity(0.85),
+                  border: Border.all(
+                    color: AppColors.pencilDark.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.history, color: AppColors.pencilDark, size: 22),
+              ),
             ),
-            child: const SizedBox(
-              width: 42, height: 42,
-              child: Icon(Icons.sync, color: AppColors.pencilDark, size: 20),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

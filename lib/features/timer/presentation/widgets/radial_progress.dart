@@ -1,26 +1,28 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 
-/// Cercle de progression "dessiné à la main" style coloriage.
-/// Le remplissage "crayon" se vide progressivement.
+/// Barre de progression circulaire — arc épais vert sur fond sombre
+/// avec deux anneaux (temps restant = arc vert, temps écoulé = arc gris).
+/// Conforme à la maquette.
 class RadialProgress extends StatelessWidget {
-  final double progress;
+  final double progress; // 1.0 = full, 0.0 = empty
   final Color primaryColor;
   final Color secondaryColor;
+  final double size;
 
   const RadialProgress({
     super.key,
     required this.progress,
     required this.primaryColor,
     required this.secondaryColor,
+    this.size = 300,
   });
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      size: const Size(300, 300),
-      painter: _SketchyRadialPainter(
+      size: Size(size, size),
+      painter: _CircularProgressPainter(
         progress: progress,
         primaryColor: primaryColor,
         secondaryColor: secondaryColor,
@@ -29,13 +31,12 @@ class RadialProgress extends StatelessWidget {
   }
 }
 
-class _SketchyRadialPainter extends CustomPainter {
+class _CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color primaryColor;
   final Color secondaryColor;
-  final _rng = Random(77);
 
-  _SketchyRadialPainter({
+  _CircularProgressPainter({
     required this.progress,
     required this.primaryColor,
     required this.secondaryColor,
@@ -44,75 +45,87 @@ class _SketchyRadialPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 8;
-    final jitter = 2.5;
+    final radius = size.width / 2 - 16;
+    final strokeW = 18.0;
 
-    // ── Fond : cercle rempli au crayon (couleur pâle) ──
+    // ── Background track (grey) ──
     final bgPaint = Paint()
-      ..color = primaryColor.withOpacity(0.12)
-      ..style = PaintingStyle.fill;
-    // Cercle légèrement irrégulier
-    final bgPath = _wobblyCirclePath(center, radius + 3, jitter * 0.5, 50);
-    canvas.drawPath(bgPath, bgPaint);
-
-    // ── Anneau intérieur pâle ──
-    final innerPaint = Paint()
-      ..color = primaryColor.withOpacity(0.2)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(_wobblyCirclePath(center, radius * 0.75, jitter * 0.4, 40), innerPaint);
-
-    // ── Remplissage crayon de la progression ──
-    if (progress > 0.0) {
-      final fillPaint = Paint()
-        ..color = primaryColor.withOpacity(0.35)
-        ..style = PaintingStyle.fill;
-
-      final sweepAngle = progress * 2 * pi;
-      final fillPath = Path();
-      fillPath.moveTo(center.dx, center.dy);
-      // Arc rempli
-      final startAngle = -pi / 2;
-      fillPath.arcTo(
-        Rect.fromCircle(center: center, radius: radius * 0.92),
-        startAngle,
-        sweepAngle,
-        false,
-      );
-      fillPath.close();
-      canvas.drawPath(fillPath, fillPaint);
-    }
-
-    // ── Contour extérieur "main levée" ──
-    final strokePaint = Paint()
-      ..color = AppColors.pencilDark.withOpacity(0.6)
+      ..color = Colors.white.withOpacity(0.08)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = strokeW
       ..strokeCap = StrokeCap.round;
-    canvas.drawPath(_wobblyCirclePath(center, radius, jitter, 60), strokePaint);
+    canvas.drawCircle(center, radius, bgPaint);
 
-    // ── Contour intérieur plus léger ──
-    final innerStrokePaint = Paint()
-      ..color = AppColors.pencilFaint.withOpacity(0.3)
+    // ── Inner subtle circle ──
+    final innerPaint = Paint()
+      ..color = Colors.white.withOpacity(0.03)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawCircle(center, radius - strokeW / 2 - 8, innerPaint);
+    canvas.drawCircle(center, radius + strokeW / 2 + 8, innerPaint);
+
+    // ── Tick marks around the circle (like a clock) ──
+    final tickPaint = Paint()
+      ..color = Colors.white.withOpacity(0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
-    canvas.drawPath(_wobblyCirclePath(center, radius * 0.72, jitter * 0.6, 45), innerStrokePaint);
-  }
 
-  Path _wobblyCirclePath(Offset center, double radius, double jitter, int steps) {
-    final path = Path();
-    final rng = Random(77); // Seed fixe pour stabilité
-    for (int i = 0; i <= steps; i++) {
-      final angle = 2 * pi * i / steps;
-      final r = radius + (rng.nextDouble() - 0.5) * jitter * 2;
-      final x = center.dx + r * cos(angle);
-      final y = center.dy + r * sin(angle);
-      if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+    for (int i = 0; i < 60; i++) {
+      final angle = 2 * pi * i / 60 - pi / 2;
+      final isLarge = i % 5 == 0;
+      final outerR = radius + strokeW / 2 + 6;
+      final innerR = radius + strokeW / 2 + (isLarge ? -2 : 2);
+      final outer = Offset(
+        center.dx + outerR * cos(angle),
+        center.dy + outerR * sin(angle),
+      );
+      final inner = Offset(
+        center.dx + innerR * cos(angle),
+        center.dy + innerR * sin(angle),
+      );
+      canvas.drawLine(inner, outer, tickPaint
+        ..strokeWidth = isLarge ? 2.0 : 1.0);
     }
-    path.close();
-    return path;
+
+    // ── Progress arc (green, elapsed = colored portion) ──
+    if (progress > 0.001) {
+      final sweepAngle = progress * 2 * pi;
+      final progressPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeW
+        ..strokeCap = StrokeCap.round
+        ..shader = SweepGradient(
+          startAngle: -pi / 2,
+          endAngle: -pi / 2 + sweepAngle,
+          colors: [secondaryColor, primaryColor, secondaryColor],
+          stops: const [0.0, 0.5, 1.0],
+          transform: const GradientRotation(-pi / 2),
+        ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -pi / 2,
+        sweepAngle,
+        false,
+        progressPaint,
+      );
+
+      // ── Glow dot at the end of progress arc ──
+      final endAngle = -pi / 2 + sweepAngle;
+      final dotCenter = Offset(
+        center.dx + radius * cos(endAngle),
+        center.dy + radius * sin(endAngle),
+      );
+      final glowPaint = Paint()
+        ..color = primaryColor.withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawCircle(dotCenter, strokeW / 2 + 4, glowPaint);
+      final dotPaint = Paint()..color = primaryColor;
+      canvas.drawCircle(dotCenter, strokeW / 2 - 2, dotPaint);
+    }
   }
 
   @override
-  bool shouldRepaint(_SketchyRadialPainter old) => old.progress != progress;
+  bool shouldRepaint(_CircularProgressPainter old) => old.progress != progress;
 }

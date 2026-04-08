@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Typographie style enfantin.
-/// Utilise Nunito (arrondie) mais en fallback la police système marche aussi.
-/// Pour un vrai style manuscrit, remplacer par "Patrick Hand", "Gaegu", ou "Coming Soon".
 class AppTextStyles {
   AppTextStyles._();
   static const String _ff = 'Nunito';
 
+  // ── Setup: Time Picker (maquette: gros chiffres colorés) ──
+  static const TextStyle timePickerValue = TextStyle(
+    fontFamily: _ff, fontSize: 44, fontWeight: FontWeight.w900,
+    color: AppColors.pencilDark, height: 1.0,
+  );
+
+  static const TextStyle timePickerUnit = TextStyle(
+    fontFamily: _ff, fontSize: 14, fontWeight: FontWeight.w700,
+    color: AppColors.pencilLight,
+  );
+
+  static const TextStyle timePickerLabel = TextStyle(
+    fontFamily: _ff, fontSize: 11, fontWeight: FontWeight.w600,
+    color: AppColors.pencilFaint, letterSpacing: 1,
+  );
+
+  // Legacy (kept for compat)
   static const TextStyle timePickerLarge = TextStyle(
     fontFamily: _ff, fontSize: 72, fontWeight: FontWeight.w900,
     color: AppColors.pencilDark, height: 1.0,
@@ -18,41 +32,51 @@ class AppTextStyles {
     color: AppColors.pencilFaint, height: 1.0,
   );
 
-  static const TextStyle timePickerUnit = TextStyle(
-    fontFamily: _ff, fontSize: 24, fontWeight: FontWeight.w700,
-    color: AppColors.pencilLight,
-  );
-
+  // ── Timer: Countdown on dark background (vert maquette) ──
   static const TextStyle timerCountdown = TextStyle(
-    fontFamily: _ff, fontSize: 52, fontWeight: FontWeight.w900,
-    color: AppColors.pencilDark, letterSpacing: 2,
+    fontFamily: _ff, fontSize: 46, fontWeight: FontWeight.w900,
+    color: AppColors.accentGreenLight, letterSpacing: 2,
   );
 
   static const TextStyle timerUnit = TextStyle(
     fontFamily: _ff, fontSize: 20, fontWeight: FontWeight.w700,
-    color: AppColors.pencilLight,
+    color: AppColors.accentGreenLight,
   );
 
+  // ── Section titles ──
   static const TextStyle sectionTitle = TextStyle(
-    fontFamily: _ff, fontSize: 20, fontWeight: FontWeight.w900,
-    color: AppColors.pencilLight, letterSpacing: 3,
+    fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w900,
+    color: AppColors.pencilDark, letterSpacing: 1,
   );
 
+  // ── Recents ──
   static const TextStyle recentName = TextStyle(
-    fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w700,
+    fontFamily: _ff, fontSize: 16, fontWeight: FontWeight.w700,
     color: AppColors.pencilDark,
   );
 
   static const TextStyle recentDuration = TextStyle(
-    fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w800,
-    color: AppColors.crayonOrange,
+    fontFamily: _ff, fontSize: 14, fontWeight: FontWeight.w600,
+    color: AppColors.pencilLight,
   );
 
+  // ── Buttons ──
   static const TextStyle buttonLabel = TextStyle(
-    fontFamily: _ff, fontSize: 22, fontWeight: FontWeight.w800,
+    fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w800,
+    color: AppColors.textOnColor,
+  );
+
+  static const TextStyle buttonLabelDark = TextStyle(
+    fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w800,
     color: AppColors.pencilDark,
   );
 
+  static const TextStyle startButtonLabel = TextStyle(
+    fontFamily: _ff, fontSize: 22, fontWeight: FontWeight.w900,
+    color: AppColors.textOnColor, letterSpacing: 1,
+  );
+
+  // ── Settings ──
   static const TextStyle settingItem = TextStyle(
     fontFamily: _ff, fontSize: 18, fontWeight: FontWeight.w600,
     color: AppColors.pencilDark,

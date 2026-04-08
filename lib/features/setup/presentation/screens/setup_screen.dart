@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../timer/presentation/screens/timer_screen.dart';
 import '../../../settings/presentation/screens/settings_sheet.dart';
@@ -30,51 +31,62 @@ class SetupScreen extends ConsumerWidget {
             left: 24, right: 24,
             bottom: bottomPad + 24,
           ),
-          child: Column(children: [
-            const SizedBox(height: 16),
-            // Settings button — petit engrenage style crayon
-            Align(
-              alignment: Alignment.topRight,
-              child: GestureDetector(
-                onTap: () => _showSettings(context),
-                child: Container(
-                  width: 48, height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.pencilDark.withOpacity(0.4),
-                      width: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 8),
+              // Settings gear - top right
+              Align(
+                alignment: Alignment.topRight,
+                child: GestureDetector(
+                  onTap: () => _showSettings(context),
+                  child: Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.paperLight.withOpacity(0.6),
+                      border: Border.all(
+                        color: AppColors.pencilDark.withOpacity(0.2), width: 1.5),
                     ),
-                    color: AppColors.paperLight.withOpacity(0.5),
+                    child: Icon(Icons.settings,
+                      color: AppColors.pencilDark.withOpacity(0.5), size: 22),
                   ),
-                  child: Icon(Icons.settings,
-                    color: AppColors.pencilDark.withOpacity(0.5), size: 24),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const TimePickerCard(),
-            const SizedBox(height: 32),
-            const AnimalSelector(),
-            const SizedBox(height: 32),
-            StartButton(onPressed: () {
-              if (!setup.isValid) { HapticFeedback.heavyImpact(); return; }
-              HapticFeedback.mediumImpact();
-              Navigator.of(context).push(PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const TimerScreen(),
-                transitionsBuilder: (_, anim, __, child) => FadeTransition(
-                  opacity: anim,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                      CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-                    child: child)),
-                transitionDuration: const Duration(milliseconds: 400),
-              ));
-            }),
-            const SizedBox(height: 40),
-            const RecentsSection(),
-            const SizedBox(height: 20),
-          ]),
+              const SizedBox(height: 8),
+
+              // Animal selector — big centered animal with swap badge
+              const Center(child: AnimalSelector()),
+              const SizedBox(height: 28),
+
+              // Recent timers section
+              const RecentsSection(),
+              const SizedBox(height: 24),
+
+              // Time picker — styled like maquette (H / m / S boxes)
+              const TimePickerCard(),
+              const SizedBox(height: 32),
+
+              // Big green "DÉMARRER" pill button
+              StartButton(onPressed: () {
+                if (!setup.isValid) { HapticFeedback.heavyImpact(); return; }
+                HapticFeedback.mediumImpact();
+                ref.read(setupProvider.notifier).saveCurrentAsRecent();
+
+                Navigator.of(context).push(PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const TimerScreen(),
+                  transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                    opacity: anim,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                        CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                      child: child)),
+                  transitionDuration: const Duration(milliseconds: 400),
+                ));
+              }),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

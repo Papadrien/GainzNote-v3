@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/timer_preset.dart';
 import '../../../data/models/animal_model.dart';
 import '../../../data/repositories/animal_repository.dart';
+import '../../../core/services/storage_service.dart';
 
 class SetupState {
   final int hours;
@@ -35,9 +36,23 @@ class SetupState {
 
 class SetupNotifier extends StateNotifier<SetupState> {
   final AnimalRepository _animalRepo;
+  final StorageService _storage;
 
-  SetupNotifier(this._animalRepo)
-      : super(SetupState(selectedAnimal: _animalRepo.getAll().first));
+  SetupNotifier(this._animalRepo, this._storage)
+      : super(SetupState(selectedAnimal: _animalRepo.getAll().first)) {
+    // Charger les recents et le dernier animal au démarrage
+    _loadFromStorage();
+  }
+
+  void _loadFromStorage() {
+    final presets = _storage.getPresets();
+    final lastAnimalId = _storage.getLastAnimalId();
+    final animal = _animalRepo.getById(lastAnimalId);
+    state = state.copyWith(
+      recentPresets: presets,
+      selectedAnimal: animal,
+    );
+  }
 
   void setHours(int h) => state = state.copyWith(hours: h.clamp(0, 23));
   void setMinutes(int m) => state = state.copyWith(minutes: m.clamp(0, 59));
@@ -46,11 +61,15 @@ class SetupNotifier extends StateNotifier<SetupState> {
   void nextAnimal() {
     final animals = _animalRepo.getAll();
     final idx = animals.indexWhere((a) => a.id == state.selectedAnimal.id);
-    state = state.copyWith(selectedAnimal: animals[(idx + 1) % animals.length]);
+    final next = animals[(idx + 1) % animals.length];
+    state = state.copyWith(selectedAnimal: next);
+    _storage.saveLastAnimalId(next.id);
   }
 
   void selectAnimal(String id) {
-    state = state.copyWith(selectedAnimal: _animalRepo.getById(id));
+    final animal = _animalRepo.getById(id);
+    state = state.copyWith(selectedAnimal: animal);
+    _storage.saveLastAnimalId(id);
   }
 
   void loadPreset(TimerPreset preset) {
@@ -63,13 +82,28 @@ class SetupNotifier extends StateNotifier<SetupState> {
     );
   }
 
-  void setRecentPresets(List<TimerPreset> presets) {
-    state = state.copyWith(recentPresets: presets);
+  /// Sauvegarder le timer actuel comme "recent" quand on lance le timer
+  Future<void> saveCurrentAsRecent() async {
+    final count = state.recentPresets.length + 1;
+    final preset = TimerPreset(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: 'Timer $count',
+      duration: state.duration,
+      animalId: state.selectedAnimal.id,
+      createdAt: DateTime.now(),
+    );
+    await _storage.savePreset(preset);
+    // Recharger depuis le storage (pour avoir l'ordre et la limite de 10)
+    final updated = _storage.getPresets();
+    state = state.copyWith(recentPresets: updated);
   }
 }
 
 final animalRepoProvider = Provider((ref) => AnimalRepository());
 
 final setupProvider = StateNotifierProvider<SetupNotifier, SetupState>((ref) {
-  return SetupNotifier(ref.read(animalRepoProvider));
+  return SetupNotifier(
+    ref.read(animalRepoProvider),
+    ref.read(storageServiceProvider),
+  );
 });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
+/// Affichage du temps restant en vert (02m 05s) conforme maquette.
 class TimerDisplay extends StatelessWidget {
   final Duration remaining;
   const TimerDisplay({super.key, required this.remaining});
@@ -17,7 +18,8 @@ class TimerDisplay extends StatelessWidget {
       textBaseline: TextBaseline.alphabetic,
       children: [
         if (hours > 0) ...[
-          Text(hours.toString().padLeft(2, '0'), style: AppTextStyles.timerCountdown),
+          Text(hours.toString().padLeft(2, '0'),
+              style: AppTextStyles.timerCountdown),
           Text('h ', style: AppTextStyles.timerUnit),
         ],
         Text(minutes, style: AppTextStyles.timerCountdown),
