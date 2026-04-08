@@ -27,14 +27,11 @@ class SetupScreen extends ConsumerWidget {
         gradient: setup.selectedAnimal.setupGradient,
         child: SingleChildScrollView(
           padding: EdgeInsets.only(
-            left: 24, right: 24,
-            bottom: bottomPad + 24,
-          ),
+            left: 24, right: 24, bottom: bottomPad + 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-              // Settings gear - top right
               Align(
                 alignment: Alignment.topRight,
                 child: GestureDetector(
@@ -53,25 +50,16 @@ class SetupScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-
-              // Animal selector — big centered animal with swap badge
               const Center(child: AnimalSelector()),
               const SizedBox(height: 28),
-
-              // Recent timers section
-              const RecentsSection(),
-              const SizedBox(height: 24),
-
-              // Time picker — styled like maquette (H / m / S boxes)
+              // Time picker FIRST
               const TimePickerCard(),
-              const SizedBox(height: 32),
-
-              // Big green "DÉMARRER" pill button
+              const SizedBox(height: 24),
+              // Start button
               StartButton(onPressed: () {
                 if (!setup.isValid) { HapticFeedback.heavyImpact(); return; }
                 HapticFeedback.mediumImpact();
                 ref.read(setupProvider.notifier).saveCurrentAsRecent();
-
                 Navigator.of(context).push(PageRouteBuilder(
                   pageBuilder: (_, __, ___) => const TimerScreen(),
                   transitionsBuilder: (_, anim, __, child) => FadeTransition(
@@ -83,6 +71,9 @@ class SetupScreen extends ConsumerWidget {
                   transitionDuration: const Duration(milliseconds: 400),
                 ));
               }),
+              const SizedBox(height: 32),
+              // Recents AFTER
+              const RecentsSection(),
               const SizedBox(height: 20),
             ],
           ),
