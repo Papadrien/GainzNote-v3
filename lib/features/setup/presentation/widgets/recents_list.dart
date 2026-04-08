@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/repositories/animal_repository.dart';
+import '../../../timer/presentation/screens/timer_screen.dart';
 import '../../providers/setup_provider.dart';
 
-/// Section "DERNIERS MINUTEURS" avec cartes colorées (bleu, orange en alternance)
-/// conforme à la maquette.
+/// Section "DERNIERS MINUTEURS" — tap = lance le timer directement.
 class RecentsSection extends ConsumerWidget {
   const RecentsSection({super.key});
 
-  // Couleurs alternées pour les cartes récentes
   static const List<Color> _cardColors = [
     AppColors.recentBlue,
     AppColors.recentOrange,
@@ -40,7 +40,22 @@ class RecentsSection extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: GestureDetector(
-              onTap: () => ref.read(setupProvider.notifier).loadPreset(preset),
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                // Load preset into setup state
+                ref.read(setupProvider.notifier).loadPreset(preset);
+                // Navigate directly to timer screen
+                Navigator.of(context).push(PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const TimerScreen(),
+                  transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                    opacity: anim,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                        CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                      child: child)),
+                  transitionDuration: const Duration(milliseconds: 400),
+                ));
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
@@ -53,7 +68,6 @@ class RecentsSection extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    // Animal thumbnail in circle
                     Container(
                       width: 46,
                       height: 46,
@@ -69,7 +83,6 @@ class RecentsSection extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    // Name + duration
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,8 +93,17 @@ class RecentsSection extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right,
-                      color: AppColors.pencilDark.withOpacity(0.3), size: 22),
+                    // Play icon to indicate it launches timer
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.accentGreen.withOpacity(0.15),
+                      ),
+                      child: const Icon(Icons.play_arrow,
+                        color: AppColors.accentGreen, size: 20),
+                    ),
                   ],
                 ),
               ),

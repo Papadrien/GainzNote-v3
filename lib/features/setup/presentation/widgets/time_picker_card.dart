@@ -4,8 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../providers/setup_provider.dart';
 
-/// Time picker maquette style: 3 cases côte à côte [0h] [2m] [10s]
-/// avec une barre colorée en dessous et labels H / m / S.
+/// Time picker: 3 boîtes [0h] [2m] [10s] avec scroll rapide.
 class TimePickerCard extends ConsumerWidget {
   const TimePickerCard({super.key});
 
@@ -22,56 +21,34 @@ class TimePickerCard extends ConsumerWidget {
           width: 1.5,
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Color bar indicator
-          Container(
-            height: 6,
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(3),
-              gradient: const LinearGradient(
-                colors: [
-                  AppColors.crayonBlue,
-                  AppColors.crayonGreen,
-                  AppColors.crayonYellow,
-                  AppColors.crayonOrange,
-                  AppColors.crayonRed,
-                ],
-              ),
-            ),
+          _TimeBox(
+            value: setup.hours,
+            unit: 'h',
+            label: 'H',
+            color: AppColors.crayonBlue,
+            maxValue: 23,
+            onChanged: ref.read(setupProvider.notifier).setHours,
           ),
-          // Time columns
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _TimeBox(
-                value: setup.hours,
-                unit: 'h',
-                label: 'H',
-                color: AppColors.crayonBlue,
-                maxValue: 23,
-                onChanged: ref.read(setupProvider.notifier).setHours,
-              ),
-              const SizedBox(width: 12),
-              _TimeBox(
-                value: setup.minutes,
-                unit: 'm',
-                label: 'm',
-                color: AppColors.crayonOrange,
-                maxValue: 59,
-                onChanged: ref.read(setupProvider.notifier).setMinutes,
-              ),
-              const SizedBox(width: 12),
-              _TimeBox(
-                value: setup.seconds,
-                unit: 's',
-                label: 'S',
-                color: AppColors.crayonRed,
-                maxValue: 59,
-                onChanged: ref.read(setupProvider.notifier).setSeconds,
-              ),
-            ],
+          const SizedBox(width: 12),
+          _TimeBox(
+            value: setup.minutes,
+            unit: 'm',
+            label: 'm',
+            color: AppColors.crayonOrange,
+            maxValue: 59,
+            onChanged: ref.read(setupProvider.notifier).setMinutes,
+          ),
+          const SizedBox(width: 12),
+          _TimeBox(
+            value: setup.seconds,
+            unit: 's',
+            label: 'S',
+            color: AppColors.crayonRed,
+            maxValue: 59,
+            onChanged: ref.read(setupProvider.notifier).setSeconds,
           ),
         ],
       ),
@@ -79,7 +56,6 @@ class TimePickerCard extends ConsumerWidget {
   }
 }
 
-/// Boîte individuelle avec scroll vertical pour une valeur de temps
 class _TimeBox extends StatefulWidget {
   final int value;
   final String unit;
@@ -127,7 +103,6 @@ class _TimeBoxState extends State<_TimeBox> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Scrollable value box
         Container(
           width: 80,
           height: 80,
@@ -148,10 +123,13 @@ class _TimeBoxState extends State<_TimeBox> {
           ),
           child: ListWheelScrollView.useDelegate(
             controller: _ctrl,
-            itemExtent: 60,
-            perspective: 0.003,
-            diameterRatio: 1.2,
-            physics: const FixedExtentScrollPhysics(),
+            itemExtent: 50,
+            perspective: 0.002,
+            diameterRatio: 1.1,
+            overAndUnderCenterOpacity: 0.3,
+            physics: const BouncingScrollPhysics(
+              decelerationRate: ScrollDecelerationRate.fast,
+            ),
             onSelectedItemChanged: widget.onChanged,
             childDelegate: ListWheelChildBuilderDelegate(
               childCount: widget.maxValue + 1,
@@ -162,7 +140,7 @@ class _TimeBoxState extends State<_TimeBox> {
                     '$index',
                     style: TextStyle(
                       fontFamily: 'Nunito',
-                      fontSize: selected ? 40 : 30,
+                      fontSize: selected ? 40 : 28,
                       fontWeight: FontWeight.w900,
                       color: selected ? widget.color : AppColors.pencilFaint,
                     ),
@@ -173,25 +151,16 @@ class _TimeBoxState extends State<_TimeBox> {
           ),
         ),
         const SizedBox(height: 6),
-        // Unit label with color
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.unit,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: widget.color,
-              ),
-            ),
-          ],
-        ),
         Text(
-          widget.label,
-          style: AppTextStyles.timePickerLabel,
+          widget.unit,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: widget.color,
+          ),
         ),
+        Text(widget.label, style: AppTextStyles.timePickerLabel),
       ],
     );
   }

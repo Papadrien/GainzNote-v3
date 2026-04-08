@@ -78,81 +78,75 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       extendBody: true,
       extendBodyBehindAppBar: true,
       body: GradientBackground(
-        gradient: animal.timerGradient,
-        showTexture: false,
+        gradient: animal.setupGradient,
         child: Column(
           children: [
             const SizedBox(height: 8),
-            // Top row: start button (green) + bell icon
+            // Top row: only mute button on the right
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Green "DÉMARRER" pill (restart)
-                  _TopPillButton(
-                    label: 'DÉMARRER',
-                    icon: Icons.chevron_right,
-                    color: AppColors.accentGreen,
+                  // Sound toggle button
+                  GestureDetector(
                     onTap: () {
-                      // Restart timer with same duration
-                      ref.read(timerServiceProvider.notifier).cancel();
-                      ref.read(audioServiceProvider).stopAll();
-                      final setup2 = ref.read(setupProvider);
-                      ref.read(timerServiceProvider.notifier).start(setup2.duration);
-                      notifications.scheduleTimerEnd(
-                        duration: setup2.duration,
-                        body: "C'est fini ! Le ${animal.name} a terminé 🎉",
-                      );
+                      HapticFeedback.selectionClick();
+                      ref.read(settingsProvider.notifier).toggleTickTock();
                       final audio = ref.read(audioServiceProvider);
-                      audio.playAmbient(animal.ambientAudioPath,
-                          volume: settings.volume * 0.5);
                       if (settings.tickTockSound) {
-                        audio.startTickTock(volume: settings.volume * 0.3);
+                        // Was on, now turning off
+                        audio.stopTickTock();
+                      } else {
+                        // Was off, now turning on
+                        if (ts.status == TimerStatus.running) {
+                          audio.startTickTock(volume: settings.volume * 0.3);
+                        }
                       }
                     },
-                  ),
-                  // Bell icon
-                  Container(
-                    width: 44, height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2), width: 1.5),
-                    ),
-                    child: Icon(
-                      settings.tickTockSound
-                          ? Icons.notifications_active
-                          : Icons.notifications_off,
-                      color: AppColors.textOnDark.withOpacity(0.7), size: 22,
+                    child: Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.paperLight.withOpacity(0.6),
+                        border: Border.all(
+                          color: AppColors.pencilDark.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(
+                        settings.tickTockSound
+                            ? Icons.volume_up_rounded
+                            : Icons.volume_off_rounded,
+                        color: settings.tickTockSound
+                            ? AppColors.pencilDark.withOpacity(0.6)
+                            : AppColors.accentRed.withOpacity(0.7),
+                        size: 22,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             const Spacer(),
-            // Central circle: radial progress + animal + countdown
+            // Central circle
             SizedBox(
               width: circleSize,
               height: circleSize,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Radial progress (green arc on dark bg)
                   RadialProgress(
                     progress: ts.progress,
                     primaryColor: AppColors.accentGreen,
                     secondaryColor: AppColors.accentGreenLight,
                     size: circleSize,
                   ),
-                  // Countdown text (green, above animal)
                   if (settings.showNumbers)
                     Positioned(
                       top: circleSize * 0.18,
                       child: TimerDisplay(remaining: ts.remaining),
                     ),
-                  // Animal (centered / slightly lower)
                   if (settings.showAnimal)
                     Positioned(
                       bottom: circleSize * 0.12,
@@ -166,7 +160,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
               ),
             ),
             const Spacer(),
-            // Bottom: Cancel (red) + Pause (orange) pill buttons
+            // Bottom: Cancel (red) + Pause (orange)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Row(
@@ -251,8 +245,8 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                 const SizedBox(height: 24),
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pop(); // dialog
-                    Navigator.of(context).pop(); // timer screen
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                   },
                   child: Container(
                     width: 120, height: 52,
@@ -278,49 +272,6 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
   }
 }
 
-/// Petit bouton pill vert en haut (DÉMARRER / restart)
-class _TopPillButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TopPillButton({
-    required this.label, required this.icon,
-    required this.color, required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(21),
-          boxShadow: [
-            BoxShadow(color: color.withOpacity(0.3), blurRadius: 8,
-              offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: const TextStyle(
-              fontFamily: 'Nunito', fontSize: 14,
-              fontWeight: FontWeight.w800, color: Colors.white)),
-            const SizedBox(width: 4),
-            Icon(icon, color: Colors.white, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Bouton pill de contrôle (Annuler / Pause) en bas
 class _ControlPillButton extends StatefulWidget {
   final String label;
   final IconData icon;
