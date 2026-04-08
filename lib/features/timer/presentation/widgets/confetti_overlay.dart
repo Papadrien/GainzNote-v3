@@ -18,7 +18,7 @@ class _ConfettiOverlayState extends State<ConfettiOverlay>
     super.initState();
     _pieces = List.generate(80, (_) => _Confetti(_rng));
     _ctrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 6))
+      vsync: this, duration: const Duration(seconds: 8))
       ..forward();
   }
 
@@ -41,7 +41,8 @@ class _ConfettiOverlayState extends State<ConfettiOverlay>
 
 class _Confetti {
   final double x;
-  final double speed;
+  final double startDelay;
+  final double fallSpeed;
   final double size;
   final double drift;
   final double rotSpeed;
@@ -50,7 +51,8 @@ class _Confetti {
 
   _Confetti(Random rng)
       : x = rng.nextDouble(),
-        speed = 0.3 + rng.nextDouble() * 0.7,
+        startDelay = rng.nextDouble() * 0.3,
+        fallSpeed = 0.5 + rng.nextDouble() * 0.5,
         size = 6 + rng.nextDouble() * 10,
         drift = (rng.nextDouble() - 0.5) * 0.15,
         rotSpeed = rng.nextDouble() * 6,
@@ -74,8 +76,10 @@ class _ConfettiPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final c in pieces) {
-      final progress = (t * c.speed).clamp(0.0, 1.0);
+      final adjusted = ((t - c.startDelay) / (1.0 - c.startDelay)).clamp(0.0, 1.0);
+      final progress = adjusted * c.fallSpeed + adjusted * (1.0 - c.fallSpeed);
       final y = -c.size + progress * (size.height + c.size * 2);
+      if (y > size.height + c.size) continue;
       final x = c.x * size.width + sin(t * c.rotSpeed * pi) * c.drift * size.width;
       final paint = Paint()..color = c.color.withOpacity(0.9);
       final rot = t * c.rotSpeed * pi;
