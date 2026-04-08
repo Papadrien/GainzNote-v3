@@ -219,6 +219,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     );
   }
 
+}
 
 class _ControlPillButton extends StatefulWidget {
   final String label;
