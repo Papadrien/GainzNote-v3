@@ -32,18 +32,13 @@ class _AnimalDisplayState extends State<AnimalDisplay>
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
-
     _breathe = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-
     _sway = Tween<double>(begin: -0.02, end: 0.02).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-
-    if (widget.animate) {
-      _ctrl.repeat(reverse: true);
-    }
+    if (widget.animate) _ctrl.repeat(reverse: true);
   }
 
   @override
@@ -79,15 +74,13 @@ class _AnimalDisplayState extends State<AnimalDisplay>
 
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
-        return Transform.scale(
-          scale: _breathe.value,
-          child: Transform.rotate(
-            angle: _sway.value,
-            child: svgWidget,
-          ),
-        );
-      },
+      builder: (_, __) => Transform.scale(
+        scale: _breathe.value,
+        child: Transform.rotate(
+          angle: _sway.value,
+          child: svgWidget,
+        ),
+      ),
     );
   }
 }

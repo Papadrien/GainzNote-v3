@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../providers/setup_provider.dart';
 
-/// Time picker: 3 boîtes [0h] [2m] [10s] avec scroll rapide.
 class TimePickerCard extends ConsumerWidget {
   const TimePickerCard({super.key});
 
@@ -12,72 +10,42 @@ class TimePickerCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final setup = ref.watch(setupProvider);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       decoration: BoxDecoration(
         color: AppColors.paperLight.withOpacity(0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.pencilDark.withOpacity(0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: AppColors.pencilDark.withOpacity(0.15), width: 1.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _TimeBox(
-            value: setup.hours,
-            unit: 'h',
-            label: 'H',
-            color: AppColors.crayonBlue,
-            maxValue: 23,
-            onChanged: ref.read(setupProvider.notifier).setHours,
-          ),
-          const SizedBox(width: 12),
-          _TimeBox(
-            value: setup.minutes,
-            unit: 'm',
-            label: 'm',
-            color: AppColors.crayonOrange,
-            maxValue: 59,
-            onChanged: ref.read(setupProvider.notifier).setMinutes,
-          ),
-          const SizedBox(width: 12),
-          _TimeBox(
-            value: setup.seconds,
-            unit: 's',
-            label: 'S',
-            color: AppColors.crayonRed,
-            maxValue: 59,
-            onChanged: ref.read(setupProvider.notifier).setSeconds,
-          ),
+          _Col(value: setup.hours, label: 'Heures', color: AppColors.crayonBlue,
+            max: 23, onChanged: ref.read(setupProvider.notifier).setHours),
+          const SizedBox(width: 10),
+          _Col(value: setup.minutes, label: 'Minutes', color: AppColors.crayonOrange,
+            max: 59, onChanged: ref.read(setupProvider.notifier).setMinutes),
+          const SizedBox(width: 10),
+          _Col(value: setup.seconds, label: 'Secondes', color: AppColors.crayonRed,
+            max: 59, onChanged: ref.read(setupProvider.notifier).setSeconds),
         ],
       ),
     );
   }
 }
 
-class _TimeBox extends StatefulWidget {
+class _Col extends StatefulWidget {
   final int value;
-  final String unit;
   final String label;
   final Color color;
-  final int maxValue;
+  final int max;
   final ValueChanged<int> onChanged;
-
-  const _TimeBox({
-    required this.value,
-    required this.unit,
-    required this.label,
-    required this.color,
-    required this.maxValue,
-    required this.onChanged,
-  });
-
+  const _Col({required this.value, required this.label, required this.color,
+    required this.max, required this.onChanged});
   @override
-  State<_TimeBox> createState() => _TimeBoxState();
+  State<_Col> createState() => _ColState();
 }
 
-class _TimeBoxState extends State<_TimeBox> {
+class _ColState extends State<_Col> {
   late FixedExtentScrollController _ctrl;
 
   @override
@@ -87,7 +55,7 @@ class _TimeBoxState extends State<_TimeBox> {
   }
 
   @override
-  void didUpdateWidget(_TimeBox old) {
+  void didUpdateWidget(_Col old) {
     super.didUpdateWidget(old);
     if (old.value != widget.value && _ctrl.hasClients) {
       _ctrl.animateToItem(widget.value,
@@ -104,63 +72,49 @@ class _TimeBoxState extends State<_TimeBox> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 90, height: 140,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: widget.color.withOpacity(0.4),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+            border: Border.all(color: widget.color.withOpacity(0.4), width: 2),
+            boxShadow: [BoxShadow(color: widget.color.withOpacity(0.1),
+              blurRadius: 8, offset: const Offset(0, 2))],
+          ),
+          child: ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              colors: [Colors.white.withOpacity(0.0), Colors.white,
+                Colors.white, Colors.white.withOpacity(0.0)],
+              stops: const [0.0, 0.25, 0.75, 1.0],
+            ).createShader(bounds),
+            blendMode: BlendMode.dstIn,
+            child: ListWheelScrollView.useDelegate(
+              controller: _ctrl,
+              itemExtent: 48,
+              perspective: 0.003,
+              diameterRatio: 1.4,
+              physics: const FixedExtentScrollPhysics(),
+              squeeze: 1.0,
+              onSelectedItemChanged: widget.onChanged,
+              childDelegate: ListWheelChildBuilderDelegate(
+                childCount: widget.max + 1,
+                builder: (context, index) {
+                  final sel = index == widget.value;
+                  return Center(child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: TextStyle(fontFamily: 'Nunito',
+                      fontSize: sel ? 38 : 24, fontWeight: FontWeight.w900,
+                      color: sel ? widget.color : AppColors.pencilFaint.withOpacity(0.5)),
+                    child: Text('$index'),
+                  ));
+                },
               ),
-            ],
-          ),
-          child: ListWheelScrollView.useDelegate(
-            controller: _ctrl,
-            itemExtent: 50,
-            perspective: 0.002,
-            diameterRatio: 1.1,
-            overAndUnderCenterOpacity: 0.3,
-            physics: const BouncingScrollPhysics(
-              decelerationRate: ScrollDecelerationRate.fast,
-            ),
-            onSelectedItemChanged: widget.onChanged,
-            childDelegate: ListWheelChildBuilderDelegate(
-              childCount: widget.maxValue + 1,
-              builder: (context, index) {
-                final selected = index == widget.value;
-                return Center(
-                  child: Text(
-                    '$index',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: selected ? 40 : 28,
-                      fontWeight: FontWeight.w900,
-                      color: selected ? widget.color : AppColors.pencilFaint,
-                    ),
-                  ),
-                );
-              },
             ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          widget.unit,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: widget.color,
-          ),
-        ),
-        Text(widget.label, style: AppTextStyles.timePickerLabel),
+        const SizedBox(height: 8),
+        Text(widget.label, style: TextStyle(fontFamily: 'Nunito', fontSize: 13,
+          fontWeight: FontWeight.w700, color: widget.color, letterSpacing: 0.5)),
       ],
     );
   }

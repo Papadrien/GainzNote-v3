@@ -68,7 +68,7 @@ class TimerService extends StateNotifier<TimerState> {
 
   void _startTicker() {
     _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(milliseconds: 16), (_) => _update());
+    _ticker = Timer.periodic(const Duration(milliseconds: 100), (_) => _update());
   }
 
   void _update() {
