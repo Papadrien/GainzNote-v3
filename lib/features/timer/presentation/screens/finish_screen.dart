@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
+import '../../../../shared/widgets/sketchy_button.dart';
 import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/confetti_overlay.dart';
@@ -77,24 +78,17 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                     fontWeight: FontWeight.w900,
                     color: AppColors.pencilDark)),
                   const SizedBox(height: 32),
-                  // OK button
-                  GestureDetector(
-                    onTap: _goHome,
-                    child: Container(
-                      width: 160, height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.accentGreen,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [BoxShadow(
-                          color: AppColors.accentGreen.withOpacity(0.3),
-                          blurRadius: 12, offset: const Offset(0, 4))],
-                      ),
-                      child: const Center(child: Text('Arrêter',
-                        style: TextStyle(fontFamily: 'Nunito', fontSize: 24,
-                          fontWeight: FontWeight.w900, color: Colors.white))),
+                  // Sketchy "Arrêter" button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 80),
+                    child: SketchyButton(
+                      text: 'Arrêter',
+                      color: SketchyButton.green,
+                      onPressed: _goHome,
+                      seed: 30,
+                      height: 56,
                     ),
                   ),
-
                 ],
               ),
             ),
