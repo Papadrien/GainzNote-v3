@@ -1,22 +1,22 @@
 class AppSettings {
   final bool showNumbers;
   final bool showAnimal;
-  final bool tickTockSound;
+  final bool soundEnabled;
   final double volume;
 
   const AppSettings({
     this.showNumbers = true,
     this.showAnimal = true,
-    this.tickTockSound = true,
+    this.soundEnabled = true,
     this.volume = 0.7,
   });
 
   AppSettings copyWith({bool? showNumbers, bool? showAnimal,
-      bool? tickTockSound, double? volume}) {
+      bool? soundEnabled, double? volume}) {
     return AppSettings(
       showNumbers: showNumbers ?? this.showNumbers,
       showAnimal: showAnimal ?? this.showAnimal,
-      tickTockSound: tickTockSound ?? this.tickTockSound,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
       volume: volume ?? this.volume,
     );
   }
@@ -24,14 +24,15 @@ class AppSettings {
   Map<String, dynamic> toJson() => {
     'show_numbers': showNumbers,
     'show_animal': showAnimal,
-    'tick_tock_sound': tickTockSound,
+    'sound_enabled': soundEnabled,
     'volume': volume,
   };
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
     showNumbers: json['show_numbers'] ?? true,
     showAnimal: json['show_animal'] ?? true,
-    tickTockSound: json['tick_tock_sound'] ?? true,
+    // Backward compat: accept old key 'tick_tock_sound' too
+    soundEnabled: json['sound_enabled'] ?? json['tick_tock_sound'] ?? true,
     volume: (json['volume'] ?? 0.7).toDouble(),
   );
 }

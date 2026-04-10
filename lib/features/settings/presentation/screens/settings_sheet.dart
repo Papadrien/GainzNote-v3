@@ -71,9 +71,9 @@ class SettingsSheet extends ConsumerWidget {
                 onChanged: (_) => ref.read(settingsProvider.notifier).toggleShowAnimal(),
               ),
               _Toggle(
-                label: 'Son tic-tac',
-                value: settings.tickTockSound,
-                onChanged: (_) => ref.read(settingsProvider.notifier).toggleTickTock(),
+                label: 'Son',
+                value: settings.soundEnabled,
+                onChanged: (_) => ref.read(settingsProvider.notifier).toggleSound(),
               ),
             ],
           ),

@@ -20,8 +20,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     _storage.saveSettings(state);
   }
 
-  void toggleTickTock() {
-    state = state.copyWith(tickTockSound: !state.tickTockSound);
+  void toggleSound() {
+    state = state.copyWith(soundEnabled: !state.soundEnabled);
     _storage.saveSettings(state);
   }
 
