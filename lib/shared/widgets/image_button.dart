@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Bouton avec fond PNG Procreate (forme "pull" dessinée à la main).
-/// Le PNG est étiré comme fond, le texte est superposé au centre.
+/// Le PNG est affiché tel quel comme fond coloré.
+/// Un contour noir en forme de pill est dessiné par-dessus.
 class ImageButton extends StatefulWidget {
   /// Chemins vers les 3 backgrounds de boutons
   static const String greenBg  = 'assets/images/buttons/btn_green.png';
@@ -64,6 +65,8 @@ class _ImageButtonState extends State<ImageButton>
 
   @override
   Widget build(BuildContext context) {
+    final pillRadius = widget.height / 2;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -76,14 +79,29 @@ class _ImageButtonState extends State<ImageButton>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // PNG background stretched to fill
+              // Layer 1: PNG background (untouched, stretched to fill)
               Positioned.fill(
-                child: Image.asset(
-                  widget.backgroundAsset,
-                  fit: BoxFit.fill,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(pillRadius),
+                  child: Image.asset(
+                    widget.backgroundAsset,
+                    fit: BoxFit.fill,
+                  ),
                 ),
               ),
-              // Text + optional icon overlay
+              // Layer 2: Black pill outline on top
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(pillRadius),
+                    border: Border.all(
+                      color: const Color(0xFF2B2B2B),
+                      width: 3.0,
+                    ),
+                  ),
+                ),
+              ),
+              // Layer 3: Text + optional icon
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
