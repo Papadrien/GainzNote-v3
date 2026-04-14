@@ -40,7 +40,7 @@ class AnimalSelector extends ConsumerWidget {
                 ),
               ),
             ),
-            // Swap badge — bottom right, circular with clock icon
+            // Swap badge — bottom right, circular with clock icon + black outline
             Positioned(
               right: 0,
               bottom: 0,
@@ -51,8 +51,8 @@ class AnimalSelector extends ConsumerWidget {
                   shape: BoxShape.circle,
                   color: animal.secondaryColor.withOpacity(0.85),
                   border: Border.all(
-                    color: AppColors.pencilDark.withOpacity(0.3),
-                    width: 2,
+                    color: AppColors.pencilDark,
+                    width: 2.5,
                   ),
                   boxShadow: [
                     BoxShadow(

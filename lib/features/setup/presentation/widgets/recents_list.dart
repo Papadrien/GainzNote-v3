@@ -62,18 +62,23 @@ class RecentsSection extends ConsumerWidget {
                   color: cardColor.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.pencilDark.withOpacity(0.12),
-                    width: 1.5,
+                    color: AppColors.pencilDark,
+                    width: 2.5,
                   ),
                 ),
                 child: Row(
                   children: [
+                    // Animal icon circle with black outline
                     Container(
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white.withOpacity(0.6),
+                        border: Border.all(
+                          color: AppColors.pencilDark,
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: animal.isSvg
@@ -98,13 +103,17 @@ class RecentsSection extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    // Play icon to indicate it launches timer
+                    // Play icon with black outline
                     Container(
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.accentGreen.withOpacity(0.15),
+                        border: Border.all(
+                          color: AppColors.pencilDark,
+                          width: 2,
+                        ),
                       ),
                       child: const Icon(Icons.play_arrow,
                         color: AppColors.accentGreen, size: 20),

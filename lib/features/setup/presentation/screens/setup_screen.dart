@@ -32,22 +32,38 @@ class SetupScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.topRight,
-                child: GestureDetector(
-                  onTap: () => _showSettings(context),
-                  child: Container(
-                    width: 44, height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.paperLight.withOpacity(0.6),
-                      border: Border.all(
-                        color: AppColors.pencilDark.withOpacity(0.2), width: 1.5),
+              // Top row: title + settings gear
+              Row(
+                children: [
+                  // App title with black outline style
+                  Expanded(
+                    child: Text(
+                      'AnimalTimer',
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.pencilDark,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                    child: Icon(Icons.settings,
-                      color: AppColors.pencilDark.withOpacity(0.5), size: 22),
                   ),
-                ),
+                  // Settings gear with black outline
+                  GestureDetector(
+                    onTap: () => _showSettings(context),
+                    child: Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.paperLight.withOpacity(0.6),
+                        border: Border.all(
+                          color: AppColors.pencilDark, width: 2.5),
+                      ),
+                      child: const Icon(Icons.settings,
+                        color: AppColors.pencilDark, size: 22),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               const Center(child: AnimalSelector()),

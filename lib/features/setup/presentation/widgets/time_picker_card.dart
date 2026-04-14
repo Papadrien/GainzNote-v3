@@ -15,7 +15,7 @@ class TimePickerCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.paperLight.withOpacity(0.8),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.pencilDark.withOpacity(0.15), width: 1.5),
+        border: Border.all(color: AppColors.pencilDark, width: 2.5),
       ),
       child: Row(
         children: [
@@ -58,8 +58,6 @@ class _ColState extends State<_Col> {
   @override
   void didUpdateWidget(_Col old) {
     super.didUpdateWidget(old);
-    // Only programmatically jump if user is NOT actively scrolling
-    // (e.g. when loading a preset from recents)
     if (!_userScrolling && old.value != widget.value && _ctrl.hasClients) {
       _ctrl.jumpToItem(widget.value);
     }
@@ -80,7 +78,7 @@ class _ColState extends State<_Col> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: widget.color.withOpacity(0.4), width: 2),
+                color: AppColors.pencilDark, width: 2),
             ),
             child: NotificationListener<ScrollNotification>(
               onNotification: (notif) {
@@ -89,7 +87,6 @@ class _ColState extends State<_Col> {
                 } else if (notif is ScrollEndNotification) {
                   _userScrolling = false;
                 }
-                // Return true to stop propagation to parent
                 return true;
               },
               child: CupertinoPicker.builder(
