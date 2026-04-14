@@ -5,7 +5,6 @@ class AnimalModel {
   final String name;
   final String emoji;
   final String imageAsset;
-  final bool isSvg;
   final String ambientAudioPath;
   final String endSoundPath;
   final LinearGradient setupGradient;
@@ -18,7 +17,6 @@ class AnimalModel {
     required this.name,
     required this.emoji,
     required this.imageAsset,
-    required this.isSvg,
     required this.ambientAudioPath,
     required this.endSoundPath,
     required this.setupGradient,
@@ -26,7 +24,4 @@ class AnimalModel {
     required this.primaryColor,
     required this.secondaryColor,
   });
-
-  /// Backward compat alias
-  String get svgAsset => imageAsset;
 }

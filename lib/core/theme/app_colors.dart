@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Palette AnimalTimer — Design maquette V2
-/// Setup: fond crème chaud avec cartes colorées
-/// Timer: fond sombre charbon avec accents verts vifs
+/// Setup: fond uni couleur animale pâle
+/// Timer: fond uni couleur animale (cohérent)
 class AppColors {
   AppColors._();
 
@@ -47,10 +47,16 @@ class AppColors {
   static const Color textOnDark    = Color(0xFFEEEEEE);
 
   // ── Per-animal colors ──
-  static const Color duckPrimary   = Color(0xFFFFD43B);
-  static const Color duckSecondary = Color(0xFFFF922B);
   static const Color dogPrimary    = Color(0xFF74C0FC);
   static const Color dogSecondary  = Color(0xFFB197FC);
+  static const Color catPrimary    = Color(0xFFFFD4A3);  // orange pâle (pelage chat)
+  static const Color catSecondary  = Color(0xFFF5A623);  // orange chaud
+  static const Color crocodilePrimary  = Color(0xFFB5CC7A);  // vert olive clair
+  static const Color crocodileSecondary = Color(0xFF7A9E3A);  // vert olive foncé
+  static const Color ponyPrimary    = Color(0xFFE8C88A);  // beige doré
+  static const Color ponySecondary  = Color(0xFF8B5E3C);  // brun chocolat
+  static const Color chickenPrimary = Color(0xFFE57373);  // rouge doux
+  static const Color chickenSecondary = Color(0xFFD32F2F);  // rouge vif
 
   // ── Recents card colors ──
   static const Color recentBlue    = Color(0xFFBBDEFB);

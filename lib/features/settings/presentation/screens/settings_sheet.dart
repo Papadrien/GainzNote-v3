@@ -21,7 +21,7 @@ class SettingsSheet extends ConsumerWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -35,7 +35,7 @@ class SettingsSheet extends ConsumerWidget {
               Center(child: Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.pencilFaint.withOpacity(0.4),
+                  color: AppColors.pencilFaint.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2)),
               )),
               const SizedBox(height: 20),
@@ -53,7 +53,7 @@ class SettingsSheet extends ConsumerWidget {
               // Separator
               Container(
                 height: 1,
-                color: AppColors.pencilFaint.withOpacity(0.2),
+                color: AppColors.pencilFaint.withValues(alpha: 0.2),
               ),
               const SizedBox(height: 20),
 
@@ -101,7 +101,7 @@ class _NavItem extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: AppTextStyles.settingItem)),
             Icon(Icons.chevron_right,
-              color: AppColors.pencilFaint.withOpacity(0.5), size: 20),
+              color: AppColors.pencilFaint.withValues(alpha: 0.5), size: 20),
           ],
         ),
       ),
@@ -125,9 +125,9 @@ class _Toggle extends StatelessWidget {
           Switch(
             value: value, onChanged: onChanged,
             activeColor: AppColors.toggleActive,
-            activeTrackColor: AppColors.toggleActive.withOpacity(0.3),
+            activeTrackColor: AppColors.toggleActive.withValues(alpha: 0.3),
             inactiveThumbColor: AppColors.pencilFaint,
-            inactiveTrackColor: AppColors.pencilFaint.withOpacity(0.2),
+            inactiveTrackColor: AppColors.pencilFaint.withValues(alpha: 0.2),
           ),
         ],
       ),

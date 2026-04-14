@@ -55,7 +55,7 @@ class SetupScreen extends ConsumerWidget {
                       width: 44, height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.paperLight.withOpacity(0.6),
+                        color: AppColors.paperLight.withValues(alpha: 0.6),
                         border: Border.all(
                           color: AppColors.pencilDark, width: 2.5),
                       ),

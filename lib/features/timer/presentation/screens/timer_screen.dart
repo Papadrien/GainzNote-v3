@@ -119,9 +119,9 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                       width: 44, height: 44,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.paperLight.withOpacity(0.6),
+                        color: AppColors.paperLight.withValues(alpha: 0.6),
                         border: Border.all(
-                          color: AppColors.pencilDark.withOpacity(0.2),
+                          color: AppColors.pencilDark.withValues(alpha: 0.2),
                           width: 1.5,
                         ),
                       ),
@@ -130,8 +130,8 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                             ? Icons.volume_up_rounded
                             : Icons.volume_off_rounded,
                         color: settings.soundEnabled
-                            ? AppColors.pencilDark.withOpacity(0.6)
-                            : AppColors.accentRed.withOpacity(0.7),
+                            ? AppColors.pencilDark.withValues(alpha: 0.6)
+                            : AppColors.accentRed.withValues(alpha: 0.7),
                         size: 22,
                       ),
                     ),

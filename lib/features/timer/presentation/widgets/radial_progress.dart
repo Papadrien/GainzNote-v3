@@ -50,7 +50,7 @@ class _CircularProgressPainter extends CustomPainter {
 
     // ── Background track (grey) ──
     final bgPaint = Paint()
-      ..color = Colors.white.withOpacity(0.08)
+      ..color = Colors.white.withValues(alpha: 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeW
       ..strokeCap = StrokeCap.round;
@@ -58,7 +58,7 @@ class _CircularProgressPainter extends CustomPainter {
 
     // ── Inner subtle circle ──
     final innerPaint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawCircle(center, radius - strokeW / 2 - 8, innerPaint);
@@ -66,7 +66,7 @@ class _CircularProgressPainter extends CustomPainter {
 
     // ── Tick marks around the circle (like a clock) ──
     final tickPaint = Paint()
-      ..color = Colors.white.withOpacity(0.12)
+      ..color = Colors.white.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
@@ -118,7 +118,7 @@ class _CircularProgressPainter extends CustomPainter {
         center.dy + radius * sin(endAngle),
       );
       final glowPaint = Paint()
-        ..color = primaryColor.withOpacity(0.4)
+        ..color = primaryColor.withValues(alpha: 0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
       canvas.drawCircle(dotCenter, strokeW / 2 + 4, glowPaint);
       final dotPaint = Paint()..color = primaryColor;

@@ -96,7 +96,7 @@ class _ConfettiPainter extends CustomPainter {
       final sway2 = sin(local * c.wobbleFreq * pi * 2) * c.wobbleAmp;
       final x = (c.x + sway1 + sway2) * size.width;
 
-      final paint = Paint()..color = c.color.withOpacity(0.9);
+      final paint = Paint()..color = c.color.withValues(alpha: 0.9);
       final rot = t * c.rotSpeed * pi;
 
       canvas.save();

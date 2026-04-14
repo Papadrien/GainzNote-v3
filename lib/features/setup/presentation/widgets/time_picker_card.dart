@@ -13,7 +13,7 @@ class TimePickerCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.paperLight.withOpacity(0.8),
+        color: AppColors.paperLight.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.pencilDark, width: 2.5),
       ),
@@ -101,7 +101,7 @@ class _ColState extends State<_Col> {
                   decoration: BoxDecoration(
                     border: Border.symmetric(
                       horizontal: BorderSide(
-                        color: widget.color.withOpacity(0.25),
+                        color: widget.color.withValues(alpha: 0.25),
                         width: 1.5)),
                   ),
                 ),

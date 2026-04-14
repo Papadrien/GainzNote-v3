@@ -4,30 +4,70 @@ class AppGradients {
   AppGradients._();
 
   // ── Setup: fond uni couleur animale pâle ──
-  static const LinearGradient duckSetup = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFF3D6), Color(0xFFFFEDBF), Color(0xFFFFE8A8)],
-    stops: [0.0, 0.5, 1.0],
-  );
   static const LinearGradient dogSetup = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFFDCEEFF), Color(0xFFCDE5FF), Color(0xFFBEDCFF)],
     stops: [0.0, 0.5, 1.0],
   );
-
-  // ── Timer: même fond couleur animale (cohérent) ──
-  static const LinearGradient duckTimer = LinearGradient(
+  static const LinearGradient catSetup = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFF3D6), Color(0xFFFFEDBF), Color(0xFFFFE8A8)],
+    colors: [Color(0xFFFFF0E0), Color(0xFFFFE6CC), Color(0xFFFFDDB8)],
     stops: [0.0, 0.5, 1.0],
   );
+
+  static const LinearGradient crocodileSetup = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFEDF5D6), Color(0xFFE0EDC2), Color(0xFFD3E5AE)],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient ponySetup = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFF3E0), Color(0xFFFFEBCC), Color(0xFFFFE0B2)],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient chickenSetup = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A)],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  // ── Timer: même fond couleur animale (cohérent) ──
+
   static const LinearGradient dogTimer = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFFDCEEFF), Color(0xFFCDE5FF), Color(0xFFBEDCFF)],
+    stops: [0.0, 0.5, 1.0],
+  );
+  static const LinearGradient catTimer = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFF0E0), Color(0xFFFFE6CC), Color(0xFFFFDDB8)],
+    stops: [0.0, 0.5, 1.0],
+  );
+  static const LinearGradient crocodileTimer = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFEDF5D6), Color(0xFFE0EDC2), Color(0xFFD3E5AE)],
+    stops: [0.0, 0.5, 1.0],
+  );
+  static const LinearGradient ponyTimer = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFF3E0), Color(0xFFFFEBCC), Color(0xFFFFE0B2)],
+    stops: [0.0, 0.5, 1.0],
+  );
+  static const LinearGradient chickenTimer = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A)],
     stops: [0.0, 0.5, 1.0],
   );
 }

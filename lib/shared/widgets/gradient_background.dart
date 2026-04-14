@@ -37,7 +37,7 @@ class _PaperTexturePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rng = Random(123);
     final paint = Paint()
-      ..color = AppColors.pencilFaint.withOpacity(0.05)
+      ..color = AppColors.pencilFaint.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
     for (int i = 0; i < 200; i++) {
       final x = rng.nextDouble() * size.width;

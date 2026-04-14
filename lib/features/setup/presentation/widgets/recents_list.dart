@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../data/repositories/animal_repository.dart';
@@ -42,9 +41,7 @@ class RecentsSection extends ConsumerWidget {
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.mediumImpact();
-                // Load preset into setup state
                 ref.read(setupProvider.notifier).loadPreset(preset);
-                // Navigate directly to timer screen
                 Navigator.of(context).push(PageRouteBuilder(
                   pageBuilder: (_, __, ___) => const TimerScreen(),
                   transitionsBuilder: (_, anim, __, child) => FadeTransition(
@@ -59,7 +56,7 @@ class RecentsSection extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: cardColor.withOpacity(0.7),
+                  color: cardColor.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: AppColors.pencilDark,
@@ -74,22 +71,17 @@ class RecentsSection extends ConsumerWidget {
                       height: 46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         border: Border.all(
                           color: AppColors.pencilDark,
                           width: 2,
                         ),
                       ),
                       child: Center(
-                        child: animal.isSvg
-                            ? SvgPicture.asset(
-                                animal.imageAsset, width: 32, height: 32,
-                                fit: BoxFit.contain,
-                              )
-                            : Image.asset(
-                                animal.imageAsset, width: 32, height: 32,
-                                fit: BoxFit.contain,
-                              ),
+                        child: Image.asset(
+                          animal.imageAsset, width: 32, height: 32,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -109,7 +101,7 @@ class RecentsSection extends ConsumerWidget {
                       height: 34,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.accentGreen.withOpacity(0.15),
+                        color: AppColors.accentGreen.withValues(alpha: 0.15),
                         border: Border.all(
                           color: AppColors.pencilDark,
                           width: 2,

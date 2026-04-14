@@ -24,7 +24,7 @@ class SketchyCard extends StatelessWidget {
     return CustomPaint(
       painter: SketchyRectPainter(
         strokeColor: AppColors.pencilDark,
-        fillColor: fillColor ?? AppColors.paperLight.withOpacity(0.7),
+        fillColor: fillColor ?? AppColors.paperLight.withValues(alpha: 0.7),
         strokeWidth: 2.5,
         radius: radius,
         seed: seed,
