@@ -35,7 +35,7 @@ class StorageService {
     await _prefs.setString(_settingsKey, jsonEncode(settings.toJson()));
   }
 
-  String getLastAnimalId() => _prefs.getString(_lastAnimalKey) ?? 'duck';
+  String getLastAnimalId() => _prefs.getString(_lastAnimalKey) ?? 'dog';
   Future<void> saveLastAnimalId(String id) async {
     await _prefs.setString(_lastAnimalKey, id);
   }

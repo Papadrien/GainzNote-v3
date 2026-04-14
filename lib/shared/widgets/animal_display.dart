@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../data/models/animal_model.dart';
 
-/// Displays an animal SVG with a gentle breathing + sway animation.
+/// Displays an animal image (SVG or PNG) with a gentle breathing + sway animation.
 class AnimalDisplay extends StatefulWidget {
   final AnimalModel animal;
   final double size;
@@ -57,20 +57,37 @@ class _AnimalDisplayState extends State<AnimalDisplay>
     super.dispose();
   }
 
+  Widget _buildImage() {
+    if (widget.animal.isSvg) {
+      return SvgPicture.asset(
+        widget.animal.imageAsset,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => Center(
+          child: Text(widget.animal.emoji,
+              style: TextStyle(fontSize: widget.size * 0.4)),
+        ),
+      );
+    } else {
+      return Image.asset(
+        widget.animal.imageAsset,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Center(
+          child: Text(widget.animal.emoji,
+              style: TextStyle(fontSize: widget.size * 0.4)),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final svgWidget = SvgPicture.asset(
-      widget.animal.svgAsset,
-      width: widget.size,
-      height: widget.size,
-      fit: BoxFit.contain,
-      placeholderBuilder: (_) => Center(
-        child: Text(widget.animal.emoji,
-            style: TextStyle(fontSize: widget.size * 0.4)),
-      ),
-    );
+    final imageWidget = _buildImage();
 
-    if (!widget.animate) return svgWidget;
+    if (!widget.animate) return imageWidget;
 
     return AnimatedBuilder(
       animation: _ctrl,
@@ -78,7 +95,7 @@ class _AnimalDisplayState extends State<AnimalDisplay>
         scale: _breathe.value,
         child: Transform.rotate(
           angle: _sway.value,
-          child: svgWidget,
+          child: imageWidget,
         ),
       ),
     );

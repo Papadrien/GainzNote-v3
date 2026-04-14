@@ -76,10 +76,15 @@ class RecentsSection extends ConsumerWidget {
                         color: Colors.white.withOpacity(0.6),
                       ),
                       child: Center(
-                        child: SvgPicture.asset(
-                          animal.svgAsset, width: 32, height: 32,
-                          fit: BoxFit.contain,
-                        ),
+                        child: animal.isSvg
+                            ? SvgPicture.asset(
+                                animal.imageAsset, width: 32, height: 32,
+                                fit: BoxFit.contain,
+                              )
+                            : Image.asset(
+                                animal.imageAsset, width: 32, height: 32,
+                                fit: BoxFit.contain,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 14),

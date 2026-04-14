@@ -13,8 +13,8 @@ class SetupState {
 
   const SetupState({
     this.hours = 0,
-    this.minutes = 2,
-    this.seconds = 10,
+    this.minutes = 3,
+    this.seconds = 0,
     required this.selectedAnimal,
     this.recentPresets = const [],
   });
