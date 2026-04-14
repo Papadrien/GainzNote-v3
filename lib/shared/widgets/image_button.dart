@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Bouton avec fond PNG Procreate (forme "pull" dessinée à la main).
-/// Le PNG est affiché tel quel comme fond coloré.
-/// Un contour noir en forme de pill est dessiné par-dessus.
+/// Le PNG est affiché comme fond, clippé en pill, avec un contour noir
+/// en forme de pill par-dessus et le texte superposé au centre.
 class ImageButton extends StatefulWidget {
   /// Chemins vers les 3 backgrounds de boutons
   static const String greenBg  = 'assets/images/buttons/btn_green.png';
@@ -16,6 +16,7 @@ class ImageButton extends StatefulWidget {
   final IconData? icon;
   final double height;
   final double? width;
+  final double borderWidth;
 
   const ImageButton({
     super.key,
@@ -25,6 +26,7 @@ class ImageButton extends StatefulWidget {
     this.icon,
     this.height = 64,
     this.width,
+    this.borderWidth = 3.0,
   });
 
   @override
@@ -79,7 +81,7 @@ class _ImageButtonState extends State<ImageButton>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Layer 1: PNG background (untouched, stretched to fill)
+              // Layer 1: PNG background, clipped into pill shape, stretched to fill
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(pillRadius),
@@ -89,14 +91,14 @@ class _ImageButtonState extends State<ImageButton>
                   ),
                 ),
               ),
-              // Layer 2: Black pill outline on top
+              // Layer 2: Black pill outline drawn on top
               Positioned.fill(
-                child: Container(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(pillRadius),
                     border: Border.all(
                       color: const Color(0xFF2B2B2B),
-                      width: 3.0,
+                      width: widget.borderWidth,
                     ),
                   ),
                 ),
