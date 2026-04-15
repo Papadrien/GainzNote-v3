@@ -8,6 +8,7 @@ class StorageService {
   static const _presetsKey = 'timer_presets';
   static const _settingsKey = 'app_settings';
   static const _lastAnimalKey = 'last_animal_id';
+  static const _unlockedAnimalsKey = 'unlocked_animal_ids';
   final SharedPreferences _prefs;
   StorageService(this._prefs);
 
@@ -38,6 +39,16 @@ class StorageService {
   String getLastAnimalId() => _prefs.getString(_lastAnimalKey) ?? 'dog';
   Future<void> saveLastAnimalId(String id) async {
     await _prefs.setString(_lastAnimalKey, id);
+  }
+
+  // ── Gamification : animaux débloqués ──
+
+  List<String> getUnlockedAnimalIds() {
+    return _prefs.getStringList(_unlockedAnimalsKey) ?? [];
+  }
+
+  Future<void> saveUnlockedAnimalIds(List<String> ids) async {
+    await _prefs.setStringList(_unlockedAnimalsKey, ids);
   }
 }
 

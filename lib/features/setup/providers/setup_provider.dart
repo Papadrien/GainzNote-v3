@@ -3,6 +3,7 @@ import '../../../data/models/timer_preset.dart';
 import '../../../data/models/animal_model.dart';
 import '../../../data/repositories/animal_repository.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/services/gamification_service.dart';
 
 class SetupState {
   final int hours;
@@ -98,8 +99,6 @@ class SetupNotifier extends StateNotifier<SetupState> {
     state = state.copyWith(recentPresets: updated);
   }
 }
-
-final animalRepoProvider = Provider((ref) => AnimalRepository());
 
 final setupProvider = StateNotifierProvider<SetupNotifier, SetupState>((ref) {
   return SetupNotifier(

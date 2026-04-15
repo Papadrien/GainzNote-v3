@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/audio_service.dart';
+import '../../../../core/services/gamification_service.dart';
+import '../../../../data/repositories/animal_repository.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
 import '../../../../shared/widgets/image_button.dart';
 import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/confetti_overlay.dart';
+import '../widgets/unlock_dialog.dart';
 
 class FinishScreen extends ConsumerStatefulWidget {
   const FinishScreen({super.key});
@@ -41,7 +45,37 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
   @override
   void dispose() { _bounceCtrl.dispose(); super.dispose(); }
 
-  void _goHome() {
+  /// Tente de débloquer un animal, affiche la pop-up si succès,
+  /// puis navigue vers l'accueil.
+  Future<void> _goHome() async {
+    final gamification = ref.read(gamificationServiceProvider);
+    final animalRepo = ref.read(animalRepoProvider);
+
+    // Tenter le déblocage
+    final unlockedId = await gamification.tryUnlockAnimal();
+
+    if (unlockedId != null && mounted) {
+      // Un animal a été débloqué ! Afficher la pop-up
+      HapticFeedback.heavyImpact();
+      final unlockedAnimal = animalRepo.getById(unlockedId);
+
+      await showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.5),
+        transitionDuration: const Duration(milliseconds: 100),
+        pageBuilder: (dialogContext, _, __) {
+          return UnlockDialog(
+            animal: unlockedAnimal,
+            onDismiss: () => Navigator.of(dialogContext).pop(),
+          );
+        },
+      );
+    }
+
+    if (!mounted) return;
+
+    // Retour à l'accueil
     ref.read(audioServiceProvider).stopAll();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -81,7 +115,7 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 60),
                     child: ImageButton(
-                      text: 'Arrêter',
+                      text: 'Arr\u00eater',
                       backgroundAsset: ImageButton.greenBg,
                       onPressed: _goHome,
                       height: 56,
