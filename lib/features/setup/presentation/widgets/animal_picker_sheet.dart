@@ -57,14 +57,17 @@ class AnimalPickerSheet extends ConsumerWidget {
           // Subtitle — shown only if there are locked animals
           if (!allUnlocked) ...[
             const SizedBox(height: 6),
-            Text(
-              'Utilise le minuteur pour débloquer de nouveaux amis !',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.pencilDark.withValues(alpha: 0.45),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Utilise le minuteur pour débloquer de nouveaux amis !',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.pencilDark.withValues(alpha: 0.45),
+                ),
               ),
             ),
           ],
@@ -93,26 +96,7 @@ class AnimalPickerSheet extends ConsumerWidget {
                   isLocked: isLocked,
                   onTap: () {
                     if (isLocked) {
-                      // Show toast for locked animal
                       HapticFeedback.heavyImpact();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Utilise le minuteur pour débloquer ${animal.name} !',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          backgroundColor: AppColors.pencilDark.withValues(alpha: 0.85),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
                       return;
                     }
                     HapticFeedback.selectionClick();

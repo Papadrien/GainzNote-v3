@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../data/models/animal_model.dart';
+import 'cat_animated_display.dart';
 
 /// Displays an animal image (PNG) with a gentle breathing + sway animation.
+/// For the cat, uses a special multi-layer animation (head + tail).
 class AnimalDisplay extends StatefulWidget {
   final AnimalModel animal;
   final double size;
@@ -37,13 +39,18 @@ class _AnimalDisplayState extends State<AnimalDisplay>
     _sway = Tween<double>(begin: -0.02, end: 0.02).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-    if (widget.animate) _ctrl.repeat(reverse: true);
+    if (widget.animate && !_isCat) _ctrl.repeat(reverse: true);
   }
+
+  bool get _isCat => widget.animal.id == 'cat';
 
   @override
   void didUpdateWidget(AnimalDisplay old) {
     super.didUpdateWidget(old);
-    if (widget.animate && !_ctrl.isAnimating) {
+    if (_isCat) {
+      // Cat uses its own animation controller — stop the generic one
+      if (_ctrl.isAnimating) _ctrl.stop();
+    } else if (widget.animate && !_ctrl.isAnimating) {
       _ctrl.repeat(reverse: true);
     } else if (!widget.animate && _ctrl.isAnimating) {
       _ctrl.stop();
@@ -58,6 +65,15 @@ class _AnimalDisplayState extends State<AnimalDisplay>
 
   @override
   Widget build(BuildContext context) {
+    // Special animated display for the cat
+    if (_isCat) {
+      return CatAnimatedDisplay(
+        size: widget.size,
+        animate: widget.animate,
+      );
+    }
+
+    // Default display for other animals
     final imageWidget = Image.asset(
       widget.animal.imageAsset,
       width: widget.size,
