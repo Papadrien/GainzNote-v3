@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../data/models/animal_model.dart';
 import 'cat_animated_display.dart';
+import 'chicken_animated_display.dart';
+import 'crocodile_animated_display.dart';
 
-/// Displays an animal image (PNG) with a gentle breathing + sway animation.
+/// Displays an animal image (PNG) with animation.
 ///
-/// For the cat, two modes :
-/// - [useStaticImage] = false (default) → multi-layer animation (head + tail)
-/// - [useStaticImage] = true → single cat.png image (for finish screen bounce, timer breathing)
+/// For cat, chicken and crocodile, two modes :
+/// - [useStaticImage] = false (default) → multi-layer animation
+/// - [useStaticImage] = true → single image (for finish screen bounce, timer breathing)
 ///
-/// [playOnce] : if true and cat multi-layer mode, plays exactly 1 cycle (2s) then stops.
+/// [playOnce] : if true and multi-layer mode, plays exactly 1 cycle (2s) then stops.
 ///              Used on the setup screen.
 class AnimalDisplay extends StatefulWidget {
   final AnimalModel animal;
@@ -36,8 +38,12 @@ class _AnimalDisplayState extends State<AnimalDisplay>
   late Animation<double> _breathe;
   late Animation<double> _sway;
 
-  bool get _useCatLayers =>
-      widget.animal.id == 'cat' && !widget.useStaticImage;
+  /// IDs of animals that have custom multi-layer animations.
+  static const _animatedIds = {'cat', 'chicken', 'crocodile'};
+
+  /// Returns true if this animal has a custom multi-layer animation.
+  bool get _hasCustomAnimation =>
+      _animatedIds.contains(widget.animal.id) && !widget.useStaticImage;
 
   @override
   void initState() {
@@ -52,7 +58,7 @@ class _AnimalDisplayState extends State<AnimalDisplay>
     _sway = Tween<double>(begin: -0.02, end: 0.02).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-    if (widget.animate && !_useCatLayers) {
+    if (widget.animate && !_hasCustomAnimation) {
       _ctrl.repeat(reverse: true);
     }
   }
@@ -60,8 +66,7 @@ class _AnimalDisplayState extends State<AnimalDisplay>
   @override
   void didUpdateWidget(AnimalDisplay old) {
     super.didUpdateWidget(old);
-    if (_useCatLayers) {
-      // Cat multi-layer mode — stop the generic breathing controller
+    if (_hasCustomAnimation) {
       if (_ctrl.isAnimating) _ctrl.stop();
     } else if (widget.animate && !_ctrl.isAnimating) {
       _ctrl.repeat(reverse: true);
@@ -78,8 +83,10 @@ class _AnimalDisplayState extends State<AnimalDisplay>
 
   @override
   Widget build(BuildContext context) {
-    // Cat multi-layer animation (head + tail)
-    if (_useCatLayers) {
+    final id = widget.animal.id;
+
+    // Cat multi-layer animation
+    if (id == 'cat' && !widget.useStaticImage) {
       return CatAnimatedDisplay(
         size: widget.size,
         animate: widget.animate,
@@ -87,7 +94,25 @@ class _AnimalDisplayState extends State<AnimalDisplay>
       );
     }
 
-    // Default: single image (all animals + cat when useStaticImage=true)
+    // Chicken multi-layer animation
+    if (id == 'chicken' && !widget.useStaticImage) {
+      return ChickenAnimatedDisplay(
+        size: widget.size,
+        animate: widget.animate,
+        playOnce: widget.playOnce,
+      );
+    }
+
+    // Crocodile multi-layer animation
+    if (id == 'crocodile' && !widget.useStaticImage) {
+      return CrocodileAnimatedDisplay(
+        size: widget.size,
+        animate: widget.animate,
+        playOnce: widget.playOnce,
+      );
+    }
+
+    // Default: single image (all other animals + when useStaticImage=true)
     final imageWidget = Image.asset(
       widget.animal.imageAsset,
       width: widget.size,

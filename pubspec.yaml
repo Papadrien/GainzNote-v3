@@ -1,7 +1,7 @@
 name: animal_timer
 description: "AnimalTimer - A premium visual timer for kids (3-8 years old)"
 publish_to: 'none'
-version: 1.0.2604171111+678911
+version: 1.0.2604171235+678995
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -26,6 +26,8 @@ flutter:
     - assets/images/
     - assets/images/buttons/
     - assets/images/cat/
+    - assets/images/chicken/
+    - assets/images/crocodile/
     - assets/audio/
   # Uncomment when you add Nunito .ttf files to assets/fonts/
   # fonts:
