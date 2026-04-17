@@ -11,6 +11,11 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// ✅ Lire versionCode/versionName depuis Flutter (pubspec.yaml)
+// flutter.versionCode peut être une String — on le convertit en int
+def flutterVersionCode = flutter.versionCode?.toInteger() ?: 1
+def flutterVersionName = flutter.versionName ?: "1.0.0"
+
 android {
     namespace "com.animaltimer.app"
     compileSdk 36
@@ -31,8 +36,8 @@ android {
         applicationId "com.animaltimer.app"
         minSdk 21
         targetSdk 36
-        versionCode flutter.versionCode
-        versionName flutter.versionName
+        versionCode flutterVersionCode
+        versionName flutterVersionName
         multiDexEnabled true
     }
 
