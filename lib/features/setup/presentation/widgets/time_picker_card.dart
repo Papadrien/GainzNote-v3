@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../providers/setup_provider.dart';
@@ -19,13 +20,13 @@ class TimePickerCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          _Col(value: setup.hours, label: 'Heures', color: AppColors.crayonBlue,
+          _Col(value: setup.hours, label: context.l10n.hours, color: AppColors.crayonBlue,
             max: 23, onChanged: ref.read(setupProvider.notifier).setHours),
           const SizedBox(width: 8),
-          _Col(value: setup.minutes, label: 'Minutes', color: AppColors.crayonOrange,
+          _Col(value: setup.minutes, label: context.l10n.minutes, color: AppColors.crayonOrange,
             max: 59, onChanged: ref.read(setupProvider.notifier).setMinutes),
           const SizedBox(width: 8),
-          _Col(value: setup.seconds, label: 'Secondes', color: AppColors.crayonRed,
+          _Col(value: setup.seconds, label: context.l10n.seconds, color: AppColors.crayonRed,
             max: 59, onChanged: ref.read(setupProvider.notifier).setSeconds),
         ],
       ),

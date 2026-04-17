@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -112,19 +113,20 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                   ),
                   const SizedBox(height: 32),
                   // "C'est fini !" text
-                  const Text("C'est fini !", style: TextStyle(
+                  Text(context.l10n.finished, style: TextStyle(
                     fontFamily: 'Nunito', fontSize: 36,
                     fontWeight: FontWeight.w900,
                     color: AppColors.pencilDark)),
                   const SizedBox(height: 32),
-                  // Bouton Arrêter avec fond PNG Procreate
+                  // Bouton Arrêter (icône maison)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 60),
                     child: ImageButton(
-                      text: 'Arr\u00eater',
+                      text: context.l10n.stop,
+                      icon: Icons.home_rounded,
                       backgroundAsset: ImageButton.greenBg,
                       onPressed: _goHome,
-                      height: 56,
+                      height: 80,
                     ),
                   ),
                 ],

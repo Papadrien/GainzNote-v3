@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -40,25 +41,25 @@ class SettingsSheet extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // MINUTEUR
-              Text('MINUTEUR', style: AppTextStyles.settingSectionTitle),
+              Text(context.l10n.settingsTimer, style: AppTextStyles.settingSectionTitle),
               const SizedBox(height: 16),
               _Toggle(
-                label: 'Afficher les chiffres',
+                label: context.l10n.showNumbers,
                 icon: Icons.numbers_rounded,
                 value: settings.showNumbers,
                 onChanged: (_) => ref.read(settingsProvider.notifier).toggleShowNumbers(),
               ),
               _Toggle(
-                label: 'Son du minuteur',
+                label: context.l10n.ambientSound,
                 icon: Icons.music_note_rounded,
-                subtitle: 'Musique pendant le d\u00e9compte',
+                subtitle: context.l10n.ambientSoundSub,
                 value: settings.ambientSoundEnabled,
                 onChanged: (_) => ref.read(settingsProvider.notifier).toggleAmbientSound(),
               ),
               _Toggle(
-                label: 'Son de fin',
+                label: context.l10n.endSound,
                 icon: Icons.notifications_active_rounded,
-                subtitle: 'Son quand le minuteur est termin\u00e9',
+                subtitle: context.l10n.endSoundSub,
                 value: settings.endSoundEnabled,
                 onChanged: (_) => ref.read(settingsProvider.notifier).toggleEndSound(),
               ),
@@ -71,34 +72,34 @@ class SettingsSheet extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // INFORMATIONS
-              Text('INFORMATIONS', style: AppTextStyles.settingSectionTitle),
+              Text(context.l10n.settingsInfo, style: AppTextStyles.settingSectionTitle),
               const SizedBox(height: 16),
               _NavItem(
-                label: 'Laisser un avis',
+                label: context.l10n.rateApp,
                 icon: Icons.star_outline,
                 onTap: () {
                   // TODO: Ajouter in_app_review quand l'app sera sur les stores
                 },
               ),
               _NavItem(
-                label: 'Politique de confidentialit\u00e9',
+                label: context.l10n.privacyPolicy,
                 icon: Icons.privacy_tip_outlined,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const _PrivacyPolicyScreen(),
+                      builder: (ctx) => _PrivacyPolicyScreen(),
                     ),
                   );
                 },
               ),
               _NavItem(
-                label: 'Restaurer les achats',
+                label: context.l10n.restorePurchases,
                 icon: Icons.restore_rounded,
                 onTap: () {
                   // TODO: Brancher sur PurchaseService.restorePurchases()
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Recherche des achats en cours...'),
+                      content: Text(context.l10n.searchingPurchases),
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -108,7 +109,7 @@ class SettingsSheet extends ConsumerWidget {
 
               Center(
                 child: Text(
-                  'Version 1.0.0',
+                  context.l10n.version,
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 12,
@@ -207,14 +208,14 @@ class _Toggle extends StatelessWidget {
 }
 
 class _PrivacyPolicyScreen extends StatelessWidget {
-  const _PrivacyPolicyScreen();
+  _PrivacyPolicyScreen();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Politique de confidentialit\u00e9',
+          context.l10n.privacyPolicy,
           style: TextStyle(
             fontFamily: 'Nunito',
             fontWeight: FontWeight.w800,
@@ -226,53 +227,34 @@ class _PrivacyPolicyScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.pencilDark),
       ),
       backgroundColor: AppColors.sheetBg,
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _PolicySection(
-              title: 'Introduction',
-              content: 'AnimalTimer est une application de minuteur visuel '
-                  'con\u00e7ue pour les enfants de 3 \u00e0 8 ans. La protection '
-                  'de la vie priv\u00e9e de vos enfants est notre priorit\u00e9 absolue.',
+              title: context.l10n.policyIntro,
+              content: context.l10n.policyIntroContent,
             ),
             _PolicySection(
-              title: 'Donn\u00e9es collect\u00e9es',
-              content: 'AnimalTimer ne collecte aucune donn\u00e9e personnelle. '
-                  'Toutes les pr\u00e9f\u00e9rences (animal s\u00e9lectionn\u00e9, '
-                  'r\u00e9glages du son, animaux d\u00e9bloqu\u00e9s) sont '
-                  'stock\u00e9es uniquement sur votre appareil et ne sont '
-                  'jamais transmises \u00e0 un serveur externe.',
+              title: context.l10n.policyData,
+              content: context.l10n.policyDataContent,
             ),
             _PolicySection(
-              title: 'Publicit\u00e9s',
-              content: 'L\u2019application peut afficher des publicit\u00e9s '
-                  'vid\u00e9o (via Google AdMob) pour d\u00e9bloquer de nouveaux '
-                  'animaux. Ces publicit\u00e9s sont conformes \u00e0 la '
-                  'r\u00e9glementation COPPA et ne collectent pas de donn\u00e9es '
-                  'personnelles sur les enfants. Seules des publicit\u00e9s '
-                  'adapt\u00e9es aux enfants sont affich\u00e9es.',
+              title: context.l10n.policyAds,
+              content: context.l10n.policyAdsContent,
             ),
             _PolicySection(
-              title: 'Achats int\u00e9gr\u00e9s',
-              content: 'L\u2019application propose un achat unique optionnel '
-                  'pour d\u00e9bloquer tous les animaux. Les achats sont '
-                  'g\u00e9r\u00e9s par Google Play ou l\u2019App Store et '
-                  'sont prot\u00e9g\u00e9s par les contr\u00f4les parentaux '
-                  'de votre appareil.',
+              title: context.l10n.policyIAP,
+              content: context.l10n.policyIAPContent,
             ),
             _PolicySection(
-              title: 'Conformit\u00e9 COPPA',
-              content: 'AnimalTimer est conforme \u00e0 la loi COPPA. Nous ne '
-                  'collectons pas sciemment d\u2019informations personnelles '
-                  'aupr\u00e8s d\u2019enfants de moins de 13 ans.',
+              title: context.l10n.policyCOPPA,
+              content: context.l10n.policyCOPPAContent,
             ),
             _PolicySection(
-              title: 'Contact',
-              content: 'Pour toute question concernant cette politique de '
-                  'confidentialit\u00e9, vous pouvez nous contacter \u00e0 :\n'
-                  'contact@animaltimer.app',
+              title: context.l10n.policyContact,
+              content: context.l10n.policyContactContent,
             ),
           ],
         ),

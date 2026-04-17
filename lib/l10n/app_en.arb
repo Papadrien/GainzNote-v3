@@ -1,0 +1,67 @@
+{
+  "@@locale": "en",
+  "appName": "AnimalTimer",
+  "animalDog": "Dog",
+  "animalCat": "Cat",
+  "animalCrocodile": "Crocodile",
+  "animalPony": "Pony",
+  "animalChicken": "Chicken",
+  "chooseAnimal": "Choose your animal",
+  "unlockSubtitle": "Use the timer to unlock new friends!",
+  "start": "Start",
+  "hours": "Hours",
+  "minutes": "Minutes",
+  "seconds": "Seconds",
+  "recentTimers": "RECENT TIMERS",
+  "cancel": "Cancel",
+  "resume": "Resume",
+  "pause": "Pause",
+  "hourUnit": "h ",
+  "minuteUnit": "m ",
+  "secondUnit": "s",
+  "finished": "Time's up!",
+  "stop": "Stop",
+  "bravo": "Well done!",
+  "unlocked": "You unlocked\n{name}!",
+  "@unlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ok": "OK",
+  "settingsTimer": "TIMER",
+  "showNumbers": "Show numbers",
+  "ambientSound": "Timer sound",
+  "ambientSoundSub": "Music during countdown",
+  "endSound": "End sound",
+  "endSoundSub": "Sound when timer ends",
+  "settingsInfo": "INFORMATION",
+  "rateApp": "Rate the app",
+  "privacyPolicy": "Privacy Policy",
+  "restorePurchases": "Restore purchases",
+  "searchingPurchases": "Searching for purchases...",
+  "version": "Version 1.0.0",
+  "policyIntro": "Introduction",
+  "policyIntroContent": "AnimalTimer is a visual timer app designed for children aged 3 to 8. Protecting your children's privacy is our absolute priority.",
+  "policyData": "Data collected",
+  "policyDataContent": "AnimalTimer does not collect any personal data. All preferences (selected animal, sound settings, unlocked animals) are stored only on your device and are never sent to any external server.",
+  "policyAds": "Advertising",
+  "policyAdsContent": "The app may display video ads (via Google AdMob) to unlock new animals. These ads comply with COPPA regulations and do not collect personal data from children. Only child-appropriate ads are shown.",
+  "policyIAP": "In-App Purchases",
+  "policyIAPContent": "The app offers an optional one-time purchase to unlock all animals. Purchases are managed by Google Play or the App Store and are protected by your device's parental controls.",
+  "policyCOPPA": "COPPA Compliance",
+  "policyCOPPAContent": "AnimalTimer complies with COPPA. We do not knowingly collect personal information from children under the age of 13.",
+  "policyContact": "Contact",
+  "policyContactContent": "For any questions regarding this privacy policy, you can contact us at:\ncontact@animaltimer.app",
+  "notifTitle": "AnimalTimer",
+  "notifTimerBody": "Time's up! {animal} is done 🎉",
+  "@notifTimerBody": {
+    "placeholders": {
+      "animal": {
+        "type": "String"
+      }
+    }
+  }
+}

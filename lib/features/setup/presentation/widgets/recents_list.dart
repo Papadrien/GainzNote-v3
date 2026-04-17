@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -28,7 +29,7 @@ class RecentsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('DERNIERS MINUTEURS', style: AppTextStyles.sectionTitle),
+        Text(context.l10n.recentTimers, style: AppTextStyles.sectionTitle),
         const SizedBox(height: 12),
         ...presets.take(3).toList().asMap().entries.map((entry) {
           final i = entry.key;

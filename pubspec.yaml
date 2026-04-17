@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   flutter_riverpod: ^2.6.1
   audioplayers: ^6.1.0
   shared_preferences: ^2.5.3
@@ -20,22 +23,11 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/images/buttons/
     - assets/images/cat/
     - assets/images/chicken/
     - assets/images/crocodile/
     - assets/audio/
-  # Uncomment when you add Nunito .ttf files to assets/fonts/
-  # fonts:
-  #   - family: Nunito
-  #     fonts:
-  #       - asset: assets/fonts/Nunito-Regular.ttf
-  #       - asset: assets/fonts/Nunito-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Nunito-ExtraBold.ttf
-  #         weight: 800
-  #       - asset: assets/fonts/Nunito-Black.ttf
-  #         weight: 900

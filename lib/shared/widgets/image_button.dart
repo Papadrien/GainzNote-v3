@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Bouton avec fond PNG Procreate (forme "pull" dessinée à la main).
-/// Le PNG est affiché comme fond, clippé en pill, avec un contour noir
-/// en forme de pill par-dessus et le texte superposé au centre.
+/// Bouton coloré avec forme pill, icône seule (pas de texte),
+/// adapté pour les enfants (gros et lisible).
 class ImageButton extends StatefulWidget {
-  /// Chemins vers les 3 backgrounds de boutons
-  static const String greenBg  = 'assets/images/buttons/btn_green.png';
-  static const String orangeBg = 'assets/images/buttons/btn_orange.png';
-  static const String redBg    = 'assets/images/buttons/btn_red.png';
+  /// Couleurs de fond prédéfinies (remplacent les anciens PNG)
+  static const String greenBg  = 'green';
+  static const String orangeBg = 'orange';
+  static const String redBg    = 'red';
 
-  final String text;
-  final String backgroundAsset;
+  final String text; // Conservé pour accessibilité/semantics mais non affiché
+  final String backgroundAsset; // Maintenant utilisé comme clé de couleur
   final VoidCallback onPressed;
   final IconData? icon;
   final double height;
@@ -24,9 +23,9 @@ class ImageButton extends StatefulWidget {
     required this.backgroundAsset,
     required this.onPressed,
     this.icon,
-    this.height = 64,
+    this.height = 80,
     this.width,
-    this.borderWidth = 3.0,
+    this.borderWidth = 3.5,
   });
 
   @override
@@ -65,70 +64,96 @@ class _ImageButtonState extends State<ImageButton>
 
   void _onTapCancel() => _ctrl.reverse();
 
+  /// Retourne la couleur de fond principale selon la clé
+  Color _bgColor() {
+    switch (widget.backgroundAsset) {
+      case 'green':
+        return const Color(0xFF4CAF50);
+      case 'orange':
+        return const Color(0xFFFF9800);
+      case 'red':
+        return const Color(0xFFE53935);
+      default:
+        return const Color(0xFF4CAF50);
+    }
+  }
+
+  /// Retourne la couleur de fond plus claire pour le dégradé
+  Color _bgColorLight() {
+    switch (widget.backgroundAsset) {
+      case 'green':
+        return const Color(0xFF66BB6A);
+      case 'orange':
+        return const Color(0xFFFFA726);
+      case 'red':
+        return const Color(0xFFEF5350);
+      default:
+        return const Color(0xFF66BB6A);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final pillRadius = widget.height / 2;
+    // Taille de l'icône proportionnelle à la hauteur du bouton
+    final iconSize = widget.height * 0.50;
 
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: ScaleTransition(
-        scale: _scale,
-        child: SizedBox(
-          width: widget.width ?? double.infinity,
-          height: widget.height,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Layer 1: PNG background, clipped into pill shape, stretched to fill
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(pillRadius),
-                  child: Image.asset(
-                    widget.backgroundAsset,
-                    fit: BoxFit.fill,
-                  ),
-                ),
-              ),
-              // Layer 2: Black pill outline drawn on top
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(pillRadius),
-                    border: Border.all(
-                      color: const Color(0xFF2B2B2B),
-                      width: widget.borderWidth,
+    return Semantics(
+      label: widget.text,
+      button: true,
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        child: ScaleTransition(
+          scale: _scale,
+          child: SizedBox(
+            width: widget.width ?? double.infinity,
+            height: widget.height,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Layer 1: Fond coloré avec dégradé, forme pill
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(pillRadius),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [_bgColorLight(), _bgColor()],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _bgColor().withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              // Layer 3: Text + optional icon
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon,
-                        color: const Color(0xFF2B2B2B), size: 24),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      widget.text.toUpperCase(),
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF2B2B2B),
-                        letterSpacing: 1.2,
+                // Layer 2: Contour pill foncé
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(pillRadius),
+                      border: Border.all(
+                        color: const Color(0xFF2B2B2B),
+                        width: widget.borderWidth,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                // Layer 3: Icône seule, centrée, grosse
+                if (widget.icon != null)
+                  Icon(
+                    widget.icon,
+                    color: Colors.white,
+                    size: iconSize,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

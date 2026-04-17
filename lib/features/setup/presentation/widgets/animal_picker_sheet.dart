@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -46,7 +47,7 @@ class AnimalPickerSheet extends ConsumerWidget {
           const SizedBox(height: 20),
           // Title
           const Text(
-            'Choisis ton animal',
+            context.l10n.chooseAnimal,
             style: TextStyle(
               fontFamily: 'Nunito',
               fontSize: 22,
@@ -60,7 +61,7 @@ class AnimalPickerSheet extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                'Utilise le minuteur pour débloquer de nouveaux amis !',
+                context.l10n.unlockSubtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Nunito',
@@ -194,7 +195,7 @@ class _AnimalCard extends StatelessWidget {
             Positioned(
               left: 0, right: 0, bottom: 10,
               child: Text(
-                animal.name,
+                localizedAnimalName(context, animal.id),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Nunito',

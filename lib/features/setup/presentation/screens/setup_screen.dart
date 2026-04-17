@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -38,7 +39,7 @@ class SetupScreen extends ConsumerWidget {
                   // App title with black outline style
                   Expanded(
                     child: Text(
-                      'AnimalTimer',
+                      context.l10n.appName,
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 28,

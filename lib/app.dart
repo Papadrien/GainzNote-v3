@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/setup/presentation/screens/setup_screen.dart';
 
@@ -11,6 +12,8 @@ class AnimalTimerApp extends StatelessWidget {
       title: 'AnimalTimer',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: const SetupScreen(),
     );
   }

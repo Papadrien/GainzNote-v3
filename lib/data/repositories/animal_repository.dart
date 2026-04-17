@@ -7,7 +7,7 @@ class AnimalRepository {
   static const List<AnimalModel> animals = [
     AnimalModel(
       id: 'dog',
-      name: 'Chien',
+      name: 'Dog',
       emoji: '\u{1F436}',
       imageAsset: 'assets/images/dog.png',
       ambientAudioPath: 'audio/ambient_default.wav',
@@ -19,7 +19,7 @@ class AnimalRepository {
     ),
     AnimalModel(
       id: 'cat',
-      name: 'Chat',
+      name: 'Cat',
       emoji: '\u{1F431}',
       imageAsset: 'assets/images/cat.png',
       ambientAudioPath: 'audio/ambient_default.wav',
@@ -43,7 +43,7 @@ class AnimalRepository {
     ),
     AnimalModel(
       id: 'pony',
-      name: 'Poney',
+      name: 'Pony',
       emoji: '\u{1F434}',
       imageAsset: 'assets/images/pony.png',
       ambientAudioPath: 'audio/ambient_default.wav',
@@ -55,7 +55,7 @@ class AnimalRepository {
     ),
     AnimalModel(
       id: 'chicken',
-      name: 'Poule',
+      name: 'Chicken',
       emoji: '\u{1F414}',
       imageAsset: 'assets/images/chicken.png',
       ambientAudioPath: 'audio/ambient_default.wav',

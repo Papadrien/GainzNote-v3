@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/animal_model.dart';
 import '../../../../shared/widgets/image_button.dart';
@@ -111,7 +112,7 @@ class _UnlockDialogState extends State<UnlockDialog>
                   const SizedBox(height: 20),
                   // Congratulation text
                   const Text(
-                    'Bravo !',
+                    context.l10n.bravo,
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 28,
@@ -121,7 +122,7 @@ class _UnlockDialogState extends State<UnlockDialog>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tu as d\u00e9bloqu\u00e9\n${widget.animal.name} !',
+                    context.l10n.unlocked(localizedAnimalName(context, widget.animal.id)),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: 'Nunito',
@@ -135,7 +136,7 @@ class _UnlockDialogState extends State<UnlockDialog>
                   SizedBox(
                     width: double.infinity,
                     child: ImageButton(
-                      text: 'OK',
+                      text: context.l10n.ok,
                       backgroundAsset: ImageButton.greenBg,
                       height: 50,
                       onPressed: widget.onDismiss,

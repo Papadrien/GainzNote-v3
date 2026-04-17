@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -32,7 +33,8 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       ref.read(timerServiceProvider.notifier).start(setup.duration);
       ref.read(notificationServiceProvider).scheduleTimerEnd(
         duration: setup.duration,
-        body: "C'est fini ! Le ${setup.selectedAnimal.name} a terminé \u{1F389}",
+        title: context.l10n.notifTitle,
+        body: context.l10n.notifTimerBody(localizedAnimalName(context, setup.selectedAnimal.id)),
       );
       // Only start ambient music if sound is enabled
       if (settings.ambientSoundEnabled) {
@@ -51,7 +53,23 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {}
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final settings = ref.read(settingsProvider);
+    final audio = ref.read(audioServiceProvider);
+    final ts = ref.read(timerServiceProvider);
+
+    if (state == AppLifecycleState.paused) {
+      // App goes to background — pause ambient music
+      if (settings.ambientSoundEnabled) {
+        audio.pauseAmbient();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // App comes back — resume ambient music if timer is running
+      if (settings.ambientSoundEnabled && ts.status == TimerStatus.running) {
+        audio.resumeAmbient();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +195,10 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                 children: [
                   Expanded(
                     child: ImageButton(
-                      text: 'Annuler',
-                      icon: Icons.chevron_left,
+                      text: context.l10n.cancel,
+                      icon: Icons.arrow_back_rounded,
                       backgroundAsset: ImageButton.redBg,
-                      height: 56,
+                      height: 80,
                       onPressed: () {
                         ref.read(timerServiceProvider.notifier).cancel();
                         ref.read(audioServiceProvider).stopAll();
@@ -192,12 +210,12 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                   const SizedBox(width: 16),
                   Expanded(
                     child: ImageButton(
-                      text: isPaused ? 'Reprendre' : 'Pause',
-                      icon: isPaused ? Icons.play_arrow : Icons.pause,
+                      text: isPaused ? context.l10n.resume : context.l10n.pause,
+                      icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                       backgroundAsset: isPaused
                           ? ImageButton.greenBg
                           : ImageButton.orangeBg,
-                      height: 56,
+                      height: 80,
                       onPressed: () {
                         final notifier =
                             ref.read(timerServiceProvider.notifier);
@@ -215,7 +233,8 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                           notifier.resume();
                           notifications.scheduleTimerEnd(
                             duration: ts.remaining,
-                            body: "C'est fini ! Le ${animal.name} a terminé \u{1F389}",
+                            title: context.l10n.notifTitle,
+                            body: context.l10n.notifTimerBody(localizedAnimalName(context, animal.id)),
                           );
                           if (settings.ambientSoundEnabled) {
                             audio.resumeAmbient();
