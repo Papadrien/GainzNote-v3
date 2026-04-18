@@ -214,9 +214,9 @@ class _PrivacyPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           context.l10n.privacyPolicy,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Nunito',
             fontWeight: FontWeight.w800,
             color: AppColors.pencilDark,

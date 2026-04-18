@@ -111,9 +111,9 @@ class _UnlockDialogState extends State<UnlockDialog>
                   ),
                   const SizedBox(height: 20),
                   // Congratulation text
-                  const Text(
+                  Text(
                     context.l10n.bravo,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 28,
                       fontWeight: FontWeight.w900,

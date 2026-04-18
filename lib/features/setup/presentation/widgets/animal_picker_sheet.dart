@@ -46,9 +46,9 @@ class AnimalPickerSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           // Title
-          const Text(
+          Text(
             context.l10n.chooseAnimal,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Nunito',
               fontSize: 22,
               fontWeight: FontWeight.w900,
