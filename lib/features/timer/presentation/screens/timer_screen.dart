@@ -87,7 +87,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       if (next.status == TimerStatus.finished &&
           prev?.status != TimerStatus.finished) {
         HapticFeedback.heavyImpact();
-        ref.read(audioServiceProvider).stopAll();
+        ref.read(audioServiceProvider).stopAmbient();
         notifications.cancelAll();
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
