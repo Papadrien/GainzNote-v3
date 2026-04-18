@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NotificationService {
+class NotificationService with WidgetsBindingObserver {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+
+  /// Track whether the app is in the foreground.
+  AppLifecycleState _appState = AppLifecycleState.resumed;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -23,7 +27,16 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
+
+    // Start observing app lifecycle
+    WidgetsBinding.instance.addObserver(this);
+
     _initialized = true;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appState = state;
   }
 
   Future<bool> requestPermission() async {
@@ -43,9 +56,9 @@ class NotificationService {
     return false;
   }
 
-  /// Schedule a notification after [duration] — works even if the app
-  /// is in the background or killed.
-  /// Uses show() with a delayed Future instead of the removed schedule().
+  /// Schedule a notification after [duration].
+  /// Only shows the notification if the app is NOT in the foreground,
+  /// since the app already handles the timer-end screen itself.
   Future<void> scheduleTimerEnd({
     required Duration duration,
     String title = 'AnimalTimer',
@@ -53,11 +66,13 @@ class NotificationService {
   }) async {
     await cancelAll();
 
-    // Use a delayed future to fire the notification.
-    // For short-lived timers (< 1h) this is reliable since the app
-    // is typically in foreground or recently backgrounded.
     Future.delayed(duration, () async {
-      await showNow(title: title, body: body);
+      // Only show notification if app is in background or killed.
+      // When the app is in foreground, the timer_screen already
+      // navigates to the finish_screen — no need to notify.
+      if (_appState != AppLifecycleState.resumed) {
+        await showNow(title: title, body: body);
+      }
     });
   }
 

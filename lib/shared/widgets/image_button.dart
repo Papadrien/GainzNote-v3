@@ -109,7 +109,7 @@ class _ImageButtonState extends State<ImageButton>
   @override
   Widget build(BuildContext context) {
     final pillRadius = widget.height / 2;
-    final iconSize = widget.height * 0.60;
+    final iconSize = widget.height * 0.70;
     final texture = _textureAsset();
     final hasTexture = texture != null;
 
@@ -175,9 +175,7 @@ class _ImageButtonState extends State<ImageButton>
                 if (widget.icon != null)
                   Icon(
                     widget.icon,
-                    color: hasTexture
-                        ? const Color(0xFF2B2B2B)
-                        : Colors.white,
+                    color: const Color(0xFF2B2B2B),
                     size: iconSize,
                   ),
               ],
