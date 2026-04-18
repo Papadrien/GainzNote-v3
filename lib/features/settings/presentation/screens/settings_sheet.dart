@@ -98,9 +98,9 @@ class SettingsSheet extends ConsumerWidget {
                 onTap: () {
                   // TODO: Brancher sur PurchaseService.restorePurchases()
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(context.l10n.searchingPurchases),
-                      duration: Duration(seconds: 2),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 },

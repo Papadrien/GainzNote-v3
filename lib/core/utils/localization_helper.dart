@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:animal_timer/l10n/app_localizations.dart';
 
 /// Usage: final l10n = context.l10n;
 extension LocalizationExt on BuildContext {
