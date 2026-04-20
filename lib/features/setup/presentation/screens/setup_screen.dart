@@ -40,7 +40,7 @@ class SetupScreen extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       context.l10n.appName,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 28,
                         fontWeight: FontWeight.w900,

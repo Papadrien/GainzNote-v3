@@ -208,7 +208,7 @@ class _Toggle extends StatelessWidget {
 }
 
 class _PrivacyPolicyScreen extends StatelessWidget {
-  _PrivacyPolicyScreen();
+  const _PrivacyPolicyScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +228,7 @@ class _PrivacyPolicyScreen extends StatelessWidget {
       ),
       backgroundColor: AppColors.sheetBg,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -61,6 +61,6 @@ class AudioService {
 
 final audioServiceProvider = Provider<AudioService>((ref) {
   final service = AudioService();
-  ref.onDispose(() => service.dispose());
+  ref.onDispose(service.dispose);
   return service;
 });

@@ -11,7 +11,7 @@ class ImageButton extends StatefulWidget {
   static const String redBg    = 'red';
 
   /// Chemins vers les textures (null = pas de texture)
-  static const String? redTexture = 'assets/images/buttons/btn_red_texture.png';
+  static const String redTexture = 'assets/images/buttons/btn_red_texture.png';
 
   final String text; // Conservé pour accessibilité/semantics mais non affiché
   final String backgroundAsset; // Clé de couleur

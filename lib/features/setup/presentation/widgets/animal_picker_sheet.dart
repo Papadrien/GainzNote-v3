@@ -19,7 +19,7 @@ class AnimalPickerSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final animals = AnimalRepository.animals;
+    const animals = AnimalRepository.animals;
     final bottomPad = MediaQuery.of(context).padding.bottom;
 
     return Container(
@@ -132,7 +132,7 @@ class _AnimalCard extends StatelessWidget {
               child: Text(
                 localizedAnimalName(context, animal.id),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 14,
                   fontWeight: FontWeight.w800,

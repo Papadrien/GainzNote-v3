@@ -46,7 +46,7 @@ class _CircularProgressPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 16;
-    final strokeW = 18.0;
+    const strokeW = 18.0;
 
     // ── Background track (grey) ──
     final bgPaint = Paint()

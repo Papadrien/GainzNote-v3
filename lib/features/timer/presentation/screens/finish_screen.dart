@@ -79,7 +79,7 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  Text(context.l10n.finished, style: TextStyle(
+                  Text(context.l10n.finished, style: const TextStyle(
                     fontFamily: 'Nunito', fontSize: 36,
                     fontWeight: FontWeight.w900,
                     color: AppColors.pencilDark)),
