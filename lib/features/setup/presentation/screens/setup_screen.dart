@@ -51,7 +51,10 @@ class SetupScreen extends ConsumerWidget {
                   ),
                   // Settings gear with black outline
                   GestureDetector(
-                    onTap: () => _showSettings(context),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _showSettings(context);
+                    },
                     child: Container(
                       width: 44, height: 44,
                       decoration: BoxDecoration(

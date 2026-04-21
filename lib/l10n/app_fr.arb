@@ -77,5 +77,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "unlockAllButton": "🌟 Tout débloquer — {price}",
+  "@unlockAllButton": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockAllSuccess": "Tous les animaux sont débloqués ! 🎉",
+  "unlockAllOr": "Ou tout débloquer d'un coup :",
+  "purchaseError": "L'achat a échoué. Réessaie.",
+  "restoreSuccess": "Achats restaurés !",
+  "restoreEmpty": "Aucun achat trouvé.",
+  "storeNotAvailable": "Boutique indisponible. Vérifie ta connexion."
 }

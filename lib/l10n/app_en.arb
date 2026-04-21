@@ -77,5 +77,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "unlockAllButton": "🌟 Unlock all — {price}",
+  "@unlockAllButton": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockAllSuccess": "All animals are unlocked! 🎉",
+  "unlockAllOr": "Or unlock all at once:",
+  "purchaseError": "Purchase failed. Please try again.",
+  "restoreSuccess": "Purchases restored!",
+  "restoreEmpty": "No purchases found.",
+  "storeNotAvailable": "Store not available. Check your connection."
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter/services.dart';
@@ -7,10 +8,12 @@ import '../../../../data/models/animal_model.dart';
 import '../../../../data/repositories/animal_repository.dart';
 import '../../../../core/services/ad_service.dart';
 import '../../../../core/services/gamification_service.dart';
+import '../../../../core/services/purchase_service.dart';
 
 /// Bottom sheet affichant les animaux disponibles dans une grille.
 /// Les animaux verrouillés affichent une icône ▶ et nécessitent
 /// le visionnage d'une pub Rewarded pour être débloqués.
+/// Un bouton "Tout débloquer" permet l'achat in-app (0.99€).
 class AnimalPickerSheet extends ConsumerStatefulWidget {
   final String selectedAnimalId;
   final ValueChanged<String> onAnimalSelected;
@@ -29,10 +32,12 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
   @override
   void initState() {
     super.initState();
-    // Pré-charger une pub uniquement s'il y a des animaux verrouillés
     final gamif = ref.read(gamificationServiceProvider);
     if (gamif.hasLockedAnimals()) {
+      // Pré-charger une pub
       ref.read(adServiceProvider).loadAd();
+      // Initialiser le service d'achat
+      ref.read(purchaseServiceProvider).initialize();
     }
   }
 
@@ -41,6 +46,7 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
     const animals = AnimalRepository.animals;
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final gamif = ref.watch(gamificationServiceProvider);
+    final hasLocked = gamif.hasLockedAnimals();
 
     return Container(
       decoration: const BoxDecoration(
@@ -73,8 +79,7 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
           const SizedBox(height: 20),
           // Grid of animals
           Padding(
-            padding: EdgeInsets.only(
-              left: 24, right: 24, bottom: bottomPad + 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -106,9 +111,138 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
               },
             ),
           ),
+          // Bouton "Tout débloquer" — visible seulement s'il reste des verrouillés
+          if (hasLocked) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                context.l10n.unlockAllOr,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.pencilFaint.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _handlePurchase,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentOrange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    context.l10n.unlockAllButton(
+                      ref.read(purchaseServiceProvider).localizedPrice,
+                    ),
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          // ⚠️ DEBUG ONLY — Simuler l'achat sans passer par le store
+          if (kDebugMode && hasLocked) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    HapticFeedback.mediumImpact();
+                    await ref.read(gamificationServiceProvider).unlockAllAnimals();
+                    if (mounted) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('DEBUG: Tous les animaux débloqués !'),
+                          duration: const Duration(seconds: 2),
+                          backgroundColor: AppColors.accentGreen,
+                        ),
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '🐛 [DEBUG] Simuler achat',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: bottomPad + 20),
         ],
       ),
     );
+  }
+
+  /// Lance l'achat in-app "Tout débloquer".
+  Future<void> _handlePurchase() async {
+    HapticFeedback.mediumImpact();
+    final purchaseService = ref.read(purchaseServiceProvider);
+
+    if (!purchaseService.isProductAvailable) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.storeNotAvailable),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Enregistrer le callback pour quand l'achat est validé
+    purchaseService.onPurchaseCompleted = () {
+      if (mounted) {
+        setState(() {}); // Rafraîchir la grille
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.unlockAllSuccess),
+            duration: const Duration(seconds: 3),
+            backgroundColor: AppColors.accentGreen,
+          ),
+        );
+      }
+    };
+
+    final launched = await purchaseService.purchaseUnlockAll();
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.purchaseError),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   /// Affiche un dialogue proposant de regarder une pub pour débloquer l'animal.
@@ -145,7 +279,10 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.of(ctx).pop();
+            },
             child: Text(
               context.l10n.cancel,
               style: const TextStyle(
@@ -157,6 +294,7 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
           ),
           ElevatedButton.icon(
             onPressed: () {
+              HapticFeedback.lightImpact();
               Navigator.of(ctx).pop();
               _watchAdAndUnlock(animal);
             },
@@ -186,7 +324,6 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
     final gamif = ref.read(gamificationServiceProvider);
 
     if (!adService.isAdReady) {
-      // Pub pas encore chargée — afficher un spinner et attendre
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -194,9 +331,7 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
           duration: const Duration(seconds: 2),
         ),
       );
-      // Relancer le chargement
       await adService.loadAd();
-      // Attendre un peu puis réessayer
       await Future.delayed(const Duration(seconds: 3));
       if (!adService.isAdReady || !mounted) return;
     }
@@ -205,7 +340,6 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
       onReward: () async {
         await gamif.unlockAnimal(animal.id);
         if (mounted) {
-          // Sélectionner l'animal débloqué et fermer la sheet
           widget.onAnimalSelected(animal.id);
           if (mounted) {
             Navigator.of(context).pop();
@@ -256,7 +390,7 @@ class _AnimalCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Animal image centered (grisé si verrouillé)
+            // Animal image centered
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -285,7 +419,7 @@ class _AnimalCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Lock / Play badge if locked — centré sur la carte
+            // Lock / Play badge if locked
             if (isLocked)
               Center(
                 child: Container(

@@ -42,6 +42,7 @@ class StorageService {
 
   // --- Déblocage des animaux ---
   static const _unlockedAnimalsKey = 'unlocked_animal_ids';
+  static const _premiumKey = 'premium_unlocked';
 
   /// Animaux débloqués par défaut (gratuits).
   static const defaultUnlocked = {'crocodile', 'cat'};
@@ -65,6 +66,15 @@ class StorageService {
     return getUnlockedAnimalIds().contains(animalId);
   }
 
+  // --- Premium (achat in-app) ---
+
+  /// Vérifie si l'utilisateur a acheté le pack premium.
+  bool getPremiumUnlocked() => _prefs.getBool(_premiumKey) ?? false;
+
+  /// Sauvegarde le statut premium.
+  Future<void> savePremiumUnlocked(bool value) async {
+    await _prefs.setBool(_premiumKey, value);
+  }
 }
 
 final sharedPrefsProvider = Provider<SharedPreferences>((ref) {

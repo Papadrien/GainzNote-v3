@@ -3,20 +3,20 @@ import 'package:flutter/services.dart';
 
 /// Bouton coloré avec forme pill, icône seule (pas de texte),
 /// adapté pour les enfants (gros et lisible).
-/// Les boutons avec texture utilisent l'image directement (pas de dégradé).
+/// [bounce] active un effet rebond élastique au relâchement.
 class ImageButton extends StatefulWidget {
-  /// Clés de couleur de fond
   static const String greenBg  = 'green';
   static const String orangeBg = 'orange';
   static const String redBg    = 'red';
 
-  final String text; // Conservé pour accessibilité/semantics mais non affiché
-  final String backgroundAsset; // Clé de couleur
+  final String text;
+  final String backgroundAsset;
   final VoidCallback onPressed;
   final IconData? icon;
   final double height;
   final double? width;
   final double borderWidth;
+  final bool bounce;
 
   const ImageButton({
     super.key,
@@ -27,6 +27,7 @@ class ImageButton extends StatefulWidget {
     this.height = 80,
     this.width,
     this.borderWidth = 3.5,
+    this.bounce = false,
   });
 
   @override
@@ -38,13 +39,17 @@ class _ImageButtonState extends State<ImageButton>
   late AnimationController _ctrl;
   late Animation<double> _scale;
 
+  // Bounce : état interne pour gérer la séquence
+  double _bounceScale = 1.0;
+  bool _isBouncing = false;
+
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 100));
-    _scale = Tween<double>(begin: 1.0, end: 0.94).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+      vsync: this, duration: const Duration(milliseconds: 80));
+    _scale = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
   }
 
   @override
@@ -58,52 +63,83 @@ class _ImageButtonState extends State<ImageButton>
     HapticFeedback.lightImpact();
   }
 
-  void _onTapUp(TapUpDetails _) {
-    _ctrl.reverse();
+  void _onTapUp(TapUpDetails _) async {
+    if (widget.bounce) {
+      await _doBounce();
+    } else {
+      _ctrl.reverse();
+    }
     widget.onPressed();
   }
 
   void _onTapCancel() => _ctrl.reverse();
 
-  /// Retourne la couleur de fond principale selon la clé
+  /// Animation bounce : overshoot (1.06) puis settle (1.0)
+  Future<void> _doBounce() async {
+    _isBouncing = true;
+
+    // Phase 1 : retour rapide depuis shrink (0.92 → 1.0)
+    await _ctrl.reverse();
+
+    // Phase 2 : overshoot (1.0 → 1.06)
+    const overshootDuration = Duration(milliseconds: 100);
+    const settleDuration = Duration(milliseconds: 80);
+
+    final start = DateTime.now();
+    while (true) {
+      final elapsed = DateTime.now().difference(start).inMilliseconds;
+      if (elapsed >= overshootDuration.inMilliseconds) break;
+      final t = elapsed / overshootDuration.inMilliseconds;
+      final curve = Curves.easeOut.transform(t);
+      if (mounted) {
+        setState(() => _bounceScale = 1.0 + 0.06 * curve);
+      }
+      await Future.delayed(const Duration(milliseconds: 8));
+    }
+
+    // Phase 3 : settle (1.06 → 1.0)
+    final start2 = DateTime.now();
+    while (true) {
+      final elapsed = DateTime.now().difference(start2).inMilliseconds;
+      if (elapsed >= settleDuration.inMilliseconds) break;
+      final t = elapsed / settleDuration.inMilliseconds;
+      final curve = Curves.easeInOut.transform(t);
+      if (mounted) {
+        setState(() => _bounceScale = 1.06 - 0.06 * curve);
+      }
+      await Future.delayed(const Duration(milliseconds: 8));
+    }
+
+    if (mounted) {
+      setState(() {
+        _bounceScale = 1.0;
+        _isBouncing = false;
+      });
+    }
+  }
+
   Color _bgColor() {
     switch (widget.backgroundAsset) {
-      case 'green':
-        return const Color(0xFF4CAF50);
-      case 'orange':
-        return const Color(0xFFFF9800);
-      case 'red':
-        return const Color(0xFFE53935);
-      default:
-        return const Color(0xFF4CAF50);
+      case 'green':  return const Color(0xFF4CAF50);
+      case 'orange': return const Color(0xFFFF9800);
+      case 'red':    return const Color(0xFFE53935);
+      default:       return const Color(0xFF4CAF50);
     }
   }
 
-  /// Retourne la couleur de fond plus claire pour le dégradé
   Color _bgColorLight() {
     switch (widget.backgroundAsset) {
-      case 'green':
-        return const Color(0xFF66BB6A);
-      case 'orange':
-        return const Color(0xFFFFA726);
-      case 'red':
-        return const Color(0xFFEF5350);
-      default:
-        return const Color(0xFF66BB6A);
+      case 'green':  return const Color(0xFF66BB6A);
+      case 'orange': return const Color(0xFFFFA726);
+      case 'red':    return const Color(0xFFEF5350);
+      default:       return const Color(0xFF66BB6A);
     }
-  }
-
-  /// Retourne le chemin de la texture (null si aucune)
-  String? _textureAsset() {
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final pillRadius = widget.height / 2;
     final iconSize = widget.height * 0.70;
-    final texture = _textureAsset();
-    final hasTexture = texture != null;
 
     return Semantics(
       label: widget.text,
@@ -114,24 +150,15 @@ class _ImageButtonState extends State<ImageButton>
         onTapCancel: _onTapCancel,
         child: ScaleTransition(
           scale: _scale,
-          child: SizedBox(
-            width: widget.width ?? double.infinity,
-            height: widget.height,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Layer 1: Fond — texture pleine OU dégradé de couleur
-                if (hasTexture)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(pillRadius),
-                      child: Image.asset(
-                        texture,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  )
-                else
+          child: Transform.scale(
+            scale: _isBouncing ? _bounceScale : 1.0,
+            child: SizedBox(
+              width: widget.width ?? double.infinity,
+              height: widget.height,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Layer 1: Fond dégradé
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -151,26 +178,27 @@ class _ImageButtonState extends State<ImageButton>
                       ),
                     ),
                   ),
-                // Layer 2: Contour pill foncé
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(pillRadius),
-                      border: Border.all(
-                        color: const Color(0xFF2B2B2B),
-                        width: widget.borderWidth,
+                  // Layer 2: Contour pill foncé
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(pillRadius),
+                        border: Border.all(
+                          color: const Color(0xFF2B2B2B),
+                          width: widget.borderWidth,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Layer 3: Icône seule, centrée, grosse, noire si texture
-                if (widget.icon != null)
-                  Icon(
-                    widget.icon,
-                    color: const Color(0xFF2B2B2B),
-                    size: iconSize,
-                  ),
-              ],
+                  // Layer 3: Icône centrée
+                  if (widget.icon != null)
+                    Icon(
+                      widget.icon,
+                      color: const Color(0xFF2B2B2B),
+                      size: iconSize,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

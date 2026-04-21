@@ -15,6 +15,7 @@ class StartButton extends StatelessWidget {
       onPressed: onPressed,
       icon: Icons.play_arrow_rounded,
       height: 80,
+      bounce: true,
     );
   }
 }

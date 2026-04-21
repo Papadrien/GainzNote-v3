@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../providers/settings_provider.dart';
+import '../../../../core/services/purchase_service.dart';
 
 class SettingsSheet extends ConsumerWidget {
   const SettingsSheet({super.key});
@@ -99,14 +101,26 @@ class SettingsSheet extends ConsumerWidget {
               _NavItem(
                 label: context.l10n.restorePurchases,
                 icon: Icons.restore_rounded,
-                onTap: () {
-                  // TODO: Brancher sur PurchaseService.restorePurchases()
+                onTap: () async {
+                  final purchaseService = ref.read(purchaseServiceProvider);
+                  // S'assurer que le service est initialisé
+                  await purchaseService.initialize();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(context.l10n.searchingPurchases),
                       duration: const Duration(seconds: 2),
                     ),
                   );
+                  purchaseService.onPurchaseCompleted = () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(context.l10n.restoreSuccess),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: AppColors.accentGreen,
+                      ),
+                    );
+                  };
+                  await purchaseService.restorePurchases();
                 },
               ),
               const SizedBox(height: 24),
@@ -148,7 +162,10 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -208,7 +225,11 @@ class _Toggle extends StatelessWidget {
             ),
           ),
           Switch(
-            value: value, onChanged: onChanged,
+            value: value,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
             activeColor: AppColors.toggleActive,
             activeTrackColor: AppColors.toggleActive.withValues(alpha: 0.3),
             inactiveThumbColor: AppColors.pencilFaint,

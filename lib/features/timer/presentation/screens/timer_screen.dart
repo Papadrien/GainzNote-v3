@@ -204,6 +204,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                       icon: Icons.arrow_back_rounded,
                       backgroundAsset: ImageButton.redBg,
                       height: 80,
+                      bounce: true,
                       onPressed: () {
                         ref.read(timerServiceProvider.notifier).cancel();
                         ref.read(audioServiceProvider).stopAll();
@@ -221,6 +222,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                           ? ImageButton.greenBg
                           : ImageButton.orangeBg,
                       height: 80,
+                      bounce: true,
                       onPressed: () {
                         final notifier =
                             ref.read(timerServiceProvider.notifier);

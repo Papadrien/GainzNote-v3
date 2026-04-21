@@ -112,6 +112,7 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                       backgroundAsset: ImageButton.greenBg,
                       onPressed: _goHome,
                       height: 80,
+                      bounce: true,
                     ),
                   ),
                 ],
