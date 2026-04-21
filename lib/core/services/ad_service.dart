@@ -9,12 +9,19 @@ class AdService {
   RewardedAd? _rewardedAd;
   bool _isLoading = false;
 
-  /// ID du bloc d'annonces Rewarded (test IDs).
+  /// ID du bloc d'annonces Rewarded.
+  /// Debug → IDs de test (fausses pubs), Release → IDs de prod (vraies pubs).
   static String get _adUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/5224354917'; // Test Android
+    if (kDebugMode) {
+      // IDs de TEST (fausses pubs "Test Ad", aucun revenu)
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/5224354917'
+          : 'ca-app-pub-3940256099942544/1712485313';
     } else {
-      return 'ca-app-pub-3940256099942544/1712485313'; // Test iOS
+      // IDs de PRODUCTION (vraies pubs, vrais revenus)
+      return Platform.isAndroid
+          ? 'ca-app-pub-7203301690798915/7522847549'
+          : 'ca-app-pub-7203301690798915/2789170273';
     }
   }
 
