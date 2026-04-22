@@ -21,6 +21,7 @@ import com.gainznote.model.TrainingSet
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
+import com.gainznote.i18n.S
 import kotlinx.coroutines.delay
 
 @Composable
@@ -65,7 +66,7 @@ fun WorkoutScreen(
             Column {
                 Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
                 // Jour en toutes lettres
-                Text("Démarré ${formatDisplayDateFull(workout.startedAt)}", color = c.textMuted, fontSize = 11.sp)
+                Text(S.startedAt(formatDisplayDateFull(workout.startedAt)), color = c.textMuted, fontSize = 11.sp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val chronoActive = chronoStart != null
@@ -94,7 +95,7 @@ fun WorkoutScreen(
                 Button(onClick = { showFinishDialog = true },
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent),
                     shape = RoundedCornerShape(10.dp)) {
-                    Text("Terminer", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                    Text(S.finish, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -127,11 +128,11 @@ fun WorkoutScreen(
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            GainzTextField(value = workout.title, placeholder = "Titre de l'entraînement",
+            GainzTextField(value = workout.title, placeholder = S.workoutTitlePlaceholder,
                 textSize = 22.sp, bold = true, c = c, onValueChange = vm::updateTitle,
                 capitalization = KeyboardCapitalization.Sentences)
             Spacer(Modifier.height(8.dp))
-            GainzTextField(value = workout.notes, placeholder = "Notes générales…",
+            GainzTextField(value = workout.notes, placeholder = S.generalNotesPlaceholder,
                 c = c, onValueChange = vm::updateNotes, minLines = 2,
                 capitalization = KeyboardCapitalization.Sentences)
             Spacer(Modifier.height(20.dp))
@@ -152,7 +153,7 @@ fun WorkoutScreen(
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, c.border),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = c.accent)) {
-                Text("+ Ajouter un exercice", fontWeight = FontWeight.SemiBold)
+                Text(S.addExercise, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(40.dp))
         }
@@ -162,15 +163,15 @@ fun WorkoutScreen(
     if (showFinishDialog) {
         AlertDialog(onDismissRequest = { showFinishDialog = false },
             containerColor = c.surface,
-            title = { Text("Terminer l'entraînement ?", color = c.text) },
-            text = { Text("${workout.exercises.size} exercice(s) · ${workout.exercises.sumOf { it.sets.size }} série(s)", color = c.textSec) },
+            title = { Text(S.finishWorkoutTitle, color = c.text) },
+            text = { Text(S.finishWorkoutBody(workout.exercises.size, workout.exercises.sumOf { it.sets.size }), color = c.textSec) },
             confirmButton = {
                 Button(onClick = { showFinishDialog = false; if (chronoNotifEnabled) onChronoStop(); vm.finish(onFinished) },
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
-                    Text("Terminer ✓", color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                    Text(S.finishConfirm, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                 }
             },
-            dismissButton = { TextButton(onClick = { showFinishDialog = false }) { Text("Continuer", color = c.textSec) } })
+            dismissButton = { TextButton(onClick = { showFinishDialog = false }) { Text(S.continueWorkout, color = c.textSec) } })
     }
 
     // Dialogue superset
@@ -178,18 +179,18 @@ fun WorkoutScreen(
         val candidates = workout.exercises.filter { it.id != srcId && it.supersetWith == null }
         AlertDialog(onDismissRequest = { showSupersetPicker = null },
             containerColor = c.surface,
-            title = { Text("Associer en superset avec…", color = c.text) },
+            title = { Text(S.supersetPickerTitle, color = c.text) },
             text = {
-                if (candidates.isEmpty()) Text("Aucun exercice disponible.", color = c.textSec)
+                if (candidates.isEmpty()) Text(S.noExerciseAvailable, color = c.textSec)
                 else Column { candidates.forEach { ex ->
                     TextButton(onClick = { vm.linkSuperset(srcId, ex.id); showSupersetPicker = null },
                         modifier = Modifier.fillMaxWidth()) {
-                        Text(ex.name.ifBlank { "Exercice sans nom" }, color = c.superset)
+                        Text(ex.name.ifBlank { S.unnamedExercise }, color = c.superset)
                     }
                 }}
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { showSupersetPicker = null }) { Text("Annuler", color = c.textSec) } })
+            dismissButton = { TextButton(onClick = { showSupersetPicker = null }) { Text(S.cancel, color = c.textSec) } })
     }
 
     // Dialogue multi-séries
@@ -197,7 +198,7 @@ fun WorkoutScreen(
         var count by remember { mutableStateOf(3) }
         AlertDialog(onDismissRequest = { showAddSetsFor = null },
             containerColor = c.surface,
-            title = { Text("Ajouter des séries", color = c.text) },
+            title = { Text(S.addSetsTitle, color = c.text) },
             text = {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically) {
@@ -210,10 +211,10 @@ fun WorkoutScreen(
             confirmButton = {
                 Button(onClick = { vm.addSets(exId, count); showAddSetsFor = null },
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
-                    Text("Ajouter", color = if (darkTheme) Color.Black else Color.White)
+                    Text(S.add, color = if (darkTheme) Color.Black else Color.White)
                 }
             },
-            dismissButton = { TextButton(onClick = { showAddSetsFor = null }) { Text("Annuler", color = c.textSec) } })
+            dismissButton = { TextButton(onClick = { showAddSetsFor = null }) { Text(S.cancel, color = c.textSec) } })
     }
 }
 
@@ -269,7 +270,7 @@ fun ExerciseCard(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 cursorBrush = SolidColor(c.accent), singleLine = true,
                 decorationBox = { inner ->
-                    if (exercise.name.isEmpty()) Text("Nom de l'exercice", color = c.textMuted, fontSize = 15.sp)
+                    if (exercise.name.isEmpty()) Text(S.exerciseNamePlaceholder, color = c.textMuted, fontSize = 15.sp)
                     inner()
                 })
             var menuOpen by remember { mutableStateOf(false) }
@@ -277,15 +278,15 @@ fun ExerciseCard(
                 IconButton(onClick = { menuOpen = true }) { Text("⋮", color = c.textSec, fontSize = 20.sp) }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, containerColor = c.surface) {
                     if (!isFirst)
-                        DropdownMenuItem(text = { Text("↑  Déplacer vers le haut", color = c.text) },
+                        DropdownMenuItem(text = { Text(S.moveUp, color = c.text) },
                             onClick = { vm.moveExerciseUp(exercise.id); menuOpen = false })
                     if (isSupersetMember)
-                        DropdownMenuItem(text = { Text("Retirer du superset", color = c.superset) },
+                        DropdownMenuItem(text = { Text(S.unlinkSuperset, color = c.superset) },
                             onClick = { vm.unlinkSuperset(exercise.id); menuOpen = false })
                     else
-                        DropdownMenuItem(text = { Text("Associer en superset", color = c.text) },
+                        DropdownMenuItem(text = { Text(S.linkSuperset, color = c.text) },
                             onClick = { onPickSuperset(); menuOpen = false })
-                    DropdownMenuItem(text = { Text("Supprimer l'exercice", color = c.danger) },
+                    DropdownMenuItem(text = { Text(S.deleteExercise, color = c.danger) },
                         onClick = { vm.removeExercise(exercise.id); menuOpen = false })
                 }
             }
@@ -312,10 +313,10 @@ fun ExerciseCard(
 
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
             TextButton(onClick = { vm.addSets(exercise.id) }, modifier = Modifier.weight(1f)) {
-                Text("+ Série", color = c.accent, fontSize = 13.sp)
+                Text(S.addSet, color = c.accent, fontSize = 13.sp)
             }
             TextButton(onClick = onAddMultiple, modifier = Modifier.weight(1f)) {
-                Text("+ Plusieurs", color = c.accent, fontSize = 13.sp)
+                Text(S.addMultiple, color = c.accent, fontSize = 13.sp)
             }
         }
     }

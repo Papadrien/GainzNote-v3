@@ -2,6 +2,9 @@ package com.gainznote.ui
 
 import androidx.compose.runtime.*
 import com.gainznote.db.DatabaseDriverFactory
+import com.gainznote.i18n.Lang
+import com.gainznote.i18n.S
+import com.gainznote.i18n.getSystemLanguage
 import com.gainznote.model.AppSettings
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.detail.DetailScreen
@@ -26,7 +29,10 @@ fun App(
     onImportRequest: ((String) -> Unit) -> Unit = {},
     // Callbacks notification chrono (implémentés côté Android)
     onChronoStart: (Long) -> Unit = {},
-    onChronoStop: () -> Unit = {}
+    onChronoStop: () -> Unit = {},
+    // Callback interstitiel pub : appelé quand un entraînement se termine.
+    // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
+    onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() }
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -34,6 +40,8 @@ fun App(
     var darkTheme by remember { mutableStateOf(true) }
     var blackBg by remember { mutableStateOf(false) }
     var chronoNotifEnabled by remember { mutableStateOf(false) }
+    var adFree by remember { mutableStateOf(false) }
+    var language by remember { mutableStateOf("auto") }
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -42,6 +50,10 @@ fun App(
         darkTheme = settings.darkTheme
         blackBg = settings.blackBg
         chronoNotifEnabled = settings.chronoNotifEnabled
+        adFree = settings.adFree
+        language = settings.language
+        // Initialiser la langue
+        if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
         settingsLoaded = true
     }
 
@@ -52,7 +64,9 @@ fun App(
                 AppSettings(
                     darkTheme = darkTheme,
                     blackBg = blackBg,
-                    chronoNotifEnabled = chronoNotifEnabled
+                    chronoNotifEnabled = chronoNotifEnabled,
+                    adFree = adFree,
+                    language = language
                 )
             )
         }
@@ -111,6 +125,17 @@ fun App(
                         }
                     }
                 },
+                adFree = adFree,
+                onToggleAdFree = {
+                    adFree = !adFree
+                    persistSettings()
+                },
+                language = language,
+                onCycleLang = {
+                    language = when (language) { "auto" -> "fr"; "fr" -> "en"; else -> "auto" }
+                    if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
+                    persistSettings()
+                },
                 refreshKey = refreshKey
             )
             is Screen.Workout -> WorkoutScreen(
@@ -120,7 +145,17 @@ fun App(
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 onBack = { navigateBack() },
-                onFinished = { backStack.clear(); backStack.add(Screen.Home) },
+                onFinished = {
+                    if (adFree) {
+                        backStack.clear()
+                        backStack.add(Screen.Home)
+                    } else {
+                        onShowInterstitial {
+                            backStack.clear()
+                            backStack.add(Screen.Home)
+                        }
+                    }
+                },
                 chronoNotifEnabled = chronoNotifEnabled,
                 onChronoStart = onChronoStart,
                 onChronoStop = onChronoStop

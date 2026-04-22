@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,13 +16,69 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.repository.WorkoutRepository
+import com.gainznote.i18n.S
 import com.gainznote.ui.App
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private var pendingExportJson: String? = null
     private var onJsonReadCallback: ((String) -> Unit)? = null
+
+    // ── Interstitiel AdMob ────────────────────────────────────────────────────
+    private var interstitialAd: InterstitialAd? = null
+
+    /** Pré-charge un interstitiel pour la prochaine utilisation. */
+    private fun loadInterstitial() {
+        InterstitialAd.load(
+            this,
+            // ID de test Google — remplacer par le vrai avant publication
+            "ca-app-pub-3940256099942544/1033173712",
+            AdRequest.Builder().build(),
+            object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(ad: InterstitialAd) {
+                    interstitialAd = ad
+                    Log.d("GainzAds", "Interstitiel chargé")
+                }
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    interstitialAd = null
+                    Log.d("GainzAds", "Échec chargement interstitiel: ${error.message}")
+                }
+            }
+        )
+    }
+
+    /**
+     * Tente d'afficher l'interstitiel puis exécute [onDismissed].
+     * Affiché une fois tous les 3 entraînements terminés pour rester non-intrusif.
+     * Si la pub n'est pas prête, on passe directement au callback.
+     */
+    private fun showInterstitialThen(onDismissed: () -> Unit) {
+        val ad = interstitialAd
+        if (ad != null) {
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    interstitialAd = null
+                    loadInterstitial()   // recharger pour la prochaine fois
+                    onDismissed()
+                }
+                override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) {
+                    interstitialAd = null
+                    loadInterstitial()
+                    onDismissed()        // fallback : ne pas bloquer l'utilisateur
+                }
+            }
+            ad.show(this)
+        } else {
+            onDismissed()
+        }
+    }
 
     // ── Export ────────────────────────────────────────────────────────────────
     private val exportLauncher = registerForActivityResult(
@@ -32,9 +89,9 @@ class MainActivity : ComponentActivity() {
             contentResolver.openOutputStream(uri)?.use {
                 it.write((pendingExportJson ?: "[]").toByteArray())
             }
-            Toast.makeText(this, "Données sauvegardées ✓", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, S.dataSaved, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, S.saveError, Toast.LENGTH_LONG).show()
         }
         pendingExportJson = null
     }
@@ -47,12 +104,12 @@ class MainActivity : ComponentActivity() {
         try {
             val json = contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
             if (json.isNullOrBlank() || !json.trim().startsWith("[")) {
-                Toast.makeText(this, "Format de fichier invalide", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, S.invalidFileFormat, Toast.LENGTH_LONG).show()
                 return@registerForActivityResult
             }
             onJsonReadCallback?.invoke(json)
         } catch (e: Exception) {
-            Toast.makeText(this, "Erreur : fichier mal formaté", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, S.fileMalformatted, Toast.LENGTH_LONG).show()
         }
         onJsonReadCallback = null
     }
@@ -64,7 +121,7 @@ class MainActivity : ComponentActivity() {
         if (!granted) {
             Toast.makeText(
                 this,
-                "Autorisation refusée — la notification chrono ne s'affichera pas",
+                S.notifPermDenied,
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -76,7 +133,6 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val perm = android.Manifest.permission.POST_NOTIFICATIONS
             if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                // Demander la permission puis relancer
                 notifPermLauncher.launch(perm)
                 return
             }
@@ -98,10 +154,13 @@ class MainActivity : ComponentActivity() {
     // ── onCreate ──────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Splash screen — doit être appelé AVANT super.onCreate
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialiser le SDK AdMob
+        MobileAds.initialize(this) {}
+        loadInterstitial()
 
         val repo = WorkoutRepository(DatabaseDriverFactory(this))
 
@@ -121,14 +180,15 @@ class MainActivity : ComponentActivity() {
                                 showImportChoiceDialog(json, repo, composableCallback)
                             } else {
                                 composableCallback(json)
-                                Toast.makeText(this@MainActivity, "Données restaurées ✓", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@MainActivity, S.dataRestored, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                     importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                 },
                 onChronoStart = { startTimeMs -> startChronoService(startTimeMs) },
-                onChronoStop  = { stopChronoService() }
+                onChronoStop  = { stopChronoService() },
+                onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) }
             )
         }
     }
@@ -144,24 +204,24 @@ class MainActivity : ComponentActivity() {
         composableCallback: (String) -> Unit
     ) {
         android.app.AlertDialog.Builder(this)
-            .setTitle("Restaurer les données")
-            .setMessage("Des entraînements existent déjà.\n\nQue souhaitez-vous faire ?")
-            .setPositiveButton("Ajouter aux existants") { _, _ ->
+            .setTitle(S.restoreDialogTitle)
+            .setMessage(S.restoreDialogBody)
+            .setPositiveButton(S.addToExisting) { _, _ ->
                 composableCallback(json)
-                Toast.makeText(this, "Données ajoutées ✓", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, S.dataAdded, Toast.LENGTH_SHORT).show()
             }
-            .setNeutralButton("Écraser tout") { _, _ ->
+            .setNeutralButton(S.overwriteAll) { _, _ ->
                 lifecycleScope.launch {
                     try {
                         repo.deleteAllWorkouts()
                         composableCallback(json)
-                        Toast.makeText(this@MainActivity, "Données remplacées ✓", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, S.dataReplaced, Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(this@MainActivity, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, S.importError, Toast.LENGTH_LONG).show()
                     }
                 }
             }
-            .setNegativeButton("Annuler", null)
+            .setNegativeButton(S.cancel, null)
             .show()
     }
 }

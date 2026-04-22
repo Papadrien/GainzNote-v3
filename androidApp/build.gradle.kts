@@ -51,4 +51,5 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.google.play.services.ads)
 }

@@ -1,0 +1,343 @@
+package com.gainznote.i18n
+
+/** Langue supportée. */
+enum class Lang { FR, EN }
+
+/**
+ * Objet de traduction centralisé.
+ * Utiliser `S.xxx` partout dans l'UI au lieu de chaînes en dur.
+ * Appeler `S.setLang(lang)` au démarrage ou quand l'utilisateur change la langue.
+ */
+object S {
+    var lang: Lang = Lang.FR
+        private set
+
+    fun setLang(l: Lang) { lang = l }
+
+    /** Initialise la langue à partir du code système ("fr", "en", …). */
+    fun initFromSystem(code: String) {
+        lang = if (code.startsWith("fr")) Lang.FR else Lang.EN
+    }
+
+    // ── App ───────────────────────────────────────────────────────────────
+    val appName get() = "GainzNote"
+    val subtitle get() = when (lang) {
+        Lang.FR -> "Ton carnet de musculation"
+        Lang.EN -> "Your workout logbook"
+    }
+
+    // ── Home ──────────────────────────────────────────────────────────────
+    val newWorkout get() = when (lang) {
+        Lang.FR -> "+ Nouvel entraînement"
+        Lang.EN -> "+ New workout"
+    }
+    val inProgress get() = when (lang) {
+        Lang.FR -> "En cours"
+        Lang.EN -> "In progress"
+    }
+    val recent get() = when (lang) {
+        Lang.FR -> "Récents"
+        Lang.EN -> "Recent"
+    }
+    val seeAll get() = when (lang) {
+        Lang.FR -> "Voir tout →"
+        Lang.EN -> "See all →"
+    }
+    val settings get() = when (lang) {
+        Lang.FR -> "Paramètres"
+        Lang.EN -> "Settings"
+    }
+    val darkMode get() = when (lang) {
+        Lang.FR -> "Mode sombre"
+        Lang.EN -> "Dark mode"
+    }
+    val blackBg get() = when (lang) {
+        Lang.FR -> "Fond noir"
+        Lang.EN -> "Black background"
+    }
+    val chronoNotif get() = when (lang) {
+        Lang.FR -> "Notification chronomètre"
+        Lang.EN -> "Timer notification"
+    }
+    val chronoNotifDesc get() = when (lang) {
+        Lang.FR -> "Affiche le temps de repos dans les notifications"
+        Lang.EN -> "Shows rest time in notifications"
+    }
+    val backupData get() = when (lang) {
+        Lang.FR -> "Sauvegarder les données"
+        Lang.EN -> "Backup data"
+    }
+    val restoreData get() = when (lang) {
+        Lang.FR -> "Restaurer les données"
+        Lang.EN -> "Restore data"
+    }
+    val untitledWorkout get() = when (lang) {
+        Lang.FR -> "Entraînement sans titre"
+        Lang.EN -> "Untitled workout"
+    }
+    val untitled get() = when (lang) {
+        Lang.FR -> "Sans titre"
+        Lang.EN -> "Untitled"
+    }
+    val deleteInProgressDesc get() = when (lang) {
+        Lang.FR -> "Supprimer l'entraînement en cours"
+        Lang.EN -> "Delete in-progress workout"
+    }
+
+    fun exerciseCount(n: Int) = when (lang) {
+        Lang.FR -> "$n exercice(s)"
+        Lang.EN -> if (n == 1) "1 exercise" else "$n exercises"
+    }
+    fun exerciseCountInProgress(n: Int) = when (lang) {
+        Lang.FR -> "$n exercice(s) · En cours…"
+        Lang.EN -> if (n == 1) "1 exercise · In progress…" else "$n exercises · In progress…"
+    }
+
+    // ── Workout ───────────────────────────────────────────────────────────
+    fun startedAt(date: String) = when (lang) {
+        Lang.FR -> "Démarré $date"
+        Lang.EN -> "Started $date"
+    }
+    val finish get() = when (lang) {
+        Lang.FR -> "Terminer"
+        Lang.EN -> "Finish"
+    }
+    val workoutTitlePlaceholder get() = when (lang) {
+        Lang.FR -> "Titre de l'entraînement"
+        Lang.EN -> "Workout title"
+    }
+    val generalNotesPlaceholder get() = when (lang) {
+        Lang.FR -> "Notes générales…"
+        Lang.EN -> "General notes…"
+    }
+    val addExercise get() = when (lang) {
+        Lang.FR -> "+ Ajouter un exercice"
+        Lang.EN -> "+ Add exercise"
+    }
+    val finishWorkoutTitle get() = when (lang) {
+        Lang.FR -> "Terminer l'entraînement ?"
+        Lang.EN -> "Finish workout?"
+    }
+    fun finishWorkoutBody(exercises: Int, sets: Int) = when (lang) {
+        Lang.FR -> "$exercises exercice(s) · $sets série(s)"
+        Lang.EN -> "$exercises exercise(s) · $sets set(s)"
+    }
+    val finishConfirm get() = when (lang) {
+        Lang.FR -> "Terminer ✓"
+        Lang.EN -> "Finish ✓"
+    }
+    val continueWorkout get() = when (lang) {
+        Lang.FR -> "Continuer"
+        Lang.EN -> "Continue"
+    }
+    val supersetPickerTitle get() = when (lang) {
+        Lang.FR -> "Associer en superset avec…"
+        Lang.EN -> "Link as superset with…"
+    }
+    val noExerciseAvailable get() = when (lang) {
+        Lang.FR -> "Aucun exercice disponible."
+        Lang.EN -> "No exercise available."
+    }
+    val unnamedExercise get() = when (lang) {
+        Lang.FR -> "Exercice sans nom"
+        Lang.EN -> "Unnamed exercise"
+    }
+    val cancel get() = when (lang) {
+        Lang.FR -> "Annuler"
+        Lang.EN -> "Cancel"
+    }
+    val addSetsTitle get() = when (lang) {
+        Lang.FR -> "Ajouter des séries"
+        Lang.EN -> "Add sets"
+    }
+    val add get() = when (lang) {
+        Lang.FR -> "Ajouter"
+        Lang.EN -> "Add"
+    }
+    val exerciseNamePlaceholder get() = when (lang) {
+        Lang.FR -> "Nom de l'exercice"
+        Lang.EN -> "Exercise name"
+    }
+    val moveUp get() = when (lang) {
+        Lang.FR -> "↑  Déplacer vers le haut"
+        Lang.EN -> "↑  Move up"
+    }
+    val unlinkSuperset get() = when (lang) {
+        Lang.FR -> "Retirer du superset"
+        Lang.EN -> "Remove from superset"
+    }
+    val linkSuperset get() = when (lang) {
+        Lang.FR -> "Associer en superset"
+        Lang.EN -> "Link as superset"
+    }
+    val deleteExercise get() = when (lang) {
+        Lang.FR -> "Supprimer l'exercice"
+        Lang.EN -> "Delete exercise"
+    }
+    val addSet get() = when (lang) {
+        Lang.FR -> "+ Série"
+        Lang.EN -> "+ Set"
+    }
+    val addMultiple get() = when (lang) {
+        Lang.FR -> "+ Plusieurs"
+        Lang.EN -> "+ Multiple"
+    }
+
+    // ── History ───────────────────────────────────────────────────────────
+    val history get() = when (lang) {
+        Lang.FR -> "Historique"
+        Lang.EN -> "History"
+    }
+    val noWorkoutRecorded get() = when (lang) {
+        Lang.FR -> "Aucun entraînement enregistré"
+        Lang.EN -> "No workout recorded"
+    }
+    fun exercisesCount(n: Int) = when (lang) {
+        Lang.FR -> "$n exercices"
+        Lang.EN -> if (n == 1) "1 exercise" else "$n exercises"
+    }
+    fun setsCount(n: Int) = when (lang) {
+        Lang.FR -> "$n séries"
+        Lang.EN -> if (n == 1) "1 set" else "$n sets"
+    }
+    val useAsTemplate get() = when (lang) {
+        Lang.FR -> "↻  Utiliser comme base"
+        Lang.EN -> "↻  Use as template"
+    }
+
+    // ── Detail ────────────────────────────────────────────────────────────
+    val delete get() = when (lang) {
+        Lang.FR -> "Supprimer"
+        Lang.EN -> "Delete"
+    }
+    val deleteConfirmTitle get() = when (lang) {
+        Lang.FR -> "Supprimer ?"
+        Lang.EN -> "Delete?"
+    }
+    val deleteConfirmBody get() = when (lang) {
+        Lang.FR -> "Action irréversible."
+        Lang.EN -> "This cannot be undone."
+    }
+    val weight get() = when (lang) {
+        Lang.FR -> "Poids"
+        Lang.EN -> "Weight"
+    }
+    val reps get() = when (lang) {
+        Lang.FR -> "Reps"
+        Lang.EN -> "Reps"
+    }
+    val notes get() = when (lang) {
+        Lang.FR -> "Notes"
+        Lang.EN -> "Notes"
+    }
+
+    // ── Dates ─────────────────────────────────────────────────────────────
+    val daysShort get() = when (lang) {
+        Lang.FR -> listOf("Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim")
+        Lang.EN -> listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    }
+    val daysLong get() = when (lang) {
+        Lang.FR -> listOf("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+        Lang.EN -> listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    }
+    val monthsShort get() = when (lang) {
+        Lang.FR -> listOf("jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc")
+        Lang.EN -> listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    }
+    fun dateAtTime(day: String, dayNum: Int, month: String, hour: String, min: String) = when (lang) {
+        Lang.FR -> "$day $dayNum $month à $hour:$min"
+        Lang.EN -> "$day $month $dayNum, $hour:$min"
+    }
+    fun dateShort(day: String, dayNum: Int, month: String, hour: String, min: String) = when (lang) {
+        Lang.FR -> "$day $dayNum $month · $hour:$min"
+        Lang.EN -> "$day $month $dayNum · $hour:$min"
+    }
+
+    // ── Ads / Purchase ────────────────────────────────────────────────────
+    val removeAds get() = when (lang) {
+        Lang.FR -> "Supprimer les publicités"
+        Lang.EN -> "Remove ads"
+    }
+    val removeAdsTestHint get() = when (lang) {
+        Lang.FR -> "⚠ Mode test — simule un achat"
+        Lang.EN -> "⚠ Test mode — simulates a purchase"
+    }
+    val adsRemoved get() = when (lang) {
+        Lang.FR -> "✓ Publicités supprimées"
+        Lang.EN -> "✓ Ads removed"
+    }
+    val adsRemovedTestHint get() = when (lang) {
+        Lang.FR -> "⚠ Mode test — appuyez pour réactiver"
+        Lang.EN -> "⚠ Test mode — tap to re-enable"
+    }
+    val language get() = when (lang) {
+        Lang.FR -> "Langue"
+        Lang.EN -> "Language"
+    }
+
+    // ── Android-only (MainActivity / ChronoService) ──────────────────────
+    val dataSaved get() = when (lang) {
+        Lang.FR -> "Données sauvegardées ✓"
+        Lang.EN -> "Data saved ✓"
+    }
+    val saveError get() = when (lang) {
+        Lang.FR -> "Erreur lors de la sauvegarde"
+        Lang.EN -> "Error while saving"
+    }
+    val invalidFileFormat get() = when (lang) {
+        Lang.FR -> "Format de fichier invalide"
+        Lang.EN -> "Invalid file format"
+    }
+    val fileMalformatted get() = when (lang) {
+        Lang.FR -> "Erreur : fichier mal formaté"
+        Lang.EN -> "Error: malformed file"
+    }
+    val notifPermDenied get() = when (lang) {
+        Lang.FR -> "Autorisation refusée — la notification chrono ne s'affichera pas"
+        Lang.EN -> "Permission denied — timer notification won't show"
+    }
+    val dataRestored get() = when (lang) {
+        Lang.FR -> "Données restaurées ✓"
+        Lang.EN -> "Data restored ✓"
+    }
+    val restoreDialogTitle get() = when (lang) {
+        Lang.FR -> "Restaurer les données"
+        Lang.EN -> "Restore data"
+    }
+    val restoreDialogBody get() = when (lang) {
+        Lang.FR -> "Des entraînements existent déjà.\n\nQue souhaitez-vous faire ?"
+        Lang.EN -> "Workouts already exist.\n\nWhat would you like to do?"
+    }
+    val addToExisting get() = when (lang) {
+        Lang.FR -> "Ajouter aux existants"
+        Lang.EN -> "Add to existing"
+    }
+    val dataAdded get() = when (lang) {
+        Lang.FR -> "Données ajoutées ✓"
+        Lang.EN -> "Data added ✓"
+    }
+    val overwriteAll get() = when (lang) {
+        Lang.FR -> "Écraser tout"
+        Lang.EN -> "Overwrite all"
+    }
+    val dataReplaced get() = when (lang) {
+        Lang.FR -> "Données remplacées ✓"
+        Lang.EN -> "Data replaced ✓"
+    }
+    val importError get() = when (lang) {
+        Lang.FR -> "Erreur lors de l'import"
+        Lang.EN -> "Import error"
+    }
+    val chronoNotifTitle get() = when (lang) {
+        Lang.FR -> "GainzNote · Temps de repos"
+        Lang.EN -> "GainzNote · Rest time"
+    }
+    val chronoChannelName get() = when (lang) {
+        Lang.FR -> "Chronomètre de repos"
+        Lang.EN -> "Rest timer"
+    }
+    val chronoChannelDesc get() = when (lang) {
+        Lang.FR -> "Affiche le temps de repos en cours pendant l'entraînement"
+        Lang.EN -> "Shows current rest time during workout"
+    }
+}

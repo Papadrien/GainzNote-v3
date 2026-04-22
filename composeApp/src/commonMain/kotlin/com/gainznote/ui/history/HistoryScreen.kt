@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.*
 import com.gainznote.model.Workout
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
+import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
 
 @Composable
@@ -36,7 +37,7 @@ fun HistoryScreen(
                 Text("←", color = c.accent, fontSize = 22.sp)
             }
             Spacer(Modifier.width(8.dp))
-            Text("Historique", color = c.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(S.history, color = c.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
@@ -49,7 +50,7 @@ fun HistoryScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🏋️", fontSize = 48.sp)
                     Spacer(Modifier.height(12.dp))
-                    Text("Aucun entraînement enregistré", color = c.textMuted, fontSize = 15.sp)
+                    Text(S.noWorkoutRecorded, color = c.textMuted, fontSize = 15.sp)
                 }
             }
         } else {
@@ -75,14 +76,14 @@ fun HistoryCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit, onUs
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(workout.title.ifBlank { "Sans titre" }, color = c.text,
+                Text(workout.title.ifBlank { S.untitled }, color = c.text,
                     fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(4.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatChip("${workout.exercises.size} exercices", c)
-                    StatChip("${workout.exercises.sumOf { it.sets.size }} séries", c)
+                    StatChip(S.exercisesCount(workout.exercises.size), c)
+                    StatChip(S.setsCount(workout.exercises.sumOf { it.sets.size }), c)
                 }
                 if (workout.exercises.isNotEmpty()) {
                     Spacer(Modifier.height(6.dp))
@@ -95,7 +96,7 @@ fun HistoryCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit, onUs
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
         TextButton(onClick = onUseAsTemplate, modifier = Modifier.fillMaxWidth()) {
-            Text("↻  Utiliser comme base", color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text(S.useAsTemplate, color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

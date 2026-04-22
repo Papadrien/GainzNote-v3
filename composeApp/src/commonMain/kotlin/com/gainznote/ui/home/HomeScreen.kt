@@ -17,6 +17,8 @@ import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import com.gainznote.i18n.S
+import com.gainznote.ui.ads.AdBanner
 
 @Composable
 fun HomeScreen(
@@ -34,6 +36,10 @@ fun HomeScreen(
     onDeleteInProgressWorkout: (String) -> Unit = {},
     onExport: () -> Unit = {},
     onImport: () -> Unit = {},
+    adFree: Boolean = false,
+    onToggleAdFree: () -> Unit = {},
+    language: String = "auto",
+    onCycleLang: () -> Unit = {},
     refreshKey: Int = 0
 ) {
     val c = GainzThemeColors(darkTheme, blackBg)
@@ -54,7 +60,7 @@ fun HomeScreen(
             "GainzNote", color = c.accent, fontSize = 34.sp,
             fontWeight = FontWeight.Black, letterSpacing = (-1).sp
         )
-        Text("Ton carnet de musculation", color = c.textMuted, fontSize = 13.sp)
+        Text(S.subtitle, color = c.textMuted, fontSize = 13.sp)
         Spacer(Modifier.height(28.dp))
 
         Button(
@@ -63,7 +69,7 @@ fun HomeScreen(
             colors = ButtonDefaults.buttonColors(containerColor = c.accent)
         ) {
             Text(
-                "+ Nouvel entraînement",
+                S.newWorkout,
                 color = if (darkTheme) Color.Black else Color.White,
                 fontSize = 17.sp, fontWeight = FontWeight.Bold
             )
@@ -72,7 +78,7 @@ fun HomeScreen(
 
         // ── En cours ──────────────────────────────────────────────────────────
         if (inProgressWorkouts.isNotEmpty()) {
-            SectionLabel("En cours", c)
+            SectionLabel(S.inProgress, c)
             Spacer(Modifier.height(8.dp))
             inProgressWorkouts.forEach { w ->
                 InProgressCard(
@@ -93,9 +99,9 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SectionLabel("Récents", c)
+                SectionLabel(S.recent, c)
                 TextButton(onClick = onHistory) {
-                    Text("Voir tout →", color = c.accent, fontSize = 13.sp)
+                    Text(S.seeAll, color = c.accent, fontSize = 13.sp)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -107,7 +113,7 @@ fun HomeScreen(
         }
 
         // ── Paramètres ────────────────────────────────────────────────────────
-        SectionLabel("Paramètres", c)
+        SectionLabel(S.settings, c)
         Spacer(Modifier.height(12.dp))
 
         // ─ Bloc Thème ─────────────────────────────────────────────────────────
@@ -122,7 +128,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Mode sombre", color = c.text, fontSize = 15.sp)
+                    Text(S.darkMode, color = c.text, fontSize = 15.sp)
                     Switch(
                         checked = darkTheme, onCheckedChange = { onToggleTheme() },
                         colors = SwitchDefaults.colors(
@@ -141,7 +147,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Fond noir", color = c.textSec, fontSize = 14.sp)
+                        Text(S.blackBg, color = c.textSec, fontSize = 14.sp)
                         Switch(
                             checked = blackBg, onCheckedChange = { onToggleBlackBg() },
                             colors = SwitchDefaults.colors(
@@ -165,9 +171,9 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text("Notification chronomètre", color = c.text, fontSize = 15.sp)
+                    Text(S.chronoNotif, color = c.text, fontSize = 15.sp)
                     Text(
-                        "Affiche le temps de repos dans les notifications",
+                        S.chronoNotifDesc,
                         color = c.textMuted, fontSize = 11.sp
                     )
                 }
@@ -182,10 +188,54 @@ fun HomeScreen(
         Spacer(Modifier.height(8.dp))
 
         // ─ Export / Import ────────────────────────────────────────────────────
-        SettingButton("↑", "Sauvegarder les données", c, onExport)
+        SettingButton("↑", S.backupData, c, onExport)
         Spacer(Modifier.height(8.dp))
-        SettingButton("↓", "Restaurer les données", c, onImport)
-        Spacer(Modifier.height(40.dp))
+        SettingButton("↓", S.restoreData, c, onImport)
+        Spacer(Modifier.height(8.dp))
+
+        // ─ Langue ─────────────────────────────────────────────────────────────
+        val langLabel = when (language) { "fr" -> "Français"; "en" -> "English"; else -> "Auto" }
+        SettingButton("🌐", "${S.language} · $langLabel", c, onCycleLang)
+        Spacer(Modifier.height(8.dp))
+
+        // ─ Supprimer les pubs (bouton test) ───────────────────────────────────
+        Surface(
+            onClick = onToggleAdFree,
+            shape = RoundedCornerShape(12.dp), color = c.surface,
+            border = BorderStroke(1.dp, if (adFree) c.accent else c.border),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text(
+                        if (adFree) S.adsRemoved else S.removeAds,
+                        color = if (adFree) c.accent else c.text, fontSize = 15.sp
+                    )
+                    Text(
+                        if (adFree) S.adsRemovedTestHint else S.removeAdsTestHint,
+                        color = c.textMuted, fontSize = 11.sp
+                    )
+                }
+                Switch(
+                    checked = adFree, onCheckedChange = { onToggleAdFree() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                    )
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+
+        // ── Publicité ─────────────────────────────────────────────────────────
+        if (!adFree) {
+            AdBanner(Modifier.fillMaxWidth())
+        }
+
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -222,14 +272,14 @@ fun InProgressCard(
                 ) {
                     Box(Modifier.size(8.dp).background(c.accent, RoundedCornerShape(4.dp)))
                     Text(
-                        workout.title.ifBlank { "Entraînement sans titre" },
+                        workout.title.ifBlank { S.untitledWorkout },
                         color = c.accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                     )
                 }
                 Spacer(Modifier.height(3.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textSec, fontSize = 12.sp)
                 Text(
-                    "${workout.exercises.size} exercice(s) · En cours…",
+                    S.exerciseCountInProgress(workout.exercises.size),
                     color = c.textSec, fontSize = 12.sp
                 )
             }
@@ -240,7 +290,7 @@ fun InProgressCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Supprimer l'entraînement en cours",
+                        contentDescription = S.deleteInProgressDesc,
                         tint = c.danger
                     )
                 }
@@ -280,12 +330,12 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    workout.title.ifBlank { "Sans titre" }, color = c.text,
+                    workout.title.ifBlank { S.untitled }, color = c.text,
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
-                Text("${workout.exercises.size} exercice(s)", color = c.textMuted, fontSize = 12.sp)
+                Text(S.exerciseCount(workout.exercises.size), color = c.textMuted, fontSize = 12.sp)
             }
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }
@@ -295,19 +345,17 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
 fun formatDisplayDate(iso: String): String = try {
     val instant = Instant.parse(iso)
     val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val days = listOf("Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim")
-    val months = listOf("jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc")
-    "${days[local.dayOfWeek.ordinal]} ${local.dayOfMonth} ${months[local.monthNumber - 1]} · ${
-        local.hour.toString().padStart(2, '0')
-    }:${local.minute.toString().padStart(2, '0')}"
+    val days = S.daysShort
+    val months = S.monthsShort
+    S.dateShort(days[local.dayOfWeek.ordinal], local.dayOfMonth, months[local.monthNumber - 1],
+        local.hour.toString().padStart(2, '0'), local.minute.toString().padStart(2, '0'))
 } catch (e: Exception) { iso }
 
 fun formatDisplayDateFull(iso: String): String = try {
     val instant = Instant.parse(iso)
     val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val days = listOf("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
-    val months = listOf("jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc")
-    "${days[local.dayOfWeek.ordinal]} ${local.dayOfMonth} ${months[local.monthNumber - 1]} à ${
-        local.hour.toString().padStart(2, '0')
-    }:${local.minute.toString().padStart(2, '0')}"
+    val days = S.daysLong
+    val months = S.monthsShort
+    S.dateAtTime(days[local.dayOfWeek.ordinal], local.dayOfMonth, months[local.monthNumber - 1],
+        local.hour.toString().padStart(2, '0'), local.minute.toString().padStart(2, '0'))
 } catch (e: Exception) { iso }

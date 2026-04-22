@@ -16,6 +16,7 @@ import com.gainznote.model.Workout
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.history.StatChip
 import com.gainznote.ui.home.formatDisplayDate
+import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.launch
 
@@ -45,7 +46,7 @@ fun DetailScreen(
             }
             if (workout != null) {
                 IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Supprimer", tint = c.danger)
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = S.delete, tint = c.danger)
                 }
             }
         }
@@ -57,14 +58,14 @@ fun DetailScreen(
             }
         } else {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-                Text(w.title.ifBlank { "Sans titre" }, color = c.text,
+                Text(w.title.ifBlank { S.untitled }, color = c.text,
                     fontSize = 24.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp)
                 Spacer(Modifier.height(6.dp))
                 Text(formatDisplayDate(w.startedAt), color = c.textMuted, fontSize = 13.sp)
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatChip("${w.exercises.size} exercices", c)
-                    StatChip("${w.exercises.sumOf { it.sets.size }} séries", c)
+                    StatChip(S.exercisesCount(w.exercises.size), c)
+                    StatChip(S.setsCount(w.exercises.sumOf { it.sets.size }), c)
                 }
                 if (w.notes.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))
@@ -81,7 +82,7 @@ fun DetailScreen(
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
-                    Text("↻  Utiliser comme base", color = if (darkTheme) Color.Black else Color.White,
+                    Text(S.useAsTemplate, color = if (darkTheme) Color.Black else Color.White,
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
                 Spacer(Modifier.height(32.dp))
@@ -92,15 +93,15 @@ fun DetailScreen(
     if (showDeleteDialog && workout != null) {
         AlertDialog(onDismissRequest = { showDeleteDialog = false },
             containerColor = c.surface,
-            title = { Text("Supprimer ?", color = c.text) },
-            text = { Text("Action irréversible.", color = c.textSec) },
+            title = { Text(S.deleteConfirmTitle, color = c.text) },
+            text = { Text(S.deleteConfirmBody, color = c.textSec) },
             confirmButton = {
                 Button(onClick = { scope.launch { repo.deleteWorkout(workoutId); onDeleted() } },
                     colors = ButtonDefaults.buttonColors(containerColor = c.danger)) {
-                    Text("Supprimer", color = Color.White)
+                    Text(S.delete, color = Color.White)
                 }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler", color = c.textMuted) } })
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(S.cancel, color = c.textMuted) } })
     }
 }
 
@@ -120,15 +121,15 @@ fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
                 }
                 Spacer(Modifier.width(8.dp))
             }
-            Text(exercise.name.ifBlank { "Exercice sans nom" }, color = c.text,
+            Text(exercise.name.ifBlank { S.unnamedExercise }, color = c.text,
                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
         HorizontalDivider(color = if (isSuperset) c.superset.copy(alpha = 0.3f) else c.border, thickness = 0.5.dp)
         Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
             Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(28.dp))
-            Text("Poids", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
-            Text("Reps", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
-            Text("Notes", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(2f))
+            Text(S.weight, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+            Text(S.reps, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+            Text(S.notes, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(2f))
         }
         exercise.sets.forEachIndexed { i, s ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp)) {

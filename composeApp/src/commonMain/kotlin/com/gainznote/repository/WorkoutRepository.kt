@@ -76,7 +76,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
             AppSettings(
                 darkTheme = it.dark_theme != 0L,
                 blackBg = it.black_bg != 0L,
-                chronoNotifEnabled = it.chrono_notif_enabled != 0L
+                chronoNotifEnabled = it.chrono_notif_enabled != 0L,
+                adFree = it.ad_free != 0L,
+                language = it.language
             )
         } ?: AppSettings()
     }
@@ -85,7 +87,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
         q.upsertAppSettings(
             dark_theme = if (settings.darkTheme) 1L else 0L,
             black_bg = if (settings.blackBg) 1L else 0L,
-            chrono_notif_enabled = if (settings.chronoNotifEnabled) 1L else 0L
+            chrono_notif_enabled = if (settings.chronoNotifEnabled) 1L else 0L,
+            ad_free = if (settings.adFree) 1L else 0L,
+            language = settings.language
         )
     }
 

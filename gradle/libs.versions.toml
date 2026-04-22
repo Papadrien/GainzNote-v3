@@ -6,6 +6,7 @@ sqldelight          = "2.0.2"
 coroutines          = "1.9.0"
 datetime            = "0.6.1"
 navigationCompose   = "2.8.0-alpha10"
+playServicesAds     = "23.6.0"
 androidMinSdk       = "26"
 androidCompileSdk   = "35"
 androidTargetSdk    = "35"
@@ -25,6 +26,7 @@ androidx-core-ktx         = { module = "androidx.core:core-ktx",                
 androidx-splashscreen     = { module = "androidx.core:core-splashscreen",               version = "1.0.1" }
 androidx-appcompat         = { module = "androidx.appcompat:appcompat",                   version = "1.7.0" }
 navigation-compose         = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+google-play-services-ads   = { module = "com.google.android.gms:play-services-ads",     version.ref = "playServicesAds" }
 
 [plugins]
 androidApplication      = { id = "com.android.application",                  version.ref = "agp" }
