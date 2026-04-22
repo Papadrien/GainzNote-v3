@@ -18,6 +18,7 @@ class ImageButton extends StatefulWidget {
   final double? width;
   final double borderWidth;
   final bool bounce;
+  final bool showLabel;
 
   const ImageButton({
     super.key,
@@ -29,6 +30,7 @@ class ImageButton extends StatefulWidget {
     this.width,
     this.borderWidth = 3.5,
     this.bounce = false,
+    this.showLabel = false,
   });
 
   @override
@@ -193,8 +195,18 @@ class _ImageButtonState extends State<ImageButton>
                       ),
                     ),
                   ),
-                  // Layer 3: Icône centrée
-                  if (widget.icon != null)
+                  // Layer 3: Label texte OU Icône centrée
+                  if (widget.showLabel)
+                    Text(
+                      widget.text,
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: widget.height * 0.28,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF2B2B2B),
+                      ),
+                    )
+                  else if (widget.icon != null)
                     Icon(
                       widget.icon,
                       color: const Color(0xFF2B2B2B),

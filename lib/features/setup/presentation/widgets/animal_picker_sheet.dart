@@ -121,7 +121,7 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: ImageButton(
                 text: context.l10n.unlockAllButton,
-                icon: Icons.star_rounded,
+                showLabel: true,
                 backgroundAsset: ImageButton.blueBg,
                 onPressed: _showPurchaseConfirmation,
                 height: 64,

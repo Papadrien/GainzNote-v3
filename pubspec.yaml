@@ -29,10 +29,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/images/buttons/
     - assets/images/cat/
     - assets/images/chicken/
     - assets/images/crocodile/
     - assets/images/dog/
     - assets/images/pony/
     - assets/audio/
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-VariableFont_wght.ttf
