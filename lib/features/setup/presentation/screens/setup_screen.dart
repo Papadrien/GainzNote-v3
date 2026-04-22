@@ -40,7 +40,7 @@ class SetupScreen extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       context.l10n.appName,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -51,7 +51,10 @@ class SetupScreen extends ConsumerWidget {
                   ),
                   // Settings gear with black outline
                   GestureDetector(
-                    onTap: () => _showSettings(context),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _showSettings(context);
+                    },
                     child: Container(
                       width: 44, height: 44,
                       decoration: BoxDecoration(

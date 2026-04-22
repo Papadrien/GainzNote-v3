@@ -3,7 +3,6 @@ import '../../../data/models/timer_preset.dart';
 import '../../../data/models/animal_model.dart';
 import '../../../data/repositories/animal_repository.dart';
 import '../../../core/services/storage_service.dart';
-import '../../../core/services/gamification_service.dart';
 
 class SetupState {
   final int hours;
@@ -40,18 +39,17 @@ class SetupNotifier extends StateNotifier<SetupState> {
   final StorageService _storage;
 
   SetupNotifier(this._animalRepo, this._storage)
-      : super(SetupState(selectedAnimal: _animalRepo.getAll().first)) {
-    // Charger les recents et le dernier animal au démarrage
-    _loadFromStorage();
-  }
+      : super(_initialState(_animalRepo, _storage));
 
-  void _loadFromStorage() {
-    final presets = _storage.getPresets();
-    final lastAnimalId = _storage.getLastAnimalId();
-    final animal = _animalRepo.getById(lastAnimalId);
-    state = state.copyWith(
-      recentPresets: presets,
+  /// Construit l'état initial directement (sans setState après le build).
+  static SetupState _initialState(
+      AnimalRepository repo, StorageService storage) {
+    final presets = storage.getPresets();
+    final lastAnimalId = storage.getLastAnimalId();
+    final animal = repo.getById(lastAnimalId);
+    return SetupState(
       selectedAnimal: animal,
+      recentPresets: presets,
     );
   }
 

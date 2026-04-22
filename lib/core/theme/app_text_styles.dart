@@ -27,7 +27,7 @@ class AppTextStyles {
     color: AppColors.pencilDark, height: 1.0,
   );
 
-  static TextStyle get timePickerGhost => TextStyle(
+  static TextStyle get timePickerGhost => const TextStyle(
     fontFamily: _ff, fontSize: 48, fontWeight: FontWeight.w900,
     color: AppColors.pencilFaint, height: 1.0,
   );

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/utils/localization_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../providers/settings_provider.dart';
+import '../../../../core/services/purchase_service.dart';
 
 class SettingsSheet extends ConsumerWidget {
   const SettingsSheet({super.key});
@@ -11,11 +14,14 @@ class SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    return DraggableScrollableSheet(
-      initialChildSize: 0.55,
-      minChildSize: 0.3,
-      maxChildSize: 0.8,
-      builder: (_, controller) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      behavior: HitTestBehavior.opaque,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.8,
+        builder: (_, controller) {
         return Container(
           decoration: BoxDecoration(
             color: AppColors.sheetBg,
@@ -87,7 +93,7 @@ class SettingsSheet extends ConsumerWidget {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (ctx) => _PrivacyPolicyScreen(),
+                      builder: (ctx) => const _PrivacyPolicyScreen(),
                     ),
                   );
                 },
@@ -95,34 +101,58 @@ class SettingsSheet extends ConsumerWidget {
               _NavItem(
                 label: context.l10n.restorePurchases,
                 icon: Icons.restore_rounded,
-                onTap: () {
-                  // TODO: Brancher sur PurchaseService.restorePurchases()
-                  ScaffoldMessenger.of(context).showSnackBar(
+                onTap: () async {
+                  final purchaseService = ref.read(purchaseServiceProvider);
+                  final messenger = ScaffoldMessenger.of(context);
+                  final searchingText = context.l10n.searchingPurchases;
+                  final successText = context.l10n.restoreSuccess;
+                  // S'assurer que le service est initialisé
+                  await purchaseService.initialize();
+                  messenger.showSnackBar(
                     SnackBar(
-                      content: Text(context.l10n.searchingPurchases),
+                      content: Text(searchingText),
                       duration: const Duration(seconds: 2),
                     ),
                   );
+                  purchaseService.onPurchaseCompleted = () {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(successText),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: AppColors.accentGreen,
+                      ),
+                    );
+                  };
+                  await purchaseService.restorePurchases();
                 },
               ),
               const SizedBox(height: 24),
 
-              Center(
-                child: Text(
-                  context.l10n.version,
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.pencilFaint.withValues(alpha: 0.4),
-                  ),
-                ),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final version = snapshot.hasData
+                      ? 'Version 1.0.${snapshot.data!.buildNumber}'
+                      : '';
+                  return Center(
+                    child: Text(
+                      version,
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.pencilFaint.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 8),
             ],
           ),
         );
       },
+      ),
     );
   }
 }
@@ -135,7 +165,10 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -195,7 +228,11 @@ class _Toggle extends StatelessWidget {
             ),
           ),
           Switch(
-            value: value, onChanged: onChanged,
+            value: value,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
             activeColor: AppColors.toggleActive,
             activeTrackColor: AppColors.toggleActive.withValues(alpha: 0.3),
             inactiveThumbColor: AppColors.pencilFaint,
@@ -208,7 +245,7 @@ class _Toggle extends StatelessWidget {
 }
 
 class _PrivacyPolicyScreen extends StatelessWidget {
-  _PrivacyPolicyScreen();
+  const _PrivacyPolicyScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +265,7 @@ class _PrivacyPolicyScreen extends StatelessWidget {
       ),
       backgroundColor: AppColors.sheetBg,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -249,12 +286,24 @@ class _PrivacyPolicyScreen extends StatelessWidget {
               content: context.l10n.policyIAPContent,
             ),
             _PolicySection(
+              title: context.l10n.policyThirdParty,
+              content: context.l10n.policyThirdPartyContent,
+            ),
+            _PolicySection(
               title: context.l10n.policyCOPPA,
               content: context.l10n.policyCOPPAContent,
             ),
             _PolicySection(
+              title: context.l10n.policyGDPR,
+              content: context.l10n.policyGDPRContent,
+            ),
+            _PolicySection(
               title: context.l10n.policyContact,
               content: context.l10n.policyContactContent,
+            ),
+            _PolicySection(
+              title: context.l10n.policyUpdate,
+              content: context.l10n.policyUpdateContent,
             ),
           ],
         ),

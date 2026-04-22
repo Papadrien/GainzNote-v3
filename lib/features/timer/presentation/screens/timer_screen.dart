@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/timer_service.dart';
 import '../../../../core/services/audio_service.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
 import '../../../../shared/widgets/image_button.dart';
@@ -31,11 +30,6 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       final setup = ref.read(setupProvider);
       final settings = ref.read(settingsProvider);
       ref.read(timerServiceProvider.notifier).start(setup.duration);
-      ref.read(notificationServiceProvider).scheduleTimerEnd(
-        duration: setup.duration,
-        title: context.l10n.notifTitle,
-        body: context.l10n.notifTimerBody(localizedAnimalName(context, setup.selectedAnimal.id)),
-      );
       // Only start ambient music if sound is enabled
       if (settings.ambientSoundEnabled) {
         ref.read(audioServiceProvider).playAmbient(
@@ -77,7 +71,6 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     final setup = ref.watch(setupProvider);
     final settings = ref.watch(settingsProvider);
     final animal = setup.selectedAnimal;
-    final notifications = ref.read(notificationServiceProvider);
     final screenW = MediaQuery.of(context).size.width;
     final circleSize = screenW * 0.78;
 
@@ -87,8 +80,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       if (next.status == TimerStatus.finished &&
           prev?.status != TimerStatus.finished) {
         HapticFeedback.heavyImpact();
-        ref.read(audioServiceProvider).stopAll();
-        notifications.cancelAll();
+        ref.read(audioServiceProvider).stopAmbient();
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             pageBuilder: (_, __, ___) => const FinishScreen(),
@@ -139,17 +131,15 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                         shape: BoxShape.circle,
                         color: AppColors.paperLight.withValues(alpha: 0.6),
                         border: Border.all(
-                          color: AppColors.pencilDark.withValues(alpha: 0.2),
-                          width: 1.5,
-                        ),
+                          color: AppColors.pencilDark, width: 2.5),
                       ),
                       child: Icon(
                         settings.ambientSoundEnabled
                             ? Icons.volume_up_rounded
                             : Icons.volume_off_rounded,
                         color: settings.ambientSoundEnabled
-                            ? AppColors.pencilDark.withValues(alpha: 0.6)
-                            : AppColors.accentRed.withValues(alpha: 0.7),
+                            ? AppColors.pencilDark
+                            : AppColors.accentRed,
                         size: 22,
                       ),
                     ),
@@ -176,13 +166,20 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                       top: circleSize * 0.18,
                       child: TimerDisplay(remaining: ts.remaining),
                     ),
-                  Positioned(
+                  if (settings.showNumbers)
+                    Positioned(
                       bottom: circleSize * 0.12,
                       child: AnimalDisplay(
                         animal: animal,
                         size: circleSize * 0.48,
                         animate: ts.status == TimerStatus.running,
                       ),
+                    )
+                  else
+                    AnimalDisplay(
+                      animal: animal,
+                      size: circleSize * 0.48,
+                      animate: ts.status == TimerStatus.running,
                     ),
                 ],
               ),
@@ -199,11 +196,11 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                       icon: Icons.arrow_back_rounded,
                       backgroundAsset: ImageButton.redBg,
                       height: 80,
+                      bounce: true,
                       onPressed: () {
                         ref.read(timerServiceProvider.notifier).cancel();
                         ref.read(audioServiceProvider).stopAll();
-                        notifications.cancelAll();
-                        Navigator.of(context).pop();
+                                        Navigator.of(context).pop();
                       },
                     ),
                   ),
@@ -216,6 +213,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                           ? ImageButton.greenBg
                           : ImageButton.orangeBg,
                       height: 80,
+                      bounce: true,
                       onPressed: () {
                         final notifier =
                             ref.read(timerServiceProvider.notifier);
@@ -224,18 +222,12 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                         if (ts.status == TimerStatus.running) {
                           // === PAUSE ===
                           notifier.pause();
-                          notifications.cancelAll();
-                          if (settings.ambientSoundEnabled) {
+                                            if (settings.ambientSoundEnabled) {
                             audio.pauseAmbient();
                           }
                         } else if (ts.status == TimerStatus.paused) {
                           // === RESUME ===
                           notifier.resume();
-                          notifications.scheduleTimerEnd(
-                            duration: ts.remaining,
-                            title: context.l10n.notifTitle,
-                            body: context.l10n.notifTimerBody(localizedAnimalName(context, animal.id)),
-                          );
                           if (settings.ambientSoundEnabled) {
                             audio.resumeAmbient();
                           }

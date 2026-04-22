@@ -172,7 +172,7 @@ class _ChickenAnimatedDisplayState extends State<ChickenAnimatedDisplay>
               // Layer 3: Head (in front) — rotation
               Positioned.fill(
                 child: Transform(
-                  alignment: FractionalOffset(_headPivotX, _headPivotY),
+                  alignment: const FractionalOffset(_headPivotX, _headPivotY),
                   transform: Matrix4.rotationZ(headAngle),
                   child: Image.asset(
                     'assets/images/chicken/chicken_head.png',

@@ -153,7 +153,7 @@ class _CrocodileAnimatedDisplayState extends State<CrocodileAnimatedDisplay>
               // Layer 2: Head (rotation)
               Positioned.fill(
                 child: Transform(
-                  alignment: FractionalOffset(_headPivotX, _headPivotY),
+                  alignment: const FractionalOffset(_headPivotX, _headPivotY),
                   transform: Matrix4.rotationZ(headAngle),
                   child: Image.asset(
                     'assets/images/crocodile/crocodile_head.png',

@@ -43,7 +43,7 @@ class _CatAnimatedDisplayState extends State<CatAnimatedDisplay>
 
   // Tail pivot: top-left of tail, junction with body (368, 338) / 512
   static const double _tailPivotX = 0.719;
-  static const double _tailPivotY = 0.660;
+  static const double _tailPivotY = 0.735;
 
   @override
   void initState() {
@@ -148,11 +148,11 @@ class _CatAnimatedDisplayState extends State<CatAnimatedDisplay>
         } else if (widget.playOnce) {
           // playOnce → transition douce depuis et vers 0
           headAngle = _computeAngleOnce(t, _headAngle);
-          tailAngle = _computeAngleOnce(t, -_tailAngle);
+          tailAngle = _computeAngleOnce(t, _tailAngle);
         } else {
           // Boucle infinie → comportement original
           headAngle = _computeAngle(t, _headAngle);
-          tailAngle = _computeAngle(t, -_tailAngle);
+          tailAngle = _computeAngle(t, _tailAngle);
         }
 
         return SizedBox(

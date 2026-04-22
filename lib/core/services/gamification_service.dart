@@ -1,101 +1,60 @@
-import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/animal_repository.dart';
 import 'storage_service.dart';
 
-/// Service de gamification : gère le déblocage progressif des animaux.
-///
-/// Règles :
-/// - Chien et Chat sont débloqués par défaut.
-/// - Les autres animaux se débloquent aléatoirement à l'arrêt du minuteur.
-/// - La probabilité diminue au fur et à mesure des déblocages :
-///   - 0 animal bonus débloqué  → 1/3
-///   - 1 animal bonus débloqué  → 1/6
-///   - 2 animaux bonus débloqués → 1/10
-///   - 3+ animaux bonus débloqués → 1/20 (plancher)
+/// Service de gestion du déblocage des animaux.
+/// Crocodile et Chat sont débloqués par défaut.
+/// Les autres nécessitent le visionnage d'une pub OU l'achat premium.
 class GamificationService {
   final StorageService _storage;
-  final AnimalRepository _animalRepo;
-  final Random _random;
+  GamificationService(this._storage);
 
-  static const List<String> _defaultUnlocked = ['dog', 'cat'];
+  // --- Premium (achat in-app) ---
 
-  GamificationService(this._storage, this._animalRepo, [Random? random])
-      : _random = random ?? Random();
+  /// Vérifie si l'utilisateur a acheté le pack premium.
+  bool isPremiumUnlocked() => _storage.getPremiumUnlocked();
 
-  /// Retourne la liste des IDs d'animaux débloqués.
-  List<String> getUnlockedAnimalIds() {
-    final stored = _storage.getUnlockedAnimalIds();
-    if (stored.isEmpty) {
-      // Première utilisation : initialiser avec les animaux par défaut
-      _storage.saveUnlockedAnimalIds(_defaultUnlocked);
-      return List.from(_defaultUnlocked);
-    }
-    return stored;
+  /// Débloque tous les animaux via l'achat premium.
+  Future<void> unlockAllAnimals() async {
+    await _storage.savePremiumUnlocked(true);
   }
 
-  /// Vérifie si un animal est débloqué.
+  // --- Déblocage individuel ---
+
+  /// Vérifie si un animal est débloqué (par défaut, par pub avec expiration, ou par premium).
   bool isUnlocked(String animalId) {
-    return getUnlockedAnimalIds().contains(animalId);
+    if (isPremiumUnlocked()) return true; // Premium → tout débloqué
+    return _storage.isAnimalUnlocked(animalId);
   }
 
-  /// Retourne la liste des IDs d'animaux encore verrouillés.
+  /// Retourne les IDs des animaux verrouillés.
   List<String> getLockedAnimalIds() {
-    final unlocked = getUnlockedAnimalIds();
-    return _animalRepo
-        .getAll()
+    if (isPremiumUnlocked()) return []; // Premium → rien de verrouillé
+    return AnimalRepository.animals
         .map((a) => a.id)
-        .where((id) => !unlocked.contains(id))
+        .where((id) => !_storage.isAnimalUnlocked(id))
         .toList();
   }
 
-  /// Nombre d'animaux bonus débloqués (hors chien et chat).
-  int get _bonusUnlockedCount {
-    final unlocked = getUnlockedAnimalIds();
-    return unlocked.where((id) => !_defaultUnlocked.contains(id)).length;
+  /// Retourne true s'il reste des animaux verrouillés.
+  bool hasLockedAnimals() => getLockedAnimalIds().isNotEmpty;
+
+  /// Débloque un animal pour 10 jours (après visionnage de pub).
+  Future<void> unlockAnimal(String animalId) async {
+    await _storage.unlockAnimalByAd(animalId, days: 10);
   }
 
-  /// Probabilité de débloquer un animal (dépend du nombre déjà débloqués).
-  /// Retourne la probabilité sous forme 1/N.
-  int get unlockChanceDenominator {
-    final bonus = _bonusUnlockedCount;
-    if (bonus <= 0) return 3;   // 1/3
-    if (bonus == 1) return 6;   // 1/6
-    if (bonus == 2) return 10;  // 1/10
-    return 20;                  // 1/20 (plancher)
+  /// Retourne le nombre de jours restants pour un animal débloqué par pub.
+  /// Retourne null si gratuit, premium, ou jamais débloqué par pub.
+  int? getDaysRemaining(String animalId) {
+    if (isPremiumUnlocked()) return null; // Premium → permanent
+    if (StorageService.defaultUnlocked.contains(animalId)) return null; // Gratuit
+    final days = _storage.getDaysRemaining(animalId);
+    return days > 0 ? days : null;
   }
-
-  /// Tente de débloquer un animal aléatoire.
-  /// Retourne l'ID de l'animal débloqué, ou null si pas de chance ou tous débloqués.
-  Future<String?> tryUnlockAnimal() async {
-    final locked = getLockedAnimalIds();
-    if (locked.isEmpty) return null; // Tous débloqués
-
-    // Tirage au sort
-    final denom = unlockChanceDenominator;
-    final roll = _random.nextInt(denom);
-    if (roll != 0) return null; // Pas de chance
-
-    // Choisir un animal aléatoire parmi les verrouillés
-    final chosen = locked[_random.nextInt(locked.length)];
-
-    // Débloquer
-    final unlocked = getUnlockedAnimalIds();
-    unlocked.add(chosen);
-    await _storage.saveUnlockedAnimalIds(unlocked);
-
-    return chosen;
-  }
-
-  /// Vérifie si tous les animaux sont débloqués.
-  bool get allUnlocked => getLockedAnimalIds().isEmpty;
 }
 
 final gamificationServiceProvider = Provider<GamificationService>((ref) {
-  return GamificationService(
-    ref.read(storageServiceProvider),
-    ref.read(animalRepoProvider),
-  );
+  final storage = ref.watch(storageServiceProvider);
+  return GamificationService(storage);
 });
-
-final animalRepoProvider = Provider((ref) => AnimalRepository());

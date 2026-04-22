@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/localization_helper.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/audio_service.dart';
-import '../../../../core/services/gamification_service.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
 import '../../../../shared/widgets/image_button.dart';
 import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/confetti_overlay.dart';
-import '../widgets/unlock_dialog.dart';
 
 class FinishScreen extends ConsumerStatefulWidget {
   const FinishScreen({super.key});
@@ -28,18 +25,38 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
   void initState() {
     super.initState();
     _bounceCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 300))
-      ..repeat(reverse: true);
-    _bounce = Tween<double>(begin: 0, end: -35).animate(
-      CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeInOut));
+      vsync: this, duration: const Duration(milliseconds: 500))
+      ..repeat();
+    _bounce = TweenSequence<double>([
+      // Montée: 0 → -35 en 0.15s (30% du cycle)
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: -35)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30,
+      ),
+      // Descente: -35 → 0 en 0.15s (30% du cycle)
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -35, end: 0)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 30,
+      ),
+      // Pause en bas: 0 → 0 pendant 0.2s (40% du cycle)
+      TweenSequenceItem(
+        tween: ConstantTween<double>(0),
+        weight: 40,
+      ),
+    ]).animate(_bounceCtrl);
 
-    // Play end sound
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Play end sounds: canon à confettis d'abord, puis son d'animal après délai
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final animal = ref.read(setupProvider).selectedAnimal;
       final settings = ref.read(settingsProvider);
       if (settings.endSoundEnabled) {
-        ref.read(audioServiceProvider)
-            .playEndSound(animal.endSoundPath, volume: settings.volume);
+        final audio = ref.read(audioServiceProvider);
+        // Jouer le son de canon et attendre sa fin réelle
+        await audio.playFinishSoundAndWait(volume: settings.volume);
+        // Enchaîner immédiatement avec le son d'animal
+        audio.playEndSound(animal.endSoundPath, volume: settings.volume);
       }
     });
   }
@@ -47,37 +64,8 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
   @override
   void dispose() { _bounceCtrl.dispose(); super.dispose(); }
 
-  /// Tente de débloquer un animal, affiche la pop-up si succès,
-  /// puis navigue vers l'accueil.
-  Future<void> _goHome() async {
-    final gamification = ref.read(gamificationServiceProvider);
-    final animalRepo = ref.read(animalRepoProvider);
-
-    // Tenter le déblocage
-    final unlockedId = await gamification.tryUnlockAnimal();
-
-    if (unlockedId != null && mounted) {
-      // Un animal a été débloqué ! Afficher la pop-up
-      HapticFeedback.heavyImpact();
-      final unlockedAnimal = animalRepo.getById(unlockedId);
-
-      await showGeneralDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.black.withValues(alpha: 0.5),
-        transitionDuration: const Duration(milliseconds: 100),
-        pageBuilder: (dialogContext, _, __) {
-          return UnlockDialog(
-            animal: unlockedAnimal,
-            onDismiss: () => Navigator.of(dialogContext).pop(),
-          );
-        },
-      );
-    }
-
-    if (!mounted) return;
-
-    // Retour à l'accueil
+  /// Navigate back to setup screen.
+  void _goHome() {
     ref.read(audioServiceProvider).stopAll();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -97,7 +85,7 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Bouncing animal — always use static image (cat.png, not layers)
+                  // Bouncing animal
                   AnimatedBuilder(
                     animation: _bounce,
                     builder: (_, __) => Transform.translate(
@@ -111,13 +99,11 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // "C'est fini !" text
-                  Text(context.l10n.finished, style: TextStyle(
+                  Text(context.l10n.finished, style: const TextStyle(
                     fontFamily: 'Nunito', fontSize: 36,
                     fontWeight: FontWeight.w900,
                     color: AppColors.pencilDark)),
                   const SizedBox(height: 32),
-                  // Bouton Arrêter (icône maison)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 60),
                     child: ImageButton(
@@ -126,6 +112,7 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
                       backgroundAsset: ImageButton.greenBg,
                       onPressed: _goHome,
                       height: 80,
+                      bounce: true,
                     ),
                   ),
                 ],
