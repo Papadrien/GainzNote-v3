@@ -179,6 +179,8 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
         loadInterstitial()
 
+        val repo = WorkoutRepository(DatabaseDriverFactory(this))
+
         // Initialiser Google Play Billing
         billingManager = BillingManager(this) { purchased ->
             // Quand l'état d'achat change, on met à jour les settings
@@ -190,8 +192,6 @@ class MainActivity : ComponentActivity() {
             }
         }
         billingManager.startConnection()
-
-        val repo = WorkoutRepository(DatabaseDriverFactory(this))
 
         setContent {
             App(
