@@ -41,7 +41,7 @@ fun HomeScreen(
     onPurchaseRemoveAds: () -> Unit = {},
     onToggleAdFree: () -> Unit = {},
     language: String = "auto",
-    onCycleLang: () -> Unit = {},
+    onChangeLang: (String) -> Unit = {},
     refreshKey: Int = 0
 ) {
     val c = GainzThemeColors(darkTheme, blackBg)
@@ -196,8 +196,24 @@ fun HomeScreen(
         Spacer(Modifier.height(8.dp))
 
         // ─ Langue ─────────────────────────────────────────────────────────────
-        val langLabel = when (language) { "fr" -> "Français"; "en" -> "English"; else -> "Auto" }
-        SettingButton("🌐", "${S.language} · $langLabel", c, onCycleLang)
+        var showLangDialog by remember { mutableStateOf(false) }
+        val langLabel = when (language) {
+            "fr" -> "Français"
+            "en" -> "English"
+            else -> S.languageAuto
+        }
+        SettingButton("🌐", "${S.language} · $langLabel", c) { showLangDialog = true }
+        if (showLangDialog) {
+            LanguagePickerDialog(
+                current = language,
+                c = c,
+                onPick = { code ->
+                    showLangDialog = false
+                    onChangeLang(code)
+                },
+                onDismiss = { showLangDialog = false }
+            )
+        }
         Spacer(Modifier.height(8.dp))
 
         // ─ Supprimer les pubs (vrai achat) ───────────────────────────────────
@@ -383,6 +399,55 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }
     }
+}
+
+
+@Composable
+fun LanguagePickerDialog(
+    current: String,
+    c: GainzThemeColors,
+    onPick: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Liste extensible : ajouter simplement une paire (code, label) pour une nouvelle langue.
+    val options: List<Pair<String, String>> = listOf(
+        "auto" to S.languageAuto,
+        "fr"   to "Français",
+        "en"   to "English"
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = c.surface,
+        title = { Text(S.chooseLanguage, color = c.text) },
+        text = {
+            Column {
+                options.forEach { (code, label) ->
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .clickable { onPick(code) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        RadioButton(
+                            selected = code == current,
+                            onClick = { onPick(code) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = c.accent,
+                                unselectedColor = c.textMuted
+                            )
+                        )
+                        Text(label, color = c.text, fontSize = 15.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(S.cancel, color = c.accent)
+            }
+        }
+    )
 }
 
 fun formatDisplayDate(iso: String): String = try {

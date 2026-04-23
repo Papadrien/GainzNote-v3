@@ -147,9 +147,10 @@ fun App(
                     persistSettings()
                 },
                 language = language,
-                onCycleLang = {
-                    language = when (language) { "auto" -> "fr"; "fr" -> "en"; else -> "auto" }
-                    if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
+                onChangeLang = { newLang ->
+                    language = newLang
+                    if (newLang == "auto") S.initFromSystem(getSystemLanguage())
+                    else S.setLang(if (newLang == "fr") Lang.FR else Lang.EN)
                     persistSettings()
                 },
                 refreshKey = refreshKey

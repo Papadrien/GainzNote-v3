@@ -286,6 +286,14 @@ object S {
         Lang.FR -> "Langue"
         Lang.EN -> "Language"
     }
+    val chooseLanguage get() = when (lang) {
+        Lang.FR -> "Choisir la langue"
+        Lang.EN -> "Choose language"
+    }
+    val languageAuto get() = when (lang) {
+        Lang.FR -> "Automatique (système)"
+        Lang.EN -> "Automatic (system)"
+    }
 
     // ── Android-only (MainActivity / ChronoService) ──────────────────────
     val dataSaved get() = when (lang) {
