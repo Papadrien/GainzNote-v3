@@ -28,15 +28,13 @@
       docTitle: 'AnimalTimer — Politique de confidentialité',
       loading: 'Chargement de la politique de confidentialité…',
       errorLoad: 'Impossible de charger la politique de confidentialité. Réessayez plus tard.',
-      htmlLang: 'fr',
-      sourceNote: 'Ce document est généré automatiquement à partir des fichiers de traduction officiels de l\'application.'
+      htmlLang: 'fr'
     },
     en: {
       docTitle: 'AnimalTimer — Privacy Policy',
       loading: 'Loading privacy policy…',
       errorLoad: 'Unable to load the privacy policy. Please try again later.',
-      htmlLang: 'en',
-      sourceNote: 'This document is automatically generated from the application\'s official translation files.'
+      htmlLang: 'en'
     }
   };
 
@@ -44,7 +42,6 @@
   var statusEl = document.getElementById('status');
   var policyEl = document.getElementById('policy');
   var updateLine = document.getElementById('update-line');
-  var sourceNote = document.getElementById('source-note');
   var langButtons = document.querySelectorAll('.lang-btn');
 
   // Cache for fetched ARBs
@@ -127,7 +124,6 @@
     var labels = LABELS[lang];
     document.title = labels.docTitle;
     document.documentElement.lang = labels.htmlLang;
-    sourceNote.textContent = labels.sourceNote;
 
     // Sections
     var html = '';
