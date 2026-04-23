@@ -71,7 +71,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Compile (Kotlin Android debug)
-        run: ./gradlew :composeApp:compileDebugKotlinAndroid :androidApp:compileDebugKotlin --stacktrace
+        run: ./gradlew :composeApp:compileDebugKotlinAndroid :androidApp:compileDebugKotlinAndroid --stacktrace
 
       - name: Run JVM tests
         run: ./gradlew test --stacktrace
