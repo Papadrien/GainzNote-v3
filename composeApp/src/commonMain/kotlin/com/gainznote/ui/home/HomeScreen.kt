@@ -117,6 +117,44 @@ fun HomeScreen(
         // ── Paramètres ────────────────────────────────────────────────────────
         SectionLabel(S.settings, c)
         Spacer(Modifier.height(12.dp))
+        // ─ Supprimer les pubs (vrai achat) ───────────────────────────────────
+        if (!adFree) {
+            Surface(
+                onClick = onPurchaseRemoveAds,
+                shape = RoundedCornerShape(12.dp), color = c.surface,
+                border = BorderStroke(1.dp, c.accent),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("\uD83D\uDEAB", fontSize = 18.sp)
+                    Column(Modifier.weight(1f)) {
+                        Text(S.removeAdsPrice, color = c.accent, fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold)
+                        Text(S.removeAdsPriceDesc, color = c.textMuted, fontSize = 11.sp)
+                    }
+                }
+            }
+        } else {
+            Surface(
+                shape = RoundedCornerShape(12.dp), color = c.surface,
+                border = BorderStroke(1.dp, c.accent),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("\u2705", fontSize = 18.sp)
+                    Text(S.adsRemoved, color = c.accent, fontSize = 15.sp)
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
 
         // ─ Bloc Thème ─────────────────────────────────────────────────────────
         Surface(
@@ -213,45 +251,6 @@ fun HomeScreen(
                 },
                 onDismiss = { showLangDialog = false }
             )
-        }
-        Spacer(Modifier.height(8.dp))
-
-        // ─ Supprimer les pubs (vrai achat) ───────────────────────────────────
-        if (!adFree) {
-            Surface(
-                onClick = onPurchaseRemoveAds,
-                shape = RoundedCornerShape(12.dp), color = c.surface,
-                border = BorderStroke(1.dp, c.accent),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("\uD83D\uDEAB", fontSize = 18.sp)
-                    Column(Modifier.weight(1f)) {
-                        Text(S.removeAdsPrice, color = c.accent, fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold)
-                        Text(S.removeAdsPriceDesc, color = c.textMuted, fontSize = 11.sp)
-                    }
-                }
-            }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(12.dp), color = c.surface,
-                border = BorderStroke(1.dp, c.accent),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("\u2705", fontSize = 18.sp)
-                    Text(S.adsRemoved, color = c.accent, fontSize = 15.sp)
-                }
-            }
         }
 
         // ─ Bouton test debug-only (toggle adFree sans achat) ─────────────────
