@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.i18n.S
+import com.gainznote.android.BuildConfig
 import com.gainznote.ui.App
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -30,6 +31,9 @@ class MainActivity : ComponentActivity() {
 
     private var pendingExportJson: String? = null
     private var onJsonReadCallback: ((String) -> Unit)? = null
+
+    // ── Billing (achat suppression pubs) ─────────────────────────────────
+    private lateinit var billingManager: BillingManager
 
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
@@ -115,28 +119,41 @@ class MainActivity : ComponentActivity() {
     }
 
     // ── Permission notifications ──────────────────────────────────────────────
+    private var pendingNotifCallback: ((Boolean) -> Unit)? = null
+
     private val notifPermLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) {
-            Toast.makeText(
-                this,
-                S.notifPermDenied,
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, S.notifPermDenied, Toast.LENGTH_LONG).show()
+        }
+        pendingNotifCallback?.invoke(granted)
+        pendingNotifCallback = null
+    }
+
+    /**
+     * Vérifie et demande la permission POST_NOTIFICATIONS si nécessaire.
+     * Appelle [onResult] avec true si accordée, false sinon.
+     * Sur Android < 13 : toujours true (pas de permission runtime).
+     */
+    private fun requestNotifPermission(onResult: (Boolean) -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val perm = android.Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
+                onResult(true)
+            } else {
+                pendingNotifCallback = onResult
+                notifPermLauncher.launch(perm)
+            }
+        } else {
+            onResult(true) // Pas de permission runtime avant Android 13
         }
     }
 
     // ── Service chrono ────────────────────────────────────────────────────────
 
     private fun startChronoService(startTimeMs: Long) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val perm = android.Manifest.permission.POST_NOTIFICATIONS
-            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                notifPermLauncher.launch(perm)
-                return
-            }
-        }
+        // La permission est déjà vérifiée au toggle du paramètre — on démarre directement
         val intent = Intent(this, ChronoForegroundService::class.java).apply {
             action = ChronoForegroundService.ACTION_START
             putExtra(ChronoForegroundService.EXTRA_START_TIME, startTimeMs)
@@ -162,6 +179,18 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
         loadInterstitial()
 
+        // Initialiser Google Play Billing
+        billingManager = BillingManager(this) { purchased ->
+            // Quand l'état d'achat change, on met à jour les settings
+            lifecycleScope.launch {
+                val settings = repo.getAppSettings()
+                if (settings.adFree != purchased) {
+                    repo.saveAppSettings(settings.copy(adFree = purchased))
+                }
+            }
+        }
+        billingManager.startConnection()
+
         val repo = WorkoutRepository(DatabaseDriverFactory(this))
 
         setContent {
@@ -186,15 +215,23 @@ class MainActivity : ComponentActivity() {
                     }
                     importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
                 },
+                onRequestNotifPermission = { onResult -> requestNotifPermission(onResult) },
                 onChronoStart = { startTimeMs -> startChronoService(startTimeMs) },
                 onChronoStop  = { stopChronoService() },
-                onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) }
+                onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) },
+                isDebug = BuildConfig.DEBUG,
+                onPurchaseRemoveAds = {
+                    if (!billingManager.launchPurchase(this@MainActivity)) {
+                        Toast.makeText(this@MainActivity, S.purchaseError, Toast.LENGTH_SHORT).show()
+                    }
+                }
             )
         }
     }
 
     override fun onDestroy() {
         stopChronoService()
+        billingManager.destroy()
         super.onDestroy()
     }
 

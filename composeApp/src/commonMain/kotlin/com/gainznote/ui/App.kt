@@ -28,11 +28,14 @@ fun App(
     onExportReady: (String) -> Unit = {},
     onImportRequest: ((String) -> Unit) -> Unit = {},
     // Callbacks notification chrono (implémentés côté Android)
+    onRequestNotifPermission: (onResult: (Boolean) -> Unit) -> Unit = { it(true) },
     onChronoStart: (Long) -> Unit = {},
     onChronoStop: () -> Unit = {},
     // Callback interstitiel pub : appelé quand un entraînement se termine.
     // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
-    onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() }
+    onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
+    isDebug: Boolean = false,
+    onPurchaseRemoveAds: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -99,8 +102,19 @@ fun App(
                     persistSettings()
                 },
                 onToggleChronoNotif = {
-                    chronoNotifEnabled = !chronoNotifEnabled
-                    persistSettings()
+                    if (chronoNotifEnabled) {
+                        // Désactivation — pas besoin de permission
+                        chronoNotifEnabled = false
+                        persistSettings()
+                    } else {
+                        // Activation — vérifier la permission d'abord
+                        onRequestNotifPermission { granted ->
+                            if (granted) {
+                                chronoNotifEnabled = true
+                                persistSettings()
+                            }
+                        }
+                    }
                 },
                 onNewWorkout = { navigateTo(Screen.Workout()) },
                 onHistory = { navigateTo(Screen.History) },
@@ -126,6 +140,8 @@ fun App(
                     }
                 },
                 adFree = adFree,
+                isDebug = isDebug,
+                onPurchaseRemoveAds = onPurchaseRemoveAds,
                 onToggleAdFree = {
                     adFree = !adFree
                     persistSettings()

@@ -37,6 +37,8 @@ fun HomeScreen(
     onExport: () -> Unit = {},
     onImport: () -> Unit = {},
     adFree: Boolean = false,
+    isDebug: Boolean = false,
+    onPurchaseRemoveAds: () -> Unit = {},
     onToggleAdFree: () -> Unit = {},
     language: String = "auto",
     onCycleLang: () -> Unit = {},
@@ -198,34 +200,75 @@ fun HomeScreen(
         SettingButton("🌐", "${S.language} · $langLabel", c, onCycleLang)
         Spacer(Modifier.height(8.dp))
 
-        // ─ Supprimer les pubs (bouton test) ───────────────────────────────────
-        Surface(
-            onClick = onToggleAdFree,
-            shape = RoundedCornerShape(12.dp), color = c.surface,
-            border = BorderStroke(1.dp, if (adFree) c.accent else c.border),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // ─ Supprimer les pubs (vrai achat) ───────────────────────────────────
+        if (!adFree) {
+            Surface(
+                onClick = onPurchaseRemoveAds,
+                shape = RoundedCornerShape(12.dp), color = c.surface,
+                border = BorderStroke(1.dp, c.accent),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text(
-                        if (adFree) S.adsRemoved else S.removeAds,
-                        color = if (adFree) c.accent else c.text, fontSize = 15.sp
-                    )
-                    Text(
-                        if (adFree) S.adsRemovedTestHint else S.removeAdsTestHint,
-                        color = c.textMuted, fontSize = 11.sp
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("\uD83D\uDEAB", fontSize = 18.sp)
+                    Column(Modifier.weight(1f)) {
+                        Text(S.removeAdsPrice, color = c.accent, fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold)
+                        Text(S.removeAdsPriceDesc, color = c.textMuted, fontSize = 11.sp)
+                    }
+                }
+            }
+        } else {
+            Surface(
+                shape = RoundedCornerShape(12.dp), color = c.surface,
+                border = BorderStroke(1.dp, c.accent),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("\u2705", fontSize = 18.sp)
+                    Text(S.adsRemoved, color = c.accent, fontSize = 15.sp)
+                }
+            }
+        }
+
+        // ─ Bouton test debug-only (toggle adFree sans achat) ─────────────────
+        if (isDebug) {
+            Spacer(Modifier.height(8.dp))
+            Surface(
+                onClick = onToggleAdFree,
+                shape = RoundedCornerShape(12.dp), color = c.surface,
+                border = BorderStroke(1.dp, c.border),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                        Text(
+                            if (adFree) S.adsRemoved else S.removeAds,
+                            color = c.textMuted, fontSize = 14.sp
+                        )
+                        Text(
+                            if (adFree) S.adsRemovedTestHint else S.removeAdsTestHint,
+                            color = c.textMuted, fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = adFree, onCheckedChange = { onToggleAdFree() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                        )
                     )
                 }
-                Switch(
-                    checked = adFree, onCheckedChange = { onToggleAdFree() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
-                    )
-                )
             }
         }
         Spacer(Modifier.height(24.dp))

@@ -270,6 +270,18 @@ object S {
         Lang.FR -> "⚠ Mode test — appuyez pour réactiver"
         Lang.EN -> "⚠ Test mode — tap to re-enable"
     }
+    val removeAdsPrice get() = when (lang) {
+        Lang.FR -> "Supprimer les publicités — 1,99€"
+        Lang.EN -> "Remove ads — \$1.99"
+    }
+    val removeAdsPriceDesc get() = when (lang) {
+        Lang.FR -> "Achat unique · Supprime toutes les publicités"
+        Lang.EN -> "One-time purchase · Removes all ads"
+    }
+    val purchaseError get() = when (lang) {
+        Lang.FR -> "Achat indisponible pour le moment"
+        Lang.EN -> "Purchase unavailable at the moment"
+    }
     val language get() = when (lang) {
         Lang.FR -> "Langue"
         Lang.EN -> "Language"
