@@ -1,0 +1,301 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Créer une release GitHub'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # 1) Analyse + compile check + tests JVM (toujours)
+  # ──────────────────────────────────────────────────────────────────────────
+  analyze:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build:   ${{ steps.version.outputs.build }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Extract version from androidApp/build.gradle.kts
+        id: version
+        run: |
+          VERSION=$(grep -E '^\s*versionName\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
+          BUILD=$(grep -E '^\s*versionCode\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
+          if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
+            echo "::error::Impossible d'extraire versionName/versionCode depuis androidApp/build.gradle.kts"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
+          echo "📦 GainzNote version=$VERSION build=$BUILD"
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Compile (Kotlin Android debug)
+        run: ./gradlew :composeApp:compileDebugKotlinAndroid :androidApp:compileDebugKotlin --stacktrace
+
+      - name: Run JVM tests
+        run: ./gradlew test --stacktrace
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 2) Build Android DEBUG — sur develop uniquement
+  # ──────────────────────────────────────────────────────────────────────────
+  build-android-debug:
+    name: Build Android Debug
+    needs: analyze
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Generate fallback debug keystore (for local consistency)
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p dist
+          VERSION="${{ needs.analyze.outputs.version }}"
+          cp androidApp/build/outputs/apk/debug/androidApp-debug.apk "dist/GainzNote-${VERSION}-debug.apk"
+          ls -lh dist/
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug
+          path: dist/*.apk
+          retention-days: 14
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 3) Build Android RELEASE — sur main et tags v*
+  # ──────────────────────────────────────────────────────────────────────────
+  build-android-release:
+    name: Build Android Release
+    needs: analyze
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Verify signing secrets are present
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "::error::Secrets ANDROID_KEYSTORE_BASE64 et/ou ANDROID_KEY_PROPERTIES manquants. Le build release nécessite ces secrets."
+            exit 1
+          fi
+          echo "✅ Secrets de signature présents"
+
+      - name: Decode keystore and key.properties
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "$ANDROID_KEY_PROPERTIES" > "$RUNNER_TEMP/key.properties"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          # Charger les propriétés de la clé et les exporter comme variables d'environnement
+          # attendues par androidApp/build.gradle.kts (STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD).
+          while IFS='=' read -r key value; do
+            case "$key" in
+              storePassword) echo "STORE_PASSWORD=$value" >> "$GITHUB_ENV" ;;
+              keyAlias)      echo "KEY_ALIAS=$value"      >> "$GITHUB_ENV" ;;
+              keyPassword)   echo "KEY_PASSWORD=$value"   >> "$GITHUB_ENV" ;;
+            esac
+          done < "$RUNNER_TEMP/key.properties"
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build Release APK + AAB
+        run: ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease --stacktrace
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p dist
+          VERSION="${{ needs.analyze.outputs.version }}"
+          cp androidApp/build/outputs/apk/release/androidApp-release.apk "dist/GainzNote-${VERSION}.apk"
+          cp androidApp/build/outputs/bundle/release/androidApp-release.aab "dist/GainzNote-${VERSION}.aab"
+          ls -lh dist/
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: |
+            dist/*.apk
+            dist/*.aab
+          retention-days: 30
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # 4) Release GitHub — sur tags v* ou workflow_dispatch avec create_release=true
+  # ──────────────────────────────────────────────────────────────────────────
+  release:
+    name: GitHub Release
+    needs: [analyze, build-android-release]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (full history for changelog)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag name
+        id: tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="v${{ needs.analyze.outputs.version }}"
+            # Si le tag n'existe pas encore, on le crée
+            if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git tag -a "$TAG" -m "Release $TAG"
+              git push origin "$TAG"
+            fi
+          fi
+          echo "TAG_NAME=$TAG" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog from git log
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^${TAG_NAME}\$" | head -n 1 || true)
+          {
+            echo "changelog<<__EOF__"
+            if [ -n "$PREV_TAG" ]; then
+              echo "### Changements depuis \`$PREV_TAG\`"
+              echo ""
+              git log --pretty=format:"- %s (%h)" "$PREV_TAG".."$TAG_NAME"
+            else
+              echo "### Premier changelog"
+              echo ""
+              git log --pretty=format:"- %s (%h)"
+            fi
+            echo ""
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release
+          path: dist
+
+      - name: List artifacts to publish
+        run: ls -lh dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: GainzNote ${{ env.TAG_NAME }}
+          body: |
+            ## 💪 GainzNote ${{ env.TAG_NAME }}
+
+            Build automatique via GitHub Actions.
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            - Version : `${{ needs.analyze.outputs.version }}`
+            - Build   : `${{ needs.analyze.outputs.build }}`
+          files: |
+            dist/*.apk
+            dist/*.aab
+          draft: false
+          prerelease: false
