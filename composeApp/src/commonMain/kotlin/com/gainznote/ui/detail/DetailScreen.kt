@@ -276,10 +276,10 @@ fun CircuitExerciseDetailCard(
                         Text("—", color = c.textMuted, fontSize = 13.sp)
                     } else {
                         val desc: String = when (exercise.inputType) {
-                            CircuitInputType.REPS -> "${perf.reps ?: "?"} reps"
+                            CircuitInputType.REPS -> "${perf.reps ?: "?"} ${S.repsShort}"
                             CircuitInputType.REPS_WEIGHT -> {
                                 val w = perf.weightKg?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "?"
-                                "${perf.reps ?: "?"} reps × ${w} kg"
+                                "${perf.reps ?: "?"} ${S.repsShort} × ${w} ${S.kgShort}"
                             }
                             CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
                         }

@@ -591,4 +591,15 @@ object S {
         Lang.EN -> "Stay"
     }
 
+
+    // ── Unit labels ────────────────────────────────────────────────────────
+    val repsShort get() = when (lang) {
+        Lang.FR -> "reps"
+        Lang.EN -> "reps"
+    }
+    val kgShort get() = when (lang) {
+        Lang.FR -> "kg"
+        Lang.EN -> "kg"
+    }
+
 }
