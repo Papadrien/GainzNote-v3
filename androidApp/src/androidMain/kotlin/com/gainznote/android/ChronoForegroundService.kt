@@ -11,18 +11,24 @@ import com.gainznote.i18n.S
 import kotlinx.coroutines.*
 
 /**
- * Service de premier plan qui affiche et met à jour le chronomètre de repos
+ * Service de premier plan qui affiche et met à jour le chronomètre
+ * (temps de repos en mode elapsed, ou compte à rebours en mode countdown)
  * dans la barre de notifications, même quand l'app est en arrière-plan.
  */
 class ChronoForegroundService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var startTimeMs = 0L
+    // Pour le mode countdown : timestamp (ms) auquel le compte à rebours atteint 0.
+    // endTimeMs == 0 => mode elapsed (legacy). Sinon => countdown.
+    private var endTimeMs = 0L
 
     companion object {
-        const val ACTION_START = "com.gainznote.CHRONO_START"
-        const val ACTION_STOP  = "com.gainznote.CHRONO_STOP"
+        const val ACTION_START     = "com.gainznote.CHRONO_START"
+        const val ACTION_COUNTDOWN = "com.gainznote.CHRONO_COUNTDOWN"
+        const val ACTION_STOP      = "com.gainznote.CHRONO_STOP"
         const val EXTRA_START_TIME = "start_time_ms"
+        const val EXTRA_END_TIME   = "end_time_ms"
         const val CHANNEL_ID = "gainznote_chrono"
         const val NOTIF_ID = 2001
     }
@@ -35,20 +41,20 @@ class ChronoForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                // Annuler toute coroutine de tick en cours avant d'en démarrer une nouvelle.
-                // Évite les duplications si ACTION_START est reçu deux fois de suite.
                 scope.coroutineContext.cancelChildren()
                 startTimeMs = intent.getLongExtra(EXTRA_START_TIME, System.currentTimeMillis())
+                endTimeMs = 0L
                 val notif = buildNotif("00:00")
-                if (Build.VERSION.SDK_INT >= 34) {
-                    ServiceCompat.startForeground(
-                        this, NOTIF_ID, notif,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                    )
-                } else {
-                    startForeground(NOTIF_ID, notif)
-                }
-                startTicking()
+                startFg(notif)
+                startTickingElapsed()
+            }
+            ACTION_COUNTDOWN -> {
+                scope.coroutineContext.cancelChildren()
+                endTimeMs = intent.getLongExtra(EXTRA_END_TIME, System.currentTimeMillis())
+                startTimeMs = 0L
+                val notif = buildNotif(formatRemaining(endTimeMs - System.currentTimeMillis()))
+                startFg(notif)
+                startTickingCountdown()
             }
             ACTION_STOP -> {
                 scope.coroutineContext.cancelChildren()
@@ -59,7 +65,18 @@ class ChronoForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startTicking() {
+    private fun startFg(notif: Notification) {
+        if (Build.VERSION.SDK_INT >= 34) {
+            ServiceCompat.startForeground(
+                this, NOTIF_ID, notif,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIF_ID, notif)
+        }
+    }
+
+    private fun startTickingElapsed() {
         scope.launch {
             while (isActive) {
                 val elapsed = (System.currentTimeMillis() - startTimeMs) / 1000L
@@ -71,6 +88,32 @@ class ChronoForegroundService : Service() {
                 delay(1000)
             }
         }
+    }
+
+    private fun startTickingCountdown() {
+        scope.launch {
+            while (isActive) {
+                val remainingMs = endTimeMs - System.currentTimeMillis()
+                val display = formatRemaining(remainingMs)
+                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                nm.notify(NOTIF_ID, buildNotif(display))
+                if (remainingMs <= 0) {
+                    // Fin du countdown : on stoppe le service automatiquement
+                    delay(500)
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                    break
+                }
+                delay(1000)
+            }
+        }
+    }
+
+    private fun formatRemaining(remainingMs: Long): String {
+        val sec = (remainingMs.coerceAtLeast(0) + 999) / 1000
+        val m = sec / 60
+        val s = sec % 60
+        return "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
     }
 
     private fun buildNotif(display: String): Notification {
@@ -93,10 +136,6 @@ class ChronoForegroundService : Service() {
     }
 
     private fun createChannel() {
-        // NOTE : sous Android, un NotificationChannel est persistant côté système
-        // après sa 1re création. Changer le nom/description ici ne met PAS à jour
-        // un channel déjà existant chez l'utilisateur. Le titre de la notification
-        // elle-même (setContentTitle ci-dessus) est en revanche rafraîchi à chaque tick.
         val channel = NotificationChannel(
             CHANNEL_ID,
             S.chronoChannelName,

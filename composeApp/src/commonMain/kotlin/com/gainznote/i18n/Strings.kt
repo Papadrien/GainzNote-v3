@@ -411,4 +411,19 @@ object S {
         Lang.EN -> "Overwrite"
     }
 
+
+    // ── Duration units (h/m/s) ─────────────────────────────────────────────
+    val hoursShort get() = when (lang) {
+        Lang.FR -> "H"
+        Lang.EN -> "H"
+    }
+    val minutesShort get() = when (lang) {
+        Lang.FR -> "M"
+        Lang.EN -> "M"
+    }
+    val secondsShort get() = when (lang) {
+        Lang.FR -> "S"
+        Lang.EN -> "S"
+    }
+
 }
