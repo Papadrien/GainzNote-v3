@@ -426,4 +426,59 @@ object S {
         Lang.EN -> "S"
     }
 
+
+    // ── Cardio ─────────────────────────────────────────────────────────────
+    val addCardioExercise get() = when (lang) {
+        Lang.FR -> "+ Ajouter un exercice cardio"
+        Lang.EN -> "+ Add cardio exercise"
+    }
+    val addSegment get() = when (lang) {
+        Lang.FR -> "+ Ajouter un segment"
+        Lang.EN -> "+ Add segment"
+    }
+    val cardioExerciseNamePlaceholder get() = when (lang) {
+        Lang.FR -> "Nom de l'exercice (ex: Vélo, Tapis...)"
+        Lang.EN -> "Exercise name (e.g. Bike, Treadmill...)"
+    }
+    val intensityPlaceholder get() = when (lang) {
+        Lang.FR -> "Intensité (ex: Niveau 5, 8 km/h, RPE 7...)"
+        Lang.EN -> "Intensity (e.g. Level 5, 8 km/h, RPE 7...)"
+    }
+    fun segmentLabel(index: Int) = when (lang) {
+        Lang.FR -> "Segment $index"
+        Lang.EN -> "Segment $index"
+    }
+    fun finishCardioBody(exercises: Int, segments: Int) = when (lang) {
+        Lang.FR -> "$exercises exercice(s) · $segments segment(s)"
+        Lang.EN -> "$exercises exercise(s) · $segments segment(s)"
+    }
+    fun segmentsCount(n: Int) = when (lang) {
+        Lang.FR -> "$n segment(s)"
+        Lang.EN -> if (n == 1) "1 segment" else "$n segments"
+    }
+    fun cardioExercisesCount(n: Int) = when (lang) {
+        Lang.FR -> "$n exercice(s) cardio"
+        Lang.EN -> if (n == 1) "1 cardio exercise" else "$n cardio exercises"
+    }
+
+
+    fun roundsCount(n: Int) = when (lang) {
+        Lang.FR -> "$n tour(s)"
+        Lang.EN -> if (n == 1) "1 round" else "$n rounds"
+    }
+
+
+    val intensity get() = when (lang) {
+        Lang.FR -> "Intensité"
+        Lang.EN -> "Intensity"
+    }
+    val duration get() = when (lang) {
+        Lang.FR -> "Durée"
+        Lang.EN -> "Duration"
+    }
+    val circuitDetailComingSoon get() = when (lang) {
+        Lang.FR -> "Détails du circuit — bientôt"
+        Lang.EN -> "Circuit details — coming soon"
+    }
+
 }

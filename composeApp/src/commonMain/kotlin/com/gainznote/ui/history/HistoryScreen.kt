@@ -9,10 +9,12 @@ import androidx.compose.ui.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.gainznote.model.Workout
+import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
+import com.gainznote.ui.theme.accentPairFor
 
 @Composable
 fun HistoryScreen(
@@ -48,7 +50,7 @@ fun HistoryScreen(
         } else if (workouts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🏋️", fontSize = 48.sp)
+                    Text("🏋", fontSize = 48.sp)
                     Spacer(Modifier.height(12.dp))
                     Text(S.noWorkoutRecorded, color = c.textMuted, fontSize = 15.sp)
                 }
@@ -57,7 +59,7 @@ fun HistoryScreen(
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 workouts.forEach { w ->
-                    HistoryCard(workout = w, c = c,
+                    HistoryCard(workout = w, c = c, darkTheme = darkTheme,
                         onClick = { onOpenDetail(w.id) },
                         onUseAsTemplate = { onUseAsTemplate(w.id) })
                 }
@@ -68,7 +70,8 @@ fun HistoryScreen(
 }
 
 @Composable
-fun HistoryCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit, onUseAsTemplate: () -> Unit) {
+fun HistoryCard(workout: Workout, c: GainzThemeColors, darkTheme: Boolean, onClick: () -> Unit, onUseAsTemplate: () -> Unit) {
+    val (typeAccent, typeAccentDim) = accentPairFor(workout.type, darkTheme)
     Column(Modifier.fillMaxWidth()
         .border(1.dp, c.border, RoundedCornerShape(14.dp))
         .background(c.surface, RoundedCornerShape(14.dp))) {
@@ -76,28 +79,73 @@ fun HistoryCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit, onUs
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(workout.title.ifBlank { S.untitled }, color = c.text,
-                    fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WorkoutTypeBadge(workout.type, typeAccent, typeAccentDim)
+                    Text(workout.title.ifBlank { S.untitled }, color = c.text,
+                        fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatChip(S.exercisesCount(workout.exercises.size), c)
-                    StatChip(S.setsCount(workout.exercises.sumOf { it.sets.size }), c)
-                }
-                if (workout.exercises.isNotEmpty()) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(workout.exercises.take(3).joinToString(" · ") { it.name.ifBlank { "?" } }
-                            + if (workout.exercises.size > 3) " +${workout.exercises.size - 3}" else "",
-                        color = c.textSec, fontSize = 12.sp)
-                }
+                WorkoutStatsRow(workout, c)
+                WorkoutPreview(workout, c)
             }
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
         TextButton(onClick = onUseAsTemplate, modifier = Modifier.fillMaxWidth()) {
-            Text(S.useAsTemplate, color = c.accent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text(S.useAsTemplate, color = typeAccent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
+    }
+}
+
+@Composable
+fun WorkoutTypeBadge(type: WorkoutType, accent: androidx.compose.ui.graphics.Color, accentDim: androidx.compose.ui.graphics.Color) {
+    val label = when (type) {
+        WorkoutType.MUSCULATION -> S.workoutTypeMusculation
+        WorkoutType.CARDIO      -> S.workoutTypeCardio
+        WorkoutType.CIRCUIT     -> S.workoutTypeCircuit
+    }
+    Box(Modifier.background(accentDim, RoundedCornerShape(6.dp))
+        .padding(horizontal = 8.dp, vertical = 3.dp)) {
+        Text(label, color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun WorkoutStatsRow(workout: Workout, c: GainzThemeColors) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        when (workout.type) {
+            WorkoutType.MUSCULATION -> {
+                StatChip(S.exercisesCount(workout.exercises.size), c)
+                StatChip(S.setsCount(workout.exercises.sumOf { it.sets.size }), c)
+            }
+            WorkoutType.CARDIO -> {
+                StatChip(S.cardioExercisesCount(workout.cardioExercises.size), c)
+                val totalSegs = workout.cardioExercises.sumOf { it.segments.size }
+                StatChip(S.segmentsCount(totalSegs), c)
+            }
+            WorkoutType.CIRCUIT -> {
+                val rounds = workout.circuitConfig?.totalRounds ?: 0
+                StatChip(S.exercisesCount(workout.circuitExercises.size), c)
+                StatChip(S.roundsCount(rounds), c)
+            }
+        }
+    }
+}
+
+@Composable
+fun WorkoutPreview(workout: Workout, c: GainzThemeColors) {
+    val names: List<String> = when (workout.type) {
+        WorkoutType.MUSCULATION -> workout.exercises.map { it.name.ifBlank { "?" } }
+        WorkoutType.CARDIO      -> workout.cardioExercises.map { it.name.ifBlank { "?" } }
+        WorkoutType.CIRCUIT     -> workout.circuitExercises.map { it.name.ifBlank { "?" } }
+    }
+    if (names.isNotEmpty()) {
+        Spacer(Modifier.height(6.dp))
+        Text(names.take(3).joinToString(" · ")
+                + if (names.size > 3) " +${names.size - 3}" else "",
+            color = c.textSec, fontSize = 12.sp)
     }
 }
 

@@ -11,13 +11,18 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
+import com.gainznote.model.CardioExercise
 import com.gainznote.model.Exercise
 import com.gainznote.model.Workout
+import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.history.StatChip
+import com.gainznote.ui.history.WorkoutStatsRow
+import com.gainznote.ui.history.WorkoutTypeBadge
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
+import com.gainznote.ui.theme.accentPairFor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,16 +62,19 @@ fun DetailScreen(
                 CircularProgressIndicator(color = c.accent)
             }
         } else {
+            val (typeAccent, typeAccentDim) = accentPairFor(w.type, darkTheme)
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WorkoutTypeBadge(w.type, typeAccent, typeAccentDim)
+                }
+                Spacer(Modifier.height(8.dp))
                 Text(w.title.ifBlank { S.untitled }, color = c.text,
                     fontSize = 24.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp)
                 Spacer(Modifier.height(6.dp))
                 Text(formatDisplayDate(w.startedAt), color = c.textMuted, fontSize = 13.sp)
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatChip(S.exercisesCount(w.exercises.size), c)
-                    StatChip(S.setsCount(w.exercises.sumOf { it.sets.size }), c)
-                }
+                WorkoutStatsRow(w, c)
                 if (w.notes.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))
                     Box(Modifier.fillMaxWidth().background(c.surfaceAlt, RoundedCornerShape(10.dp)).padding(12.dp)) {
@@ -74,14 +82,29 @@ fun DetailScreen(
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                w.exercises.forEach { ex ->
-                    ExerciseDetailCard(ex, c)
-                    Spacer(Modifier.height(12.dp))
+                when (w.type) {
+                    WorkoutType.MUSCULATION -> {
+                        w.exercises.forEach { ex ->
+                            ExerciseDetailCard(ex, c)
+                            Spacer(Modifier.height(12.dp))
+                        }
+                    }
+                    WorkoutType.CARDIO -> {
+                        w.cardioExercises.forEach { ex ->
+                            CardioExerciseDetailCard(ex, c, typeAccent, typeAccentDim)
+                            Spacer(Modifier.height(12.dp))
+                        }
+                    }
+                    WorkoutType.CIRCUIT -> {
+                        // Rendu détaillé circuit ajouté en C5
+                        Text(S.circuitDetailComingSoon, color = c.textMuted, fontSize = 14.sp)
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
                 Button(onClick = { onUseAsTemplate(w.id) },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)) {
+                    colors = ButtonDefaults.buttonColors(containerColor = typeAccent)) {
                     Text(S.useAsTemplate, color = if (darkTheme) Color.Black else Color.White,
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
@@ -107,7 +130,6 @@ fun DetailScreen(
 
 @Composable
 fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
-    // Bordure violette si superset — cohérent avec la vue entraînement en cours
     val isSuperset = exercise.supersetWith != null
     Column(Modifier.fillMaxWidth()
         .border(if (isSuperset) 2.dp else 1.dp,
@@ -142,5 +164,49 @@ fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
             }
         }
         Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun CardioExerciseDetailCard(
+    exercise: CardioExercise,
+    c: GainzThemeColors,
+    typeAccent: Color,
+    typeAccentDim: Color
+) {
+    Column(Modifier.fillMaxWidth()
+        .border(1.dp, c.border, RoundedCornerShape(12.dp))
+        .background(c.surface, RoundedCornerShape(12.dp))) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(exercise.name.ifBlank { S.unnamedExercise }, color = c.text,
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+            Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(28.dp))
+            Text(S.intensity, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(2f))
+            Text(S.duration, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+        }
+        exercise.segments.forEachIndexed { i, seg ->
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp)) {
+                Text("${i+1}", color = c.textMuted, fontSize = 12.sp, modifier = Modifier.width(28.dp))
+                Text(seg.intensity.ifBlank { "—" }, color = c.text, fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium, modifier = Modifier.weight(2f))
+                Text(formatSegmentDuration(seg.durationSeconds), color = c.text, fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+fun formatSegmentDuration(totalSec: Long): String {
+    val h = totalSec / 3600L
+    val m = (totalSec % 3600L) / 60L
+    val s = totalSec % 60L
+    return when {
+        h > 0 -> "${h}h ${m.toString().padStart(2,'0')}m ${s.toString().padStart(2,'0')}s"
+        m > 0 -> "${m}m ${s.toString().padStart(2,'0')}s"
+        else  -> "${s}s"
     }
 }

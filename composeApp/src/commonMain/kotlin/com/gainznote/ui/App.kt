@@ -219,6 +219,7 @@ fun App(
                 blackBg = blackBg,
                 templateId = s.templateId,
                 resumeId = s.resumeId,
+                adFree = adFree,
                 onBack = { navigateBack() },
                 onFinished = {
                     if (adFree) {
@@ -230,10 +231,7 @@ fun App(
                             backStack.add(Screen.Home)
                         }
                     }
-                },
-                chronoNotifEnabled = chronoNotifEnabled,
-                onChronoStart = onChronoStart,
-                onChronoStop = onChronoStop
+                }
             )
             is Screen.CircuitSetup -> CircuitSetupScreen(
                 repo = repo,
