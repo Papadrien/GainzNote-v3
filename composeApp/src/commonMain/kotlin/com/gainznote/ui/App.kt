@@ -10,6 +10,7 @@ import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.cardio.CardioSetupScreen
 import com.gainznote.ui.circuit.CircuitSetupScreen
+import com.gainznote.ui.circuit.CircuitWorkoutScreen
 import com.gainznote.ui.detail.DetailScreen
 import com.gainznote.ui.history.HistoryScreen
 import com.gainznote.ui.home.HomeScreen
@@ -26,6 +27,7 @@ sealed class Screen {
         val resumeId: String? = null,
         val skipSetup: Boolean = false
     ) : Screen()
+    data class CircuitWorkout(val workoutId: String) : Screen()
     data object History : Screen()
     data class Detail(val workoutId: String) : Screen()
 }
@@ -145,7 +147,17 @@ fun App(
                 },
                 onHistory = { navigateTo(Screen.History) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
-                onResumeWorkout = { id -> navigateTo(Screen.Workout(resumeId = id)) },
+                onResumeWorkout = { id ->
+                    scope.launch {
+                        val w = repo.getWorkoutById(id)
+                        val type = w?.type ?: com.gainznote.model.WorkoutType.MUSCULATION
+                        navigateTo(when (type) {
+                            com.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(resumeId = id)
+                            com.gainznote.model.WorkoutType.CARDIO -> Screen.CardioSetup(resumeId = id)
+                            com.gainznote.model.WorkoutType.CIRCUIT -> Screen.CircuitWorkout(workoutId = id)
+                        })
+                    }
+                },
                 onDeleteInProgressWorkout = { id ->
                     scope.launch {
                         repo.deleteWorkout(id)
@@ -209,8 +221,16 @@ fun App(
                 onBack = { navigateBack() },
                 onOpenDetail = { id -> navigateTo(Screen.Detail(id)) },
                 onUseAsTemplate = { id ->
-                    backStack.clear(); backStack.add(Screen.Home)
-                    navigateTo(Screen.Workout(templateId = id))
+                    scope.launch {
+                        val w = repo.getWorkoutById(id)
+                        val type = w?.type ?: com.gainznote.model.WorkoutType.MUSCULATION
+                        backStack.clear(); backStack.add(Screen.Home)
+                        navigateTo(when (type) {
+                            com.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(templateId = id)
+                            com.gainznote.model.WorkoutType.CARDIO -> Screen.CardioSetup(templateId = id)
+                            com.gainznote.model.WorkoutType.CIRCUIT -> Screen.CircuitSetup(templateId = id)
+                        })
+                    }
                 }
             )
             is Screen.CardioSetup -> CardioSetupScreen(
@@ -240,6 +260,34 @@ fun App(
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 skipSetup = s.skipSetup,
+                adFree = adFree,
+                onBack = { navigateBack() },
+                onStartWorkout = { workoutId ->
+                    // Remplace l'écran de setup par l'écran de séance active
+                    backStack.removeLast()
+                    backStack.add(Screen.CircuitWorkout(workoutId = workoutId))
+                },
+                onFinished = {
+                    if (adFree) {
+                        backStack.clear()
+                        backStack.add(Screen.Home)
+                    } else {
+                        onShowInterstitial {
+                            backStack.clear()
+                            backStack.add(Screen.Home)
+                        }
+                    }
+                }
+            )
+            is Screen.CircuitWorkout -> CircuitWorkoutScreen(
+                repo = repo,
+                darkTheme = darkTheme,
+                blackBg = blackBg,
+                workoutId = s.workoutId,
+                adFree = adFree,
+                chronoNotifEnabled = chronoNotifEnabled,
+                onChronoStart = onChronoStart,
+                onChronoStop = onChronoStop,
                 onBack = { navigateBack() },
                 onFinished = {
                     if (adFree) {
@@ -251,10 +299,7 @@ fun App(
                             backStack.add(Screen.Home)
                         }
                     }
-                },
-                chronoNotifEnabled = chronoNotifEnabled,
-                onChronoStart = onChronoStart,
-                onChronoStop = onChronoStop
+                }
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
@@ -263,8 +308,20 @@ fun App(
                 workoutId = s.workoutId,
                 onBack = { navigateBack() },
                 onUseAsTemplate = { id ->
+                    scope.launch {
+                        val w = repo.getWorkoutById(id)
+                        val type = w?.type ?: com.gainznote.model.WorkoutType.MUSCULATION
+                        backStack.clear(); backStack.add(Screen.Home)
+                        navigateTo(when (type) {
+                            com.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(templateId = id)
+                            com.gainznote.model.WorkoutType.CARDIO -> Screen.CardioSetup(templateId = id)
+                            com.gainznote.model.WorkoutType.CIRCUIT -> Screen.CircuitSetup(templateId = id)
+                        })
+                    }
+                },
+                onReplayCircuit = { id ->
                     backStack.clear(); backStack.add(Screen.Home)
-                    navigateTo(Screen.Workout(templateId = id))
+                    navigateTo(Screen.CircuitSetup(templateId = id, skipSetup = true))
                 },
                 onDeleted = { navigateBack() }
             )

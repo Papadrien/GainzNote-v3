@@ -481,4 +481,95 @@ object S {
         Lang.EN -> "Circuit details — coming soon"
     }
 
+
+    // ── Circuit ────────────────────────────────────────────────────────────
+    val addCircuitExercise get() = when (lang) {
+        Lang.FR -> "+ Ajouter un exercice"
+        Lang.EN -> "+ Add exercise"
+    }
+    val circuitExerciseNamePlaceholder get() = when (lang) {
+        Lang.FR -> "Nom de l'exercice (ex: Pompes, Squats...)"
+        Lang.EN -> "Exercise name (e.g. Push-ups, Squats...)"
+    }
+    val circuitConfig get() = when (lang) {
+        Lang.FR -> "Configuration"
+        Lang.EN -> "Configuration"
+    }
+    val totalRounds get() = when (lang) {
+        Lang.FR -> "Nombre de tours"
+        Lang.EN -> "Number of rounds"
+    }
+    val restBetweenExercises get() = when (lang) {
+        Lang.FR -> "Repos entre exercices"
+        Lang.EN -> "Rest between exercises"
+    }
+    val restBetweenRounds get() = when (lang) {
+        Lang.FR -> "Repos entre tours"
+        Lang.EN -> "Rest between rounds"
+    }
+    val startCircuit get() = when (lang) {
+        Lang.FR -> "Démarrer"
+        Lang.EN -> "Start"
+    }
+    val inputType get() = when (lang) {
+        Lang.FR -> "Type de saisie"
+        Lang.EN -> "Input type"
+    }
+    val inputTypeReps get() = when (lang) {
+        Lang.FR -> "Répétitions"
+        Lang.EN -> "Reps"
+    }
+    val inputTypeRepsWeight get() = when (lang) {
+        Lang.FR -> "Reps + poids"
+        Lang.EN -> "Reps + weight"
+    }
+    val inputTypeDuration get() = when (lang) {
+        Lang.FR -> "Durée"
+        Lang.EN -> "Duration"
+    }
+    val restInProgress get() = when (lang) {
+        Lang.FR -> "Repos en cours"
+        Lang.EN -> "Resting"
+    }
+    val skipRest get() = when (lang) {
+        Lang.FR -> "Passer"
+        Lang.EN -> "Skip"
+    }
+    val validateAndNext get() = when (lang) {
+        Lang.FR -> "Valider et passer au suivant"
+        Lang.EN -> "Validate and next"
+    }
+    val recap get() = when (lang) {
+        Lang.FR -> "Récapitulatif"
+        Lang.EN -> "Summary"
+    }
+    val exercise get() = when (lang) {
+        Lang.FR -> "Exercice"
+        Lang.EN -> "Exercise"
+    }
+    val save get() = when (lang) {
+        Lang.FR -> "Enregistrer"
+        Lang.EN -> "Save"
+    }
+    val notesPlaceholder get() = when (lang) {
+        Lang.FR -> "Notes..."
+        Lang.EN -> "Notes..."
+    }
+    val replayCircuit get() = when (lang) {
+        Lang.FR -> "Refaire ce circuit"
+        Lang.EN -> "Replay this circuit"
+    }
+    fun roundProgress(current: Int, total: Int) = when (lang) {
+        Lang.FR -> "Tour $current / $total"
+        Lang.EN -> "Round $current / $total"
+    }
+    fun exerciseProgress(current: Int, total: Int) = when (lang) {
+        Lang.FR -> "Exercice $current / $total"
+        Lang.EN -> "Exercise $current / $total"
+    }
+    fun finishCircuitBody(exercises: Int, performances: Int) = when (lang) {
+        Lang.FR -> "$exercises exercice(s) · $performances performance(s)"
+        Lang.EN -> "$exercises exercise(s) · $performances performance(s)"
+    }
+
 }

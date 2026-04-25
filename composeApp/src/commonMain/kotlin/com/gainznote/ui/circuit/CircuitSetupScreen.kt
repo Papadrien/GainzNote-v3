@@ -1,17 +1,33 @@
 package com.gainznote.ui.circuit
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gainznote.i18n.S
+import com.gainznote.model.CircuitExercise
+import com.gainznote.model.CircuitInputType
 import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
+import com.gainznote.ui.ads.AdBanner
+import com.gainznote.ui.components.DurationWheelPicker
+import com.gainznote.ui.home.formatDisplayDateFull
+import com.gainznote.ui.theme.GainzThemeColors
 import com.gainznote.ui.theme.themeColorsFor
 
 @Composable
@@ -22,26 +38,234 @@ fun CircuitSetupScreen(
     templateId: String? = null,
     resumeId: String? = null,
     skipSetup: Boolean = false,
+    adFree: Boolean = false,
     onBack: () -> Unit,
-    onFinished: () -> Unit,
-    chronoNotifEnabled: Boolean = false,
-    onChronoStart: (Long) -> Unit = {},
-    onChronoStop: () -> Unit = {}
+    onStartWorkout: (String) -> Unit,
+    onFinished: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val vm = remember(resumeId, templateId) {
+        CircuitViewModel(repo, scope, templateId, resumeId)
+    }
+    val workout by vm.state.collectAsState()
     val c = themeColorsFor(WorkoutType.CIRCUIT, darkTheme, blackBg)
-    Column(
-        Modifier.fillMaxSize().background(c.background).safeDrawingPadding().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("\uD83D\uDD04", fontSize = 56.sp)
-        Spacer(Modifier.height(16.dp))
-        Text(S.circuitComingSoon, color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        Text(S.circuitComingSoonDesc, color = c.textSec, fontSize = 14.sp)
-        Spacer(Modifier.height(24.dp))
-        androidx.compose.material3.TextButton(onClick = onBack) {
-            Text(S.back, color = c.accent)
+    val cfg = workout.circuitConfig
+
+    // Mode "skipSetup" : on route directement vers l'écran de séance après chargement template
+    LaunchedEffect(workout.id, skipSetup, templateId) {
+        if (skipSetup && templateId != null && workout.circuitExercises.isNotEmpty()) {
+            onStartWorkout(workout.id)
         }
+    }
+
+    Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
+        // TopBar
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(40.dp).clickable { onBack() }, contentAlignment = Alignment.Center) {
+                    Text("←", color = c.accent, fontSize = 22.sp)
+                }
+                Spacer(Modifier.width(4.dp))
+                Column {
+                    Text(S.workoutTypeCircuit, color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                    Text(S.startedAt(formatDisplayDateFull(workout.startedAt)), color = c.textMuted, fontSize = 11.sp)
+                }
+            }
+            Button(
+                onClick = { onStartWorkout(workout.id) },
+                colors = ButtonDefaults.buttonColors(containerColor = c.accent),
+                shape = RoundedCornerShape(10.dp),
+                enabled = workout.circuitExercises.isNotEmpty()
+            ) {
+                Text(
+                    S.startCircuit,
+                    color = if (darkTheme) Color.Black else Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
+        ) {
+            Spacer(Modifier.height(12.dp))
+            // Titre
+            BasicTextField(
+                value = workout.title,
+                onValueChange = { vm.updateTitle(it) },
+                textStyle = TextStyle(color = c.text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+                cursorBrush = SolidColor(c.accent),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                decorationBox = { inner ->
+                    Box(Modifier.fillMaxWidth().background(c.surface, RoundedCornerShape(10.dp))
+                        .border(1.dp, c.border, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 14.dp, vertical = 14.dp)) {
+                        if (workout.title.isEmpty()) Text(S.workoutTitlePlaceholder, color = c.textMuted, fontSize = 16.sp)
+                        inner()
+                    }
+                }
+            )
+            Spacer(Modifier.height(12.dp))
+
+            // ── Config (tours + repos) ────────────────────────────────────
+            Column(Modifier.fillMaxWidth()
+                .border(1.dp, c.border, RoundedCornerShape(12.dp))
+                .background(c.surface, RoundedCornerShape(12.dp))
+                .padding(14.dp)) {
+                Text(S.circuitConfig, color = c.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+
+                // Nb tours
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(S.totalRounds, color = c.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) - 1) }) {
+                        Text("−", color = c.accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "${cfg?.totalRounds ?: 3}",
+                        color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.widthIn(min = 32.dp)
+                    )
+                    IconButton(onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) + 1) }) {
+                        Text("+", color = c.accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = c.border, thickness = 0.5.dp)
+                Spacer(Modifier.height(8.dp))
+
+                // Repos entre exos
+                Text(S.restBetweenExercises, color = c.textSec, fontSize = 12.sp)
+                Spacer(Modifier.height(4.dp))
+                DurationWheelPicker(
+                    totalSeconds = cfg?.restBetweenExercisesSeconds ?: 0L,
+                    onChange = { vm.updateRestBetweenExercises(it) },
+                    c = c, showHours = false
+                )
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = c.border, thickness = 0.5.dp)
+                Spacer(Modifier.height(8.dp))
+
+                // Repos entre tours
+                Text(S.restBetweenRounds, color = c.textSec, fontSize = 12.sp)
+                Spacer(Modifier.height(4.dp))
+                DurationWheelPicker(
+                    totalSeconds = cfg?.restBetweenRoundsSeconds ?: 0L,
+                    onChange = { vm.updateRestBetweenRounds(it) },
+                    c = c, showHours = false
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // Liste des exercices circuit
+            workout.circuitExercises.forEach { ex ->
+                CircuitExerciseSetupCard(
+                    exercise = ex,
+                    c = c,
+                    onNameChange = { vm.updateExerciseName(ex.id, it) },
+                    onInputTypeChange = { vm.updateInputType(ex.id, it) },
+                    onRemove = { vm.removeExercise(ex.id) },
+                    onMoveUp = { vm.moveExerciseUp(ex.id) }
+                )
+                Spacer(Modifier.height(10.dp))
+            }
+
+            Surface(
+                onClick = { vm.addExercise() },
+                shape = RoundedCornerShape(12.dp),
+                color = c.accentDim,
+                border = BorderStroke(1.dp, c.accent),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(Modifier.padding(16.dp), contentAlignment = Alignment.Center) {
+                    Text(S.addCircuitExercise, color = c.accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+
+            if (!adFree) {
+                AdBanner(Modifier.fillMaxWidth())
+                Spacer(Modifier.height(12.dp))
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun CircuitExerciseSetupCard(
+    exercise: CircuitExercise,
+    c: GainzThemeColors,
+    onNameChange: (String) -> Unit,
+    onInputTypeChange: (CircuitInputType) -> Unit,
+    onRemove: () -> Unit,
+    onMoveUp: () -> Unit
+) {
+    Column(Modifier.fillMaxWidth()
+        .border(1.dp, c.border, RoundedCornerShape(12.dp))
+        .background(c.surface, RoundedCornerShape(12.dp))
+        .padding(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BasicTextField(
+                value = exercise.name,
+                onValueChange = onNameChange,
+                textStyle = TextStyle(color = c.text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                cursorBrush = SolidColor(c.accent),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                modifier = Modifier.weight(1f),
+                decorationBox = { inner ->
+                    Box(Modifier.padding(vertical = 4.dp)) {
+                        if (exercise.name.isEmpty()) Text(S.circuitExerciseNamePlaceholder, color = c.textMuted, fontSize = 16.sp)
+                        inner()
+                    }
+                }
+            )
+            IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
+                Text("↑", color = c.accent, fontSize = 16.sp)
+            }
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Default.Delete, contentDescription = S.delete, tint = c.danger)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+        Spacer(Modifier.height(8.dp))
+        Text(S.inputType, color = c.textMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            InputTypeChip(CircuitInputType.REPS, S.inputTypeReps, exercise.inputType, c, onInputTypeChange)
+            InputTypeChip(CircuitInputType.REPS_WEIGHT, S.inputTypeRepsWeight, exercise.inputType, c, onInputTypeChange)
+            InputTypeChip(CircuitInputType.DURATION, S.inputTypeDuration, exercise.inputType, c, onInputTypeChange)
+        }
+    }
+}
+
+@Composable
+private fun InputTypeChip(
+    value: CircuitInputType,
+    label: String,
+    current: CircuitInputType,
+    c: GainzThemeColors,
+    onPick: (CircuitInputType) -> Unit
+) {
+    val selected = value == current
+    Surface(
+        onClick = { onPick(value) },
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) c.accentDim else c.surfaceAlt,
+        border = BorderStroke(1.dp, if (selected) c.accent else c.border)
+    ) {
+        Text(
+            label,
+            color = if (selected) c.accent else c.textSec,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        )
     }
 }

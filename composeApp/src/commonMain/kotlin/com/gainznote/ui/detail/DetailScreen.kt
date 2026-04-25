@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.gainznote.model.CardioExercise
+import com.gainznote.model.CircuitExercise
+import com.gainznote.model.CircuitInputType
 import com.gainznote.model.Exercise
 import com.gainznote.model.Workout
 import com.gainznote.model.WorkoutType
@@ -33,6 +35,7 @@ fun DetailScreen(
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
+    onReplayCircuit: (String) -> Unit = {},
     onDeleted: () -> Unit
 ) {
     val c = GainzThemeColors(darkTheme, blackBg)
@@ -96,9 +99,20 @@ fun DetailScreen(
                         }
                     }
                     WorkoutType.CIRCUIT -> {
-                        // Rendu détaillé circuit ajouté en C5
-                        Text(S.circuitDetailComingSoon, color = c.textMuted, fontSize = 14.sp)
-                        Spacer(Modifier.height(12.dp))
+                        val cfg = w.circuitConfig
+                        if (cfg != null) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                StatChip(S.roundsCount(cfg.totalRounds), c)
+                                if (cfg.restBetweenExercisesSeconds > 0) {
+                                    StatChip("⏱ ${formatShortSec(cfg.restBetweenExercisesSeconds)}", c)
+                                }
+                            }
+                            Spacer(Modifier.height(12.dp))
+                        }
+                        w.circuitExercises.forEach { ex ->
+                            CircuitExerciseDetailCard(ex, cfg?.totalRounds ?: 0, c, typeAccent, typeAccentDim)
+                            Spacer(Modifier.height(12.dp))
+                        }
                     }
                 }
                 Button(onClick = { onUseAsTemplate(w.id) },
@@ -107,6 +121,17 @@ fun DetailScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = typeAccent)) {
                     Text(S.useAsTemplate, color = if (darkTheme) Color.Black else Color.White,
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+                if (w.type == WorkoutType.CIRCUIT) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { onReplayCircuit(w.id) },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, typeAccent)
+                    ) {
+                        Text(S.replayCircuit, color = typeAccent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    }
                 }
                 Spacer(Modifier.height(32.dp))
             }
@@ -208,5 +233,77 @@ fun formatSegmentDuration(totalSec: Long): String {
         h > 0 -> "${h}h ${m.toString().padStart(2,'0')}m ${s.toString().padStart(2,'0')}s"
         m > 0 -> "${m}m ${s.toString().padStart(2,'0')}s"
         else  -> "${s}s"
+    }
+}
+
+
+@Composable
+fun CircuitExerciseDetailCard(
+    exercise: CircuitExercise,
+    totalRounds: Int,
+    c: GainzThemeColors,
+    typeAccent: Color,
+    typeAccentDim: Color
+) {
+    Column(Modifier.fillMaxWidth()
+        .border(1.dp, c.border, RoundedCornerShape(12.dp))
+        .background(c.surface, RoundedCornerShape(12.dp))) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(exercise.name.ifBlank { S.unnamedExercise }, color = c.text,
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Box(Modifier.background(typeAccentDim, RoundedCornerShape(5.dp))
+                .padding(horizontal = 5.dp, vertical = 2.dp)) {
+                val label = when (exercise.inputType) {
+                    CircuitInputType.REPS -> S.inputTypeReps
+                    CircuitInputType.REPS_WEIGHT -> S.inputTypeRepsWeight
+                    CircuitInputType.DURATION -> S.inputTypeDuration
+                }
+                Text(label, color = typeAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+        // Tableau perfs par tour
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            (1..totalRounds).forEach { round ->
+                val perf = exercise.performances.firstOrNull { it.roundNumber == round }
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("T$round", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(32.dp))
+                    if (perf == null) {
+                        Text("—", color = c.textMuted, fontSize = 13.sp)
+                    } else {
+                        val desc: String = when (exercise.inputType) {
+                            CircuitInputType.REPS -> "${perf.reps ?: "?"} reps"
+                            CircuitInputType.REPS_WEIGHT -> {
+                                val w = perf.weightKg?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "?"
+                                "${perf.reps ?: "?"} reps × ${w} kg"
+                            }
+                            CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
+                        }
+                        Text(desc, color = c.text, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
+                        if (perf.notes.isNotBlank()) {
+                            Text(perf.notes, color = c.textSec, fontSize = 12.sp, maxLines = 1,
+                                modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+    }
+}
+
+fun formatShortSec(sec: Long): String {
+    val h = sec / 3600
+    val m = (sec % 3600) / 60
+    val s = sec % 60
+    return when {
+        h > 0 -> "${h}h${m.toString().padStart(2,'0')}"
+        m > 0 -> "${m}m${s.toString().padStart(2,'0')}"
+        else -> "${s}s"
     }
 }
