@@ -5,5 +5,6 @@ data class AppSettings(
     val blackBg: Boolean = false,
     val chronoNotifEnabled: Boolean = false,
     val adFree: Boolean = false,
-    val language: String = "auto"
+    val language: String = "auto",
+    val lastWorkoutType: WorkoutType = WorkoutType.MUSCULATION
 )

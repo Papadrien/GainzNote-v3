@@ -3,9 +3,16 @@ package com.gainznote.repository
 import com.gainznote.db.DatabaseDriverFactory
 import com.gainznote.db.GainzNoteDatabase
 import com.gainznote.model.AppSettings
+import com.gainznote.model.CardioExercise
+import com.gainznote.model.CardioSegment
+import com.gainznote.model.CircuitConfig
+import com.gainznote.model.CircuitExercise
+import com.gainznote.model.CircuitInputType
+import com.gainznote.model.CircuitPerformance
 import com.gainznote.model.Exercise
 import com.gainznote.model.TrainingSet
 import com.gainznote.model.Workout
+import com.gainznote.model.WorkoutType
 import com.gainznote.ui.workout.newId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -34,26 +41,92 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
 
     private fun buildWorkout(id: String): Workout {
         val row = q.getWorkoutById(id).executeAsOne()
-        val exercises = q.getExercisesForWorkout(id).executeAsList().map { ex ->
-            val sets = q.getSetsForExercise(ex.id).executeAsList().map { s ->
-                TrainingSet(s.id, s.exercise_id, s.position.toInt(),
-                    s.weight_kg, s.reps?.toInt(), s.reps_placeholder?.toInt(), s.notes)
+        val type = WorkoutType.parse(row.type)
+        val exercises = if (type == WorkoutType.MUSCULATION) {
+            q.getExercisesForWorkout(id).executeAsList().map { ex ->
+                val sets = q.getSetsForExercise(ex.id).executeAsList().map { s ->
+                    TrainingSet(s.id, s.exercise_id, s.position.toInt(),
+                        s.weight_kg, s.reps?.toInt(), s.reps_placeholder?.toInt(), s.notes)
+                }
+                Exercise(ex.id, ex.workout_id, ex.name, ex.position.toInt(), ex.superset_with, sets)
             }
-            Exercise(ex.id, ex.workout_id, ex.name, ex.position.toInt(), ex.superset_with, sets)
-        }
-        return Workout(row.id, row.title, row.notes, row.started_at, row.finished_at, exercises)
+        } else emptyList()
+
+        val cardioExercises = if (type == WorkoutType.CARDIO) {
+            q.getCardioExercisesForWorkout(id).executeAsList().map { ce ->
+                val segs = q.getCardioSegmentsForExercise(ce.id).executeAsList().map { s ->
+                    CardioSegment(s.id, s.cardio_exercise_id, s.position.toInt(),
+                        s.intensity, s.duration_seconds)
+                }
+                CardioExercise(ce.id, ce.workout_id, ce.name, ce.position.toInt(), segs)
+            }
+        } else emptyList()
+
+        val circuitConfig = if (type == WorkoutType.CIRCUIT) {
+            q.getCircuitConfig(id).executeAsOneOrNull()?.let { cc ->
+                CircuitConfig(cc.workout_id, cc.total_rounds.toInt(),
+                    cc.rest_between_exercises_seconds, cc.rest_between_rounds_seconds)
+            }
+        } else null
+
+        val circuitExercises = if (type == WorkoutType.CIRCUIT) {
+            q.getCircuitExercisesForWorkout(id).executeAsList().map { ce ->
+                val perfs = q.getCircuitPerformancesForExercise(ce.id).executeAsList().map { p ->
+                    CircuitPerformance(p.id, p.circuit_exercise_id, p.round_number.toInt(),
+                        p.reps?.toInt(), p.weight_kg, p.duration_seconds, p.notes)
+                }
+                CircuitExercise(ce.id, ce.workout_id, ce.name, ce.position.toInt(),
+                    CircuitInputType.parse(ce.input_type), perfs)
+            }
+        } else emptyList()
+
+        return Workout(
+            id = row.id, title = row.title, notes = row.notes,
+            startedAt = row.started_at, finishedAt = row.finished_at, type = type,
+            exercises = exercises, cardioExercises = cardioExercises,
+            circuitConfig = circuitConfig, circuitExercises = circuitExercises
+        )
     }
 
     suspend fun saveWorkout(workout: Workout) = withContext(Dispatchers.IO) {
         db.transaction {
-            q.insertWorkout(workout.id, workout.title, workout.notes, workout.startedAt, workout.finishedAt)
+            q.insertWorkout(workout.id, workout.title, workout.notes,
+                workout.startedAt, workout.finishedAt, workout.type.name)
             q.deleteExercisesForWorkout(workout.id)
-            workout.exercises.forEachIndexed { i, ex ->
-                q.insertExercise(ex.id, workout.id, ex.name, i.toLong(), ex.supersetWith)
-                q.deleteSetsForExercise(ex.id)
-                ex.sets.forEachIndexed { j, s ->
-                    q.insertSet(s.id, ex.id, j.toLong(), s.weightKg,
-                        s.reps?.toLong(), s.repsPlaceholder?.toLong(), s.notes)
+            if (workout.type == WorkoutType.MUSCULATION) {
+                workout.exercises.forEachIndexed { i, ex ->
+                    q.insertExercise(ex.id, workout.id, ex.name, i.toLong(), ex.supersetWith)
+                    q.deleteSetsForExercise(ex.id)
+                    ex.sets.forEachIndexed { j, s ->
+                        q.insertSet(s.id, ex.id, j.toLong(), s.weightKg,
+                            s.reps?.toLong(), s.repsPlaceholder?.toLong(), s.notes)
+                    }
+                }
+            }
+            q.deleteCardioExercisesForWorkout(workout.id)
+            if (workout.type == WorkoutType.CARDIO) {
+                workout.cardioExercises.forEachIndexed { i, ce ->
+                    q.insertCardioExercise(ce.id, workout.id, ce.name, i.toLong())
+                    q.deleteCardioSegmentsForExercise(ce.id)
+                    ce.segments.forEachIndexed { j, s ->
+                        q.insertCardioSegment(s.id, ce.id, j.toLong(), s.intensity, s.durationSeconds)
+                    }
+                }
+            }
+            q.deleteCircuitConfig(workout.id)
+            q.deleteCircuitExercisesForWorkout(workout.id)
+            if (workout.type == WorkoutType.CIRCUIT) {
+                workout.circuitConfig?.let { cc ->
+                    q.upsertCircuitConfig(workout.id, cc.totalRounds.toLong(),
+                        cc.restBetweenExercisesSeconds, cc.restBetweenRoundsSeconds)
+                }
+                workout.circuitExercises.forEachIndexed { i, ce ->
+                    q.insertCircuitExercise(ce.id, workout.id, ce.name, i.toLong(), ce.inputType.name)
+                    q.deleteCircuitPerformancesForExercise(ce.id)
+                    ce.performances.forEach { p ->
+                        q.insertCircuitPerformance(p.id, ce.id, p.roundNumber.toLong(),
+                            p.reps?.toLong(), p.weightKg, p.durationSeconds, p.notes)
+                    }
                 }
             }
         }
@@ -78,7 +151,8 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
                 blackBg = it.black_bg != 0L,
                 chronoNotifEnabled = it.chrono_notif_enabled != 0L,
                 adFree = it.ad_free != 0L,
-                language = it.language
+                language = it.language,
+                lastWorkoutType = WorkoutType.parse(it.last_workout_type)
             )
         } ?: AppSettings()
     }
@@ -89,7 +163,8 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
             black_bg = if (settings.blackBg) 1L else 0L,
             chrono_notif_enabled = if (settings.chronoNotifEnabled) 1L else 0L,
             ad_free = if (settings.adFree) 1L else 0L,
-            language = settings.language
+            language = settings.language,
+            last_workout_type = settings.lastWorkoutType.name
         )
     }
 
@@ -107,6 +182,7 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
                 append("\"notes\":${w.notes.j()},")
                 append("\"startedAt\":${w.startedAt.j()},")
                 append("\"finishedAt\":${w.finishedAt.jn()},")
+                append("\"type\":${w.type.name.j()},")
                 append("\"exercises\":[")
                 w.exercises.forEachIndexed { ei, ex ->
                     if (ei > 0) append(",")
@@ -143,11 +219,13 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
         val workouts = parseJsonWorkouts(json)
         db.transaction {
             workouts.forEach { workout ->
-                q.insertWorkout(workout.id, workout.title, workout.notes, workout.startedAt, workout.finishedAt)
+                q.insertWorkout(workout.id, workout.title, workout.notes,
+                    workout.startedAt, workout.finishedAt, workout.type.name)
                 workout.exercises.forEachIndexed { i, ex ->
                     q.insertExercise(ex.id, workout.id, ex.name, i.toLong(), ex.supersetWith)
                     ex.sets.forEachIndexed { j, s ->
-                        q.insertSet(s.id, ex.id, j.toLong(), s.weightKg, s.reps?.toLong(), s.repsPlaceholder?.toLong(), s.notes)
+                        q.insertSet(s.id, ex.id, j.toLong(), s.weightKg, s.reps?.toLong(),
+                            s.repsPlaceholder?.toLong(), s.notes)
                     }
                 }
             }
@@ -213,7 +291,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
         val exercises = splitJsonObjects(exBlock).map { parseExerciseJson(it, wId) }
         return Workout(wId, sf(json, "title") ?: "", sf(json, "notes") ?: "",
             sf(json, "startedAt") ?: Clock.System.now().toString(),
-            snf(json, "finishedAt"), exercises)
+            snf(json, "finishedAt"),
+            type = WorkoutType.parse(sf(json, "type")),
+            exercises = exercises)
     }
 
     private fun parseExerciseJson(json: String, workoutId: String): Exercise {

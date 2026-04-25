@@ -3,7 +3,8 @@ CREATE TABLE workout (
     title       TEXT NOT NULL DEFAULT '',
     notes       TEXT NOT NULL DEFAULT '',
     started_at  TEXT NOT NULL,
-    finished_at TEXT
+    finished_at TEXT,
+    type        TEXT NOT NULL DEFAULT 'MUSCULATION'
 );
 
 CREATE TABLE exercise (
@@ -24,13 +25,56 @@ CREATE TABLE training_set (
     notes            TEXT NOT NULL DEFAULT ''
 );
 
+-- Cardio
+CREATE TABLE cardio_exercise (
+    id         TEXT NOT NULL PRIMARY KEY,
+    workout_id TEXT NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL DEFAULT '',
+    position   INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE cardio_segment (
+    id                  TEXT NOT NULL PRIMARY KEY,
+    cardio_exercise_id  TEXT NOT NULL REFERENCES cardio_exercise(id) ON DELETE CASCADE,
+    position            INTEGER NOT NULL DEFAULT 0,
+    intensity           TEXT NOT NULL DEFAULT '',
+    duration_seconds    INTEGER NOT NULL DEFAULT 0
+);
+
+-- Circuit
+CREATE TABLE circuit_config (
+    workout_id                       TEXT NOT NULL PRIMARY KEY REFERENCES workout(id) ON DELETE CASCADE,
+    total_rounds                     INTEGER NOT NULL DEFAULT 3,
+    rest_between_exercises_seconds   INTEGER NOT NULL DEFAULT 0,
+    rest_between_rounds_seconds      INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE circuit_exercise (
+    id         TEXT NOT NULL PRIMARY KEY,
+    workout_id TEXT NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL DEFAULT '',
+    position   INTEGER NOT NULL DEFAULT 0,
+    input_type TEXT NOT NULL DEFAULT 'REPS'
+);
+
+CREATE TABLE circuit_performance (
+    id                  TEXT NOT NULL PRIMARY KEY,
+    circuit_exercise_id TEXT NOT NULL REFERENCES circuit_exercise(id) ON DELETE CASCADE,
+    round_number        INTEGER NOT NULL,
+    reps                INTEGER,
+    weight_kg           REAL,
+    duration_seconds    INTEGER,
+    notes               TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE app_settings (
     id                    INTEGER NOT NULL PRIMARY KEY,
     dark_theme            INTEGER NOT NULL DEFAULT 1,
     black_bg              INTEGER NOT NULL DEFAULT 0,
     chrono_notif_enabled  INTEGER NOT NULL DEFAULT 0,
     ad_free               INTEGER NOT NULL DEFAULT 0,
-    language              TEXT NOT NULL DEFAULT 'auto'
+    language              TEXT NOT NULL DEFAULT 'auto',
+    last_workout_type     TEXT NOT NULL DEFAULT 'MUSCULATION'
 );
 
 -- Workouts
@@ -41,16 +85,16 @@ getWorkoutById:
 SELECT * FROM workout WHERE id = :id;
 
 insertWorkout:
-INSERT OR REPLACE INTO workout(id, title, notes, started_at, finished_at)
-VALUES (:id, :title, :notes, :started_at, :finished_at);
+INSERT OR REPLACE INTO workout(id, title, notes, started_at, finished_at, type)
+VALUES (:id, :title, :notes, :started_at, :finished_at, :type);
 
 updateWorkout:
-UPDATE workout SET title=:title, notes=:notes, finished_at=:finished_at WHERE id=:id;
+UPDATE workout SET title=:title, notes=:notes, finished_at=:finished_at, type=:type WHERE id=:id;
 
 deleteWorkout:
 DELETE FROM workout WHERE id=:id;
 
--- Exercises
+-- Exercises (muscu)
 getExercisesForWorkout:
 SELECT * FROM exercise WHERE workout_id=:workout_id ORDER BY position;
 
@@ -64,7 +108,7 @@ DELETE FROM exercise WHERE id=:id;
 deleteExercisesForWorkout:
 DELETE FROM exercise WHERE workout_id=:workout_id;
 
--- Sets
+-- Sets (muscu)
 getSetsForExercise:
 SELECT * FROM training_set WHERE exercise_id=:exercise_id ORDER BY position;
 
@@ -75,19 +119,68 @@ VALUES (:id, :exercise_id, :position, :weight_kg, :reps, :reps_placeholder, :not
 deleteSetsForExercise:
 DELETE FROM training_set WHERE exercise_id=:exercise_id;
 
--- Entraînements en cours (sans finished_at)
 getInProgressWorkouts:
 SELECT * FROM workout WHERE finished_at IS NULL ORDER BY started_at DESC;
 
--- Entraînements terminés
 getFinishedWorkouts:
 SELECT * FROM workout WHERE finished_at IS NOT NULL ORDER BY started_at DESC;
 
+-- Cardio queries
+getCardioExercisesForWorkout:
+SELECT * FROM cardio_exercise WHERE workout_id=:workout_id ORDER BY position;
 
--- Paramètres applicatifs
+insertCardioExercise:
+INSERT OR REPLACE INTO cardio_exercise(id, workout_id, name, position)
+VALUES (:id, :workout_id, :name, :position);
+
+deleteCardioExercisesForWorkout:
+DELETE FROM cardio_exercise WHERE workout_id=:workout_id;
+
+getCardioSegmentsForExercise:
+SELECT * FROM cardio_segment WHERE cardio_exercise_id=:cardio_exercise_id ORDER BY position;
+
+insertCardioSegment:
+INSERT OR REPLACE INTO cardio_segment(id, cardio_exercise_id, position, intensity, duration_seconds)
+VALUES (:id, :cardio_exercise_id, :position, :intensity, :duration_seconds);
+
+deleteCardioSegmentsForExercise:
+DELETE FROM cardio_segment WHERE cardio_exercise_id=:cardio_exercise_id;
+
+-- Circuit queries
+getCircuitConfig:
+SELECT * FROM circuit_config WHERE workout_id=:workout_id;
+
+upsertCircuitConfig:
+INSERT OR REPLACE INTO circuit_config(workout_id, total_rounds, rest_between_exercises_seconds, rest_between_rounds_seconds)
+VALUES (:workout_id, :total_rounds, :rest_between_exercises_seconds, :rest_between_rounds_seconds);
+
+deleteCircuitConfig:
+DELETE FROM circuit_config WHERE workout_id=:workout_id;
+
+getCircuitExercisesForWorkout:
+SELECT * FROM circuit_exercise WHERE workout_id=:workout_id ORDER BY position;
+
+insertCircuitExercise:
+INSERT OR REPLACE INTO circuit_exercise(id, workout_id, name, position, input_type)
+VALUES (:id, :workout_id, :name, :position, :input_type);
+
+deleteCircuitExercisesForWorkout:
+DELETE FROM circuit_exercise WHERE workout_id=:workout_id;
+
+getCircuitPerformancesForExercise:
+SELECT * FROM circuit_performance WHERE circuit_exercise_id=:circuit_exercise_id ORDER BY round_number;
+
+insertCircuitPerformance:
+INSERT OR REPLACE INTO circuit_performance(id, circuit_exercise_id, round_number, reps, weight_kg, duration_seconds, notes)
+VALUES (:id, :circuit_exercise_id, :round_number, :reps, :weight_kg, :duration_seconds, :notes);
+
+deleteCircuitPerformancesForExercise:
+DELETE FROM circuit_performance WHERE circuit_exercise_id=:circuit_exercise_id;
+
+-- Settings
 getAppSettings:
 SELECT * FROM app_settings WHERE id = 1;
 
 upsertAppSettings:
-INSERT OR REPLACE INTO app_settings(id, dark_theme, black_bg, chrono_notif_enabled, ad_free, language)
-VALUES (1, :dark_theme, :black_bg, :chrono_notif_enabled, :ad_free, :language);
+INSERT OR REPLACE INTO app_settings(id, dark_theme, black_bg, chrono_notif_enabled, ad_free, language, last_workout_type)
+VALUES (1, :dark_theme, :black_bg, :chrono_notif_enabled, :ad_free, :language, :last_workout_type);
