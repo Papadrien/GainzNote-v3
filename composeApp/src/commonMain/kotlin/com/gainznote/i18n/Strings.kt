@@ -360,4 +360,55 @@ object S {
         Lang.FR -> "Affiche le temps de repos en cours pendant l'entraînement"
         Lang.EN -> "Shows current rest time during workout"
     }
+
+    // ── Workout types (Cardio, Circuit) ───────────────────────────────────
+    val workoutTypeMusculation get() = when (lang) {
+        Lang.FR -> "Musculation"
+        Lang.EN -> "Strength training"
+    }
+    val workoutTypeCardio get() = when (lang) {
+        Lang.FR -> "Cardio"
+        Lang.EN -> "Cardio"
+    }
+    val workoutTypeCircuit get() = when (lang) {
+        Lang.FR -> "Circuit"
+        Lang.EN -> "Circuit"
+    }
+    val selectWorkoutType get() = when (lang) {
+        Lang.FR -> "Type"
+        Lang.EN -> "Type"
+    }
+    val back get() = when (lang) {
+        Lang.FR -> "Retour"
+        Lang.EN -> "Back"
+    }
+    val cardioComingSoon get() = when (lang) {
+        Lang.FR -> "Cardio — bientôt disponible"
+        Lang.EN -> "Cardio — coming soon"
+    }
+    val cardioComingSoonDesc get() = when (lang) {
+        Lang.FR -> "Cette fonctionnalité arrive très prochainement."
+        Lang.EN -> "This feature is coming soon."
+    }
+    val circuitComingSoon get() = when (lang) {
+        Lang.FR -> "Circuit — bientôt disponible"
+        Lang.EN -> "Circuit — coming soon"
+    }
+    val circuitComingSoonDesc get() = when (lang) {
+        Lang.FR -> "Cette fonctionnalité arrive très prochainement."
+        Lang.EN -> "This feature is coming soon."
+    }
+    val overwriteInProgressTitle get() = when (lang) {
+        Lang.FR -> "Un entraînement est en cours"
+        Lang.EN -> "A workout is in progress"
+    }
+    val overwriteInProgressBody get() = when (lang) {
+        Lang.FR -> "Démarrer un nouvel entraînement écrasera celui en cours.\n\nContinuer ?"
+        Lang.EN -> "Starting a new workout will overwrite the one in progress.\n\nContinue?"
+    }
+    val overwriteConfirm get() = when (lang) {
+        Lang.FR -> "Écraser"
+        Lang.EN -> "Overwrite"
+    }
+
 }

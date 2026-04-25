@@ -6,7 +6,10 @@ import com.gainznote.i18n.Lang
 import com.gainznote.i18n.S
 import com.gainznote.i18n.getSystemLanguage
 import com.gainznote.model.AppSettings
+import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
+import com.gainznote.ui.cardio.CardioSetupScreen
+import com.gainznote.ui.circuit.CircuitSetupScreen
 import com.gainznote.ui.detail.DetailScreen
 import com.gainznote.ui.history.HistoryScreen
 import com.gainznote.ui.home.HomeScreen
@@ -17,6 +20,12 @@ import kotlinx.coroutines.launch
 sealed class Screen {
     data object Home : Screen()
     data class Workout(val templateId: String? = null, val resumeId: String? = null) : Screen()
+    data class CardioSetup(val templateId: String? = null, val resumeId: String? = null) : Screen()
+    data class CircuitSetup(
+        val templateId: String? = null,
+        val resumeId: String? = null,
+        val skipSetup: Boolean = false
+    ) : Screen()
     data object History : Screen()
     data class Detail(val workoutId: String) : Screen()
 }
@@ -45,6 +54,7 @@ fun App(
     var chronoNotifEnabled by remember { mutableStateOf(false) }
     var adFree by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf("auto") }
+    var lastWorkoutType by remember { mutableStateOf(WorkoutType.MUSCULATION) }
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -55,6 +65,7 @@ fun App(
         chronoNotifEnabled = settings.chronoNotifEnabled
         adFree = settings.adFree
         language = settings.language
+        lastWorkoutType = settings.lastWorkoutType
         // Initialiser la langue
         if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
         settingsLoaded = true
@@ -69,7 +80,8 @@ fun App(
                     blackBg = blackBg,
                     chronoNotifEnabled = chronoNotifEnabled,
                     adFree = adFree,
-                    language = language
+                    language = language,
+                    lastWorkoutType = lastWorkoutType
                 )
             )
         }
@@ -116,7 +128,21 @@ fun App(
                         }
                     }
                 },
-                onNewWorkout = { navigateTo(Screen.Workout()) },
+                selectedWorkoutType = lastWorkoutType,
+                onSelectedWorkoutTypeChange = { t ->
+                    lastWorkoutType = t
+                    persistSettings()
+                },
+                onStartWorkoutOfType = { type ->
+                    lastWorkoutType = type
+                    persistSettings()
+                    val dest: Screen = when (type) {
+                        WorkoutType.MUSCULATION -> Screen.Workout()
+                        WorkoutType.CARDIO -> Screen.CardioSetup()
+                        WorkoutType.CIRCUIT -> Screen.CircuitSetup()
+                    }
+                    navigateTo(dest)
+                },
                 onHistory = { navigateTo(Screen.History) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
                 onResumeWorkout = { id -> navigateTo(Screen.Workout(resumeId = id)) },
@@ -186,6 +212,51 @@ fun App(
                     backStack.clear(); backStack.add(Screen.Home)
                     navigateTo(Screen.Workout(templateId = id))
                 }
+            )
+            is Screen.CardioSetup -> CardioSetupScreen(
+                repo = repo,
+                darkTheme = darkTheme,
+                blackBg = blackBg,
+                templateId = s.templateId,
+                resumeId = s.resumeId,
+                onBack = { navigateBack() },
+                onFinished = {
+                    if (adFree) {
+                        backStack.clear()
+                        backStack.add(Screen.Home)
+                    } else {
+                        onShowInterstitial {
+                            backStack.clear()
+                            backStack.add(Screen.Home)
+                        }
+                    }
+                },
+                chronoNotifEnabled = chronoNotifEnabled,
+                onChronoStart = onChronoStart,
+                onChronoStop = onChronoStop
+            )
+            is Screen.CircuitSetup -> CircuitSetupScreen(
+                repo = repo,
+                darkTheme = darkTheme,
+                blackBg = blackBg,
+                templateId = s.templateId,
+                resumeId = s.resumeId,
+                skipSetup = s.skipSetup,
+                onBack = { navigateBack() },
+                onFinished = {
+                    if (adFree) {
+                        backStack.clear()
+                        backStack.add(Screen.Home)
+                    } else {
+                        onShowInterstitial {
+                            backStack.clear()
+                            backStack.add(Screen.Home)
+                        }
+                    }
+                },
+                chronoNotifEnabled = chronoNotifEnabled,
+                onChronoStart = onChronoStart,
+                onChronoStop = onChronoStop
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,

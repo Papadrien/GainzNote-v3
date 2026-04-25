@@ -12,8 +12,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.gainznote.model.Workout
+import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.theme.GainzThemeColors
+import com.gainznote.ui.theme.accentPairFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -29,7 +31,9 @@ fun HomeScreen(
     onToggleTheme: () -> Unit,
     onToggleBlackBg: () -> Unit = {},
     onToggleChronoNotif: () -> Unit = {},
-    onNewWorkout: () -> Unit,
+    selectedWorkoutType: WorkoutType = WorkoutType.MUSCULATION,
+    onSelectedWorkoutTypeChange: (WorkoutType) -> Unit = {},
+    onStartWorkoutOfType: (WorkoutType) -> Unit = {},
     onHistory: () -> Unit,
     onOpenWorkout: (String) -> Unit,
     onResumeWorkout: (String) -> Unit = {},
@@ -65,18 +69,73 @@ fun HomeScreen(
         Text(S.subtitle, color = c.textMuted, fontSize = 13.sp)
         Spacer(Modifier.height(28.dp))
 
-        Button(
-            onClick = onNewWorkout, modifier = Modifier.fillMaxWidth().height(58.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = c.accent)
+        // State local pour le dialog "écraser entraînement en cours"
+        var pendingTypeForStart by remember { mutableStateOf<WorkoutType?>(null) }
+
+        fun tryStart(type: WorkoutType) {
+            if (inProgressWorkouts.isNotEmpty()) {
+                pendingTypeForStart = type
+            } else {
+                onStartWorkoutOfType(type)
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                S.newWorkout,
-                color = if (darkTheme) Color.Black else Color.White,
-                fontSize = 17.sp, fontWeight = FontWeight.Bold
+            WorkoutTypeDropdown(
+                selected = selectedWorkoutType,
+                onSelected = { onSelectedWorkoutTypeChange(it) },
+                darkTheme = darkTheme,
+                modifier = Modifier.weight(1f)
             )
+            val (accent, _) = accentPairFor(selectedWorkoutType, darkTheme)
+            Button(
+                onClick = { tryStart(selectedWorkoutType) },
+                modifier = Modifier.weight(1.2f).height(58.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = accent)
+            ) {
+                Text(
+                    S.newWorkout,
+                    color = if (darkTheme) Color.Black else Color.White,
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+            }
         }
         Spacer(Modifier.height(32.dp))
+
+        if (pendingTypeForStart != null) {
+            val t = pendingTypeForStart!!
+            AlertDialog(
+                onDismissRequest = { pendingTypeForStart = null },
+                containerColor = c.surface,
+                title = { Text(S.overwriteInProgressTitle, color = c.text) },
+                text = { Text(S.overwriteInProgressBody, color = c.textSec) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            pendingTypeForStart = null
+                            // Supprimer les entraînements en cours avant de démarrer le nouveau
+                            inProgressWorkouts.forEach { onDeleteInProgressWorkout(it.id) }
+                            onStartWorkoutOfType(t)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = c.danger)
+                    ) {
+                        Text(S.overwriteConfirm, color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingTypeForStart = null }) {
+                        Text(S.cancel, color = c.textMuted)
+                    }
+                }
+            )
+        }
+
 
         // ── En cours ──────────────────────────────────────────────────────────
         if (inProgressWorkouts.isNotEmpty()) {
@@ -447,6 +506,75 @@ fun LanguagePickerDialog(
             }
         }
     )
+}
+
+
+@Composable
+fun WorkoutTypeDropdown(
+    selected: WorkoutType,
+    onSelected: (WorkoutType) -> Unit,
+    darkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val c = GainzThemeColors(darkTheme)
+    var expanded by remember { mutableStateOf(false) }
+
+    val label = when (selected) {
+        WorkoutType.MUSCULATION -> S.workoutTypeMusculation
+        WorkoutType.CARDIO -> S.workoutTypeCardio
+        WorkoutType.CIRCUIT -> S.workoutTypeCircuit
+    }
+    val (accent, _) = accentPairFor(selected, darkTheme)
+
+    Box(modifier) {
+        Surface(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(14.dp),
+            color = c.surface,
+            border = BorderStroke(1.5.dp, accent),
+            modifier = Modifier.fillMaxWidth().height(58.dp)
+        ) {
+            Row(
+                Modifier.fillMaxSize().padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(S.selectWorkoutType, color = c.textMuted, fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(label, color = accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Text("\u25BC", color = accent, fontSize = 11.sp)
+            }
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = c.surface
+        ) {
+            WorkoutType.entries.forEach { type ->
+                val typeLabel = when (type) {
+                    WorkoutType.MUSCULATION -> S.workoutTypeMusculation
+                    WorkoutType.CARDIO -> S.workoutTypeCardio
+                    WorkoutType.CIRCUIT -> S.workoutTypeCircuit
+                }
+                val (typeAccent, _) = accentPairFor(type, darkTheme)
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            typeLabel,
+                            color = if (type == selected) typeAccent else c.text,
+                            fontWeight = if (type == selected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelected(type)
+                    }
+                )
+            }
+        }
+    }
 }
 
 fun formatDisplayDate(iso: String): String = try {
