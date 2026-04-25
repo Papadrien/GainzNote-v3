@@ -23,6 +23,7 @@ import com.gainznote.model.CardioExercise
 import com.gainznote.model.CardioSegment
 import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
+import com.gainznote.ui.BackHandler
 import com.gainznote.ui.ads.AdBanner
 import com.gainznote.ui.components.DurationWheelPicker
 import com.gainznote.ui.home.formatDisplayDateFull
@@ -47,6 +48,10 @@ fun CardioSetupScreen(
     val workout by vm.state.collectAsState()
     val c = themeColorsFor(WorkoutType.CARDIO, darkTheme, blackBg)
     var showFinishDialog by remember { mutableStateOf(false) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) { showLeaveDialog = true }
+
 
     Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
         // ── TopBar ─────────────────────────────────────────────────────────
@@ -56,7 +61,7 @@ fun CardioSetupScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).clickable { onBack() }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(40.dp).clickable { showLeaveDialog = true }, contentAlignment = Alignment.Center) {
                     Text("←", color = c.accent, fontSize = 22.sp)
                 }
                 Spacer(Modifier.width(4.dp))
@@ -168,6 +173,28 @@ fun CardioSetupScreen(
             dismissButton = {
                 TextButton(onClick = { showFinishDialog = false }) {
                     Text(S.continueWorkout, color = c.textMuted)
+                }
+            }
+        )
+    }
+
+    if (showLeaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showLeaveDialog = false },
+            containerColor = c.surface,
+            title = { Text(S.leaveWorkoutTitle, color = c.text) },
+            text = { Text(S.leaveWorkoutBody, color = c.textSec) },
+            confirmButton = {
+                Button(
+                    onClick = { showLeaveDialog = false; onBack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
+                ) {
+                    Text(S.leaveConfirm, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveDialog = false }) {
+                    Text(S.stay, color = c.textMuted)
                 }
             }
         )

@@ -572,4 +572,23 @@ object S {
         Lang.EN -> "$exercises exercise(s) · $performances performance(s)"
     }
 
+
+    // ── Back handler confirmation ──────────────────────────────────────────
+    val leaveWorkoutTitle get() = when (lang) {
+        Lang.FR -> "Quitter l'entraînement ?"
+        Lang.EN -> "Leave workout?"
+    }
+    val leaveWorkoutBody get() = when (lang) {
+        Lang.FR -> "Les modifications non terminées sont sauvegardées automatiquement. Vous pouvez y revenir plus tard depuis « En cours »."
+        Lang.EN -> "Unfinished changes are auto-saved. You can come back later from « In progress »."
+    }
+    val leaveConfirm get() = when (lang) {
+        Lang.FR -> "Quitter"
+        Lang.EN -> "Leave"
+    }
+    val stay get() = when (lang) {
+        Lang.FR -> "Rester"
+        Lang.EN -> "Stay"
+    }
+
 }
