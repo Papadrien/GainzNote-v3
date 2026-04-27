@@ -37,24 +37,24 @@ class RecentsSection extends ConsumerWidget {
           final animal = animalRepo.getById(preset.animalId);
           final cardColor = _cardColors[i % _cardColors.length];
 
+          void launchPreset() {
+            HapticFeedback.mediumImpact();
+            ref.read(setupProvider.notifier).loadPreset(preset);
+            Navigator.of(context).push(PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const TimerScreen(),
+              transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                opacity: anim,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                  child: child)),
+              transitionDuration: const Duration(milliseconds: 400),
+            ));
+          }
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                ref.read(setupProvider.notifier).loadPreset(preset);
-                Navigator.of(context).push(PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const TimerScreen(),
-                  transitionsBuilder: (_, anim, __, child) => FadeTransition(
-                    opacity: anim,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                        CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-                      child: child)),
-                  transitionDuration: const Duration(milliseconds: 400),
-                ));
-              },
-              child: Container(
+            child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: cardColor.withValues(alpha: 0.7),
@@ -96,20 +96,23 @@ class RecentsSection extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    // Play icon with black outline
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.accentGreen.withValues(alpha: 0.15),
-                        border: Border.all(
-                          color: AppColors.pencilDark,
-                          width: 2,
+                    GestureDetector(
+                      onTap: launchPreset,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.accentGreen.withValues(alpha: 0.15),
+                          border: Border.all(
+                            color: AppColors.pencilDark,
+                            width: 2,
+                          ),
                         ),
+                        child: const Icon(Icons.play_arrow,
+                          color: AppColors.accentGreen, size: 20),
                       ),
-                      child: const Icon(Icons.play_arrow,
-                        color: AppColors.accentGreen, size: 20),
                     ),
                   ],
                 ),
