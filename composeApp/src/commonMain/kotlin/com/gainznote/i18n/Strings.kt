@@ -602,4 +602,43 @@ object S {
         Lang.EN -> "kg"
     }
 
+
+    // ── Accessibilité (C9) ────────────────────────────────────────────────
+    val backDesc get() = when (lang) {
+        Lang.FR -> "Retour"
+        Lang.EN -> "Back"
+    }
+    val moveUpDesc get() = when (lang) {
+        Lang.FR -> "Déplacer l'exercice vers le haut"
+        Lang.EN -> "Move exercise up"
+    }
+    val increaseRoundsDesc get() = when (lang) {
+        Lang.FR -> "Augmenter le nombre de tours"
+        Lang.EN -> "Increase number of rounds"
+    }
+    val decreaseRoundsDesc get() = when (lang) {
+        Lang.FR -> "Diminuer le nombre de tours"
+        Lang.EN -> "Decrease number of rounds"
+    }
+    val addSegmentDesc get() = when (lang) {
+        Lang.FR -> "Ajouter un segment"
+        Lang.EN -> "Add a segment"
+    }
+    val removeSegmentDesc get() = when (lang) {
+        Lang.FR -> "Supprimer ce segment"
+        Lang.EN -> "Remove this segment"
+    }
+    val skipRestDesc get() = when (lang) {
+        Lang.FR -> "Passer le repos"
+        Lang.EN -> "Skip rest"
+    }
+    val removeExerciseDesc get() = when (lang) {
+        Lang.FR -> "Supprimer cet exercice"
+        Lang.EN -> "Remove this exercise"
+    }
+    val restTimerLabel get() = when (lang) {
+        Lang.FR -> "Temps de repos restant"
+        Lang.EN -> "Remaining rest time"
+    }
+
 }

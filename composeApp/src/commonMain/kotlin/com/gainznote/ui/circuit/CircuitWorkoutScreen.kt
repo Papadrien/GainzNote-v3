@@ -1,6 +1,9 @@
 package com.gainznote.ui.circuit
 
 import androidx.compose.animation.*
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +19,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gainznote.i18n.S
@@ -100,7 +105,11 @@ fun CircuitWorkoutScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).clickable { showLeaveDialog = true }, contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.size(40.dp)
+                        .clickable(onClickLabel = S.backDesc) { showLeaveDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
                     Text("←", color = c.accent, fontSize = 22.sp)
                 }
                 Spacer(Modifier.width(4.dp))
@@ -133,11 +142,18 @@ fun CircuitWorkoutScreen(
             ) {
                 Text("⏱  ${S.restInProgress}", color = c.accent, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(restDisplay, color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = {
-                        restEndMs = null
-                        if (chronoNotifEnabled) onChronoStop()
-                    }) {
+                    Text(
+                        restDisplay,
+                        color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { contentDescription = "${S.restTimerLabel} $restDisplay" }
+                    )
+                    TextButton(
+                        onClick = {
+                            restEndMs = null
+                            if (chronoNotifEnabled) onChronoStop()
+                        },
+                        modifier = Modifier.semantics { contentDescription = S.skipRestDesc }
+                    ) {
                         Text(S.skipRest, color = c.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
@@ -147,6 +163,14 @@ fun CircuitWorkoutScreen(
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(10.dp))
             if (currentExo != null) {
+                AnimatedContent(
+                    targetState = currentRound to currentExIdx,
+                    transitionSpec = {
+                        (fadeIn() + slideInHorizontally { it / 4 }) togetherWith
+                            (fadeOut() + slideOutHorizontally { -it / 4 })
+                    },
+                    label = "activeExerciseTransition"
+                ) { _ ->
                 ActiveExerciseCard(
                     exercise = currentExo,
                     exerciseIdx = currentExIdx,
@@ -191,6 +215,7 @@ fun CircuitWorkoutScreen(
                         }
                     }
                 )
+                }
             }
             Spacer(Modifier.height(16.dp))
 

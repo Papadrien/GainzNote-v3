@@ -1,5 +1,10 @@
 package com.gainznote.ui.circuit
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +22,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gainznote.i18n.S
@@ -71,7 +78,11 @@ fun CircuitSetupScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).clickable { showLeaveDialog = true }, contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.size(40.dp)
+                        .clickable(onClickLabel = S.backDesc) { showLeaveDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
                     Text("←", color = c.accent, fontSize = 22.sp)
                 }
                 Spacer(Modifier.width(4.dp))
@@ -128,7 +139,10 @@ fun CircuitSetupScreen(
                 // Nb tours
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(S.totalRounds, color = c.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) - 1) }) {
+                    IconButton(
+                        onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) - 1) },
+                        modifier = Modifier.semantics { contentDescription = S.decreaseRoundsDesc }
+                    ) {
                         Text("−", color = c.accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     }
                     Text(
@@ -136,7 +150,10 @@ fun CircuitSetupScreen(
                         color = c.text, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.widthIn(min = 32.dp)
                     )
-                    IconButton(onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) + 1) }) {
+                    IconButton(
+                        onClick = { vm.updateTotalRounds((cfg?.totalRounds ?: 3) + 1) },
+                        modifier = Modifier.semantics { contentDescription = S.increaseRoundsDesc }
+                    ) {
                         Text("+", color = c.accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -169,15 +186,23 @@ fun CircuitSetupScreen(
 
             // Liste des exercices circuit
             workout.circuitExercises.forEach { ex ->
-                CircuitExerciseSetupCard(
-                    exercise = ex,
-                    c = c,
-                    onNameChange = { vm.updateExerciseName(ex.id, it) },
-                    onInputTypeChange = { vm.updateInputType(ex.id, it) },
-                    onRemove = { vm.removeExercise(ex.id) },
-                    onMoveUp = { vm.moveExerciseUp(ex.id) }
-                )
-                Spacer(Modifier.height(10.dp))
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        CircuitExerciseSetupCard(
+                            exercise = ex,
+                            c = c,
+                            onNameChange = { vm.updateExerciseName(ex.id, it) },
+                            onInputTypeChange = { vm.updateInputType(ex.id, it) },
+                            onRemove = { vm.removeExercise(ex.id) },
+                            onMoveUp = { vm.moveExerciseUp(ex.id) }
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
             }
 
             Surface(
@@ -252,11 +277,14 @@ private fun CircuitExerciseSetupCard(
                     }
                 }
             )
-            IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
+            IconButton(
+                onClick = onMoveUp,
+                modifier = Modifier.size(32.dp).semantics { contentDescription = S.moveUpDesc }
+            ) {
                 Text("↑", color = c.accent, fontSize = 16.sp)
             }
             IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = S.delete, tint = c.danger)
+                Icon(Icons.Default.Delete, contentDescription = S.removeExerciseDesc, tint = c.danger)
             }
         }
         Spacer(Modifier.height(8.dp))

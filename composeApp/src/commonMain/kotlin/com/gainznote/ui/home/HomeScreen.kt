@@ -387,16 +387,22 @@ fun InProgressCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(Modifier.size(8.dp).background(c.accent, RoundedCornerShape(4.dp)))
+                    val (typeAccent, _) = accentPairFor(workout.type, c.dark)
+                    Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
                     Text(
                         workout.title.ifBlank { S.untitledWorkout },
-                        color = c.accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                        color = typeAccent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                     )
                 }
                 Spacer(Modifier.height(3.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textSec, fontSize = 12.sp)
+                val inProgressCount = when (workout.type) {
+                    WorkoutType.MUSCULATION -> workout.exercises.size
+                    WorkoutType.CARDIO -> workout.cardioExercises.size
+                    WorkoutType.CIRCUIT -> workout.circuitExercises.size
+                }
                 Text(
-                    S.exerciseCountInProgress(workout.exercises.size),
+                    S.exerciseCountInProgress(inProgressCount),
                     color = c.textSec, fontSize = 12.sp
                 )
             }
@@ -445,6 +451,9 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val (typeAccent, _) = accentPairFor(workout.type, c.dark)
+            Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
+            Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     workout.title.ifBlank { S.untitled }, color = c.text,
@@ -452,7 +461,7 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
-                Text(S.exerciseCount(workout.exercises.size), color = c.textMuted, fontSize = 12.sp)
+                Text(workoutTypeAndCount(workout), color = c.textMuted, fontSize = 12.sp)
             }
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }
@@ -575,6 +584,23 @@ fun WorkoutTypeDropdown(
             }
         }
     }
+}
+
+
+
+/** Affiche le type + le décompte adapté (exos pour muscu, exos cardio pour cardio, exos×tours pour circuit). */
+private fun workoutTypeAndCount(workout: Workout): String {
+    val typeLabel = when (workout.type) {
+        WorkoutType.MUSCULATION -> S.workoutTypeMusculation
+        WorkoutType.CARDIO -> S.workoutTypeCardio
+        WorkoutType.CIRCUIT -> S.workoutTypeCircuit
+    }
+    val count = when (workout.type) {
+        WorkoutType.MUSCULATION -> S.exerciseCount(workout.exercises.size)
+        WorkoutType.CARDIO -> S.exerciseCount(workout.cardioExercises.size)
+        WorkoutType.CIRCUIT -> S.exerciseCount(workout.circuitExercises.size)
+    }
+    return "$typeLabel · $count"
 }
 
 fun formatDisplayDate(iso: String): String = try {

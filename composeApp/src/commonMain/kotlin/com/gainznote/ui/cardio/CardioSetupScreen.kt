@@ -1,5 +1,10 @@
 package com.gainznote.ui.cardio
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,7 +66,13 @@ fun CardioSetupScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).clickable { showLeaveDialog = true }, contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.size(40.dp)
+                        .clickable(
+                            onClickLabel = S.backDesc
+                        ) { showLeaveDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
                     Text("←", color = c.accent, fontSize = 22.sp)
                 }
                 Spacer(Modifier.width(4.dp))
@@ -234,25 +245,33 @@ private fun CardioExerciseCard(
                 }
             )
             IconButton(onClick = onRemoveExercise) {
-                Icon(Icons.Default.Delete, contentDescription = S.delete, tint = c.danger)
+                Icon(Icons.Default.Delete, contentDescription = S.removeExerciseDesc, tint = c.danger)
             }
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
         Spacer(Modifier.height(8.dp))
         exercise.segments.forEachIndexed { idx, seg ->
-            SegmentRow(
-                index = idx + 1,
-                segment = seg,
-                canRemove = exercise.segments.size > 1,
-                c = c,
-                onIntensityChange = { onIntensityChange(seg.id, it) },
-                onDurationChange = { onDurationChange(seg.id, it) },
-                onRemove = { onRemoveSegment(seg.id) }
-            )
-            if (idx < exercise.segments.size - 1) {
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(color = c.border, thickness = 0.5.dp)
-                Spacer(Modifier.height(8.dp))
+            androidx.compose.animation.AnimatedVisibility(
+                visible = true,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    SegmentRow(
+                        index = idx + 1,
+                        segment = seg,
+                        canRemove = exercise.segments.size > 1,
+                        c = c,
+                        onIntensityChange = { onIntensityChange(seg.id, it) },
+                        onDurationChange = { onDurationChange(seg.id, it) },
+                        onRemove = { onRemoveSegment(seg.id) }
+                    )
+                    if (idx < exercise.segments.size - 1) {
+                        Spacer(Modifier.height(8.dp))
+                        HorizontalDivider(color = c.border, thickness = 0.5.dp)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -281,7 +300,7 @@ private fun SegmentRow(
             Text(S.segmentLabel(index), color = c.textMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             if (canRemove) {
                 IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = S.delete, tint = c.danger)
+                    Icon(Icons.Default.Delete, contentDescription = S.removeSegmentDesc, tint = c.danger)
                 }
             }
         }
