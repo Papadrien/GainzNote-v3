@@ -35,9 +35,8 @@ import com.gainznote.ui.theme.GainzThemeColors
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-
-@Composable
 import com.gainznote.ui.components.FloatingTimer
+
 
 @Composable
 fun CircuitWorkoutScreen(

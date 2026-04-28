@@ -133,9 +133,6 @@ fun DetailScreen(
                         Text(S.replayCircuit, color = typeAccent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
                 }
-                    Text(S.useAsTemplate, color = if (darkTheme) Color.Black else Color.White,
-                        fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                }
 
                 Spacer(Modifier.height(32.dp))
             }

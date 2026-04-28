@@ -29,8 +29,8 @@ class CardioViewModel(
     private val scope: CoroutineScope,
     private val templateId: String?,
     private val resumeId: String? = null,
-    private var saveJob: Job? = null
-    private var isFinished = false
+    private var saveJob: Job? = null,
+    private var isFinished: Boolean = false
 ) {
     private val _state = MutableStateFlow(
         Workout(
@@ -126,12 +126,12 @@ class CardioViewModel(
         }
     }
 
-        fun finish(onDone: () -> Unit) {
+    fun finish(onDone: () -> Unit) {
         isFinished = true
-        isFinished = true
-                scope.launch {
-        saveJob?.cancel()
-        repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
-        onDone()
+        scope.launch {
+            saveJob?.cancel()
+            repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
+            onDone()
+        }
     }
 }
