@@ -1,0 +1,12 @@
+# Template pour local.properties
+# Copiez ce fichier en local.properties et ajustez les chemins
+
+# Chemin vers le SDK Android (obligatoire)
+# Exemples selon votre OS :
+# Windows: C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
+# macOS: /Users/YourName/Library/Android/sdk  
+# Linux: /home/YourName/Android/Sdk
+sdk.dir=/path/to/android/sdk
+
+# Optionnel: NDK si utilisé
+# ndk.dir=/path/to/android/ndk
