@@ -448,3 +448,4 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
         )
 
 }
+}

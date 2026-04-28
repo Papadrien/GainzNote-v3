@@ -2,6 +2,7 @@ package com.gainznote.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,32 +28,44 @@ fun FloatingTimer(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn() + slideInHorizontally(initialOffsetX = { it }),
-        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it })
+        enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
     ) {
-        Card(
-            modifier = Modifier.padding(16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = c.surface)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            contentAlignment = Alignment.CenterEnd
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Box(
+                modifier = Modifier
+                    .border(2.dp, c.accent, RoundedCornerShape(12.dp))
+                    .background(c.surface, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                Text(
-                    timerDisplay, 
-                    color = c.accent, 
-                    fontSize = 20.sp, 
-                    fontWeight = FontWeight.Bold
-                )
-                Box(Modifier.size(32.dp).clickable(onClick = onClose)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Text(
-                        "✕", 
-                        color = c.textMuted, 
-                        fontSize = 18.sp, 
-                        modifier = Modifier.align(Alignment.Center)
+                        timerDisplay,
+                        color = c.text,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
+                    Box(
+                        Modifier
+                            .size(28.dp)
+                            .clickable(onClick = onClose),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "\u2715",
+                            color = c.textMuted,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }

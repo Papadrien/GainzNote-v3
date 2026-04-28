@@ -65,7 +65,9 @@ fun DetailScreen(
                 CircularProgressIndicator(color = c.accent)
             }
         } else {
-            val (typeAccent, typeAccentDim) = Pair(c.accent, c.accentDim)
+            val typeC = GainzThemeColors(darkTheme, type = w.type)
+            val typeAccent = typeC.accent
+            val typeAccentDim = typeC.accentDim
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {

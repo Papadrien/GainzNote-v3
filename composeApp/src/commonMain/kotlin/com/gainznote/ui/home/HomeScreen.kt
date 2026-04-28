@@ -367,7 +367,8 @@ fun InProgressCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val (typeAccent, _) = Pair(c.accent, c.accentDim)
+                    val typeColors = GainzThemeColors(c.dark, type = workout.type)
+                    val typeAccent = typeColors.accent
                     Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
                     Text(
                         workout.title.ifBlank { S.untitledWorkout },
@@ -431,7 +432,7 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val (typeAccent, _) = Pair(c.accent, c.accentDim)
+            val typeAccent = GainzThemeColors(c.dark, type = workout.type).accent
             Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {

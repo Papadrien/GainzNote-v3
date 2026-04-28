@@ -23,6 +23,7 @@ import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
 import com.gainznote.i18n.S
 import kotlinx.coroutines.delay
+import com.gainznote.ui.components.FloatingTimer
 
 @Composable
 fun WorkoutScreen(
@@ -100,30 +101,17 @@ fun WorkoutScreen(
             }
         }
 
-        // ── Chrono inline — juste sous la topbar, toujours visible même avec le clavier ──
-        // Positionné dans le flux normal (pas flottant) donc reste visible même si le contenu
-        // est décalé par le clavier. S'affiche/masque avec animation.
-        AnimatedVisibility(
+        // ── Chrono flottant — fenêtre au-dessus du contenu ──
+        FloatingTimer(
             visible = chronoStart != null,
-            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(c.accentDim)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "⏱  $chronoDisplay",
-                    color = c.accent,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
-            }
-        }
+            timerDisplay = chronoDisplay,
+            onClose = {
+                chronoStart = null
+                chronoDisplay = "00:00"
+                if (chronoNotifEnabled) onChronoStop()
+            },
+            c = c
+        )
 
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
