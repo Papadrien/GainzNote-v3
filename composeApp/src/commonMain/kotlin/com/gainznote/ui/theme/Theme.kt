@@ -37,86 +37,35 @@ object GainzColors {
     val SupersetLight     = Color(0xFF5C50D0)
     val SupersetDimLight  = Color(0xFFE0DAFF)
 
-    // ── Cardio (vert) - Palette étendue ─────────────────────────────────────
+    // ── Cardio (vert) ────────────────────────────────────────────────────────
     val CardioAccentDark      = Color(0xFF4DD98C)
     val CardioAccentDimDark   = Color(0xFF0E4A2A)
-    val CardioBackgroundDark  = Color(0xFF0A2818)
-    val CardioSurfaceDark     = Color(0xFF114030)
-    val CardioSurfaceAltDark  = Color(0xFF1A5040)
-    val CardioBorderDark      = Color(0xFF1E6348)
-
     val CardioAccentLight     = Color(0xFF1B8A4A)
     val CardioAccentDimLight  = Color(0xFFC8F0D8)
-    val CardioBackgroundLight = Color(0xFFE8F5EE)
-    val CardioSurfaceLight    = Color(0xFFFFFFFF)
-    val CardioSurfaceAltLight = Color(0xFFD8F0E8)
-    val CardioBorderLight     = Color(0xFFB0E8C8)
 
-    // ── Circuit (rouge) - Palette étendue ───────────────────────────────────
+    // ── Circuit (rouge) ──────────────────────────────────────────────────────
     val CircuitAccentDark     = Color(0xFFFF6B6B)
     val CircuitAccentDimDark  = Color(0xFF5A1F1F)
-    val CircuitBackgroundDark = Color(0xFF281010)
-    val CircuitSurfaceDark    = Color(0xFF402020)
-    val CircuitSurfaceAltDark = Color(0xFF502A2A)
-    val CircuitBorderDark     = Color(0xFF634040)
-
     val CircuitAccentLight    = Color(0xFFC62828)
     val CircuitAccentDimLight = Color(0xFFFFD0D0)
-    val CircuitBackgroundLight= Color(0xFFFFF0F0)
-    val CircuitSurfaceLight   = Color(0xFFFFFFFF)
-    val CircuitSurfaceAltLight= Color(0xFFF8E8E8)
-    val CircuitBorderLight    = Color(0xFFE8C0C0)
 }
 
 data class GainzThemeColors(
     val dark: Boolean,
     val blackBg: Boolean = false,
-    val workoutType: WorkoutType = WorkoutType.MUSCULATION
+    val accentOverride: Color? = null,
+    val accentDimOverride: Color? = null
 ) {
-    val accent get() = when (workoutType) {
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioAccentDark else GainzColors.CardioAccentLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitAccentDark else GainzColors.CircuitAccentLight
-        else -> if (dark) GainzColors.AccentDark else GainzColors.AccentLight
-    }
-
-    val accentDim get() = when (workoutType) {
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioAccentDimDark else GainzColors.CardioAccentDimLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitAccentDimDark else GainzColors.CircuitAccentDimLight
-        else -> if (dark) GainzColors.AccentDimDark else GainzColors.AccentDimLight
-    }
-
-    val background get() = when {
+    val accent      get() = accentOverride ?: if (dark) GainzColors.AccentDark else GainzColors.AccentLight
+    val accentDim   get() = accentDimOverride ?: if (dark) GainzColors.AccentDimDark else GainzColors.AccentDimLight
+    val background  get() = when {
         dark && blackBg -> GainzColors.BackgroundBlack
-        dark -> when (workoutType) {
-            WorkoutType.CARDIO -> GainzColors.CardioBackgroundDark
-            WorkoutType.CIRCUIT -> GainzColors.CircuitBackgroundDark
-            else -> GainzColors.BackgroundDark
-        }
-        else -> when (workoutType) {
-            WorkoutType.CARDIO -> GainzColors.CardioBackgroundLight
-            WorkoutType.CIRCUIT -> GainzColors.CircuitBackgroundLight
-            else -> GainzColors.BackgroundLight
-        }
+        dark            -> GainzColors.BackgroundDark
+        else            -> GainzColors.BackgroundLight
     }
-
-    val surface get() = when (workoutType) {
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioSurfaceDark else GainzColors.CardioSurfaceLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitSurfaceDark else GainzColors.CircuitSurfaceLight
-        else -> if (dark) GainzColors.SurfaceDark else GainzColors.SurfaceLight
-    }
-
-    val surfaceAlt get() = when (workoutType) {
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioSurfaceAltDark else GainzColors.CardioSurfaceAltLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitSurfaceAltDark else GainzColors.CircuitSurfaceAltLight
-        else -> if (dark) GainzColors.SurfaceAltDark else GainzColors.SurfaceAltLight
-    }
-
-    val border get() = when (workoutType) {
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioBorderDark else GainzColors.CardioBorderLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitBorderDark else GainzColors.CircuitBorderLight
-        else -> if (dark) GainzColors.BorderDark else GainzColors.BorderLight
-    }
-
+    val surface     get() = if (dark) GainzColors.SurfaceDark     else GainzColors.SurfaceLight
+    val surfaceAlt  get() = if (dark) GainzColors.SurfaceAltDark  else GainzColors.SurfaceAltLight
+    val border      get() = if (dark) GainzColors.BorderDark      else GainzColors.BorderLight
     val text        get() = if (dark) GainzColors.TextDark        else GainzColors.TextLight
     val textSec     get() = if (dark) GainzColors.TextSecDark     else GainzColors.TextSecLight
     val textMuted   get() = if (dark) GainzColors.TextMutedDark   else GainzColors.TextMutedLight
@@ -143,7 +92,9 @@ fun accentPairFor(type: WorkoutType, dark: Boolean): Pair<Color, Color> = when (
 
 /** Construit un GainzThemeColors avec l'accent du type d'entraînement. */
 fun themeColorsFor(type: WorkoutType, dark: Boolean, blackBg: Boolean = false): GainzThemeColors {
-    return GainzThemeColors(dark = dark, blackBg = blackBg, workoutType = type)
+    val (accent, accentDim) = accentPairFor(type, dark)
+    return GainzThemeColors(dark = dark, blackBg = blackBg,
+        accentOverride = accent, accentDimOverride = accentDim)
 }
 
 @Composable

@@ -101,17 +101,9 @@ fun VerticalWheelPicker(
 
 /**
  * Sélecteur de durée composé de 3 wheel pickers (heures, minutes, secondes).
- * Version corrigée avec gestion d'état indépendante et layout optimisé.
- * 
  * @param totalSeconds durée totale actuelle en secondes
  * @param onChange callback avec la nouvelle durée totale en secondes
  * @param showHours si false, masque la colonne heures (utile pour les durées courtes)
- * 
- * Corrections apportées:
- * - Gestion d'état indépendante pour chaque roue
- * - Réduction des espaces verticaux (padding réduit)
- * - Conservation de la zone centrale de sélection
- * - Prévention de la réinitialisation lors des changements
  */
 @Composable
 fun DurationWheelPicker(
@@ -121,99 +113,43 @@ fun DurationWheelPicker(
     modifier: Modifier = Modifier,
     showHours: Boolean = true
 ) {
-    // États locaux pour maintenir les valeurs indépendamment
-    var currentHours by remember(totalSeconds) { 
-        mutableIntStateOf((totalSeconds / 3600L).toInt().coerceIn(0, 23)) 
-    }
-    var currentMinutes by remember(totalSeconds) { 
-        mutableIntStateOf(((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)) 
-    }
-    var currentSeconds by remember(totalSeconds) { 
-        mutableIntStateOf((totalSeconds % 60L).toInt().coerceIn(0, 59)) 
-    }
+    val h = (totalSeconds / 3600L).toInt().coerceIn(0, 23)
+    val m = ((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
+    val s = (totalSeconds % 60L).toInt().coerceIn(0, 59)
 
-    // Fonction pour émettre les changements sans réinitialiser les autres valeurs
-    fun emitChange(newHours: Int? = null, newMinutes: Int? = null, newSecs: Int? = null) {
-        val h = newHours ?: currentHours
-        val m = newMinutes ?: currentMinutes
-        val s = newSecs ?: currentSeconds
-
-        // Mettre à jour les états locaux
-        if (newHours != null) currentHours = h
-        if (newMinutes != null) currentMinutes = m
-        if (newSecs != null) currentSeconds = s
-
-        // Émettre le changement total
-        onChange(h * 3600L + m * 60L + s.toLong())
+    fun emit(nh: Int, nm: Int, ns: Int) {
+        onChange(nh * 3600L + nm * 60L + ns.toLong())
     }
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp), // Augmenté pour plus de clarté
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (showHours) {
-            Column(
-                Modifier.weight(1f), 
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    S.hoursShort, 
-                    color = c.textMuted, 
-                    fontSize = 12.sp, // Légèrement augmenté pour la lisibilité
-                    modifier = Modifier.padding(bottom = 4.dp) // Réduction du padding
-                )
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(S.hoursShort, color = c.textMuted, fontSize = 11.sp)
                 VerticalWheelPicker(
-                    value = currentHours, 
-                    range = 0..23,
-                    onValueChange = { emitChange(newHours = it) }, 
-                    c = c,
-                    modifier = Modifier.fillMaxWidth(),
-                    itemHeight = 36.dp, // Hauteur réduite pour moins d'espace
-                    visibleItems = 3 // Réduit à 3 items visibles pour compacter
+                    value = h, range = 0..23,
+                    onValueChange = { emit(it, m, s) }, c = c,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
-
-        Column(
-            Modifier.weight(1f), 
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                S.minutesShort, 
-                color = c.textMuted, 
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(S.minutesShort, color = c.textMuted, fontSize = 11.sp)
             VerticalWheelPicker(
-                value = currentMinutes, 
-                range = 0..59,
-                onValueChange = { emitChange(newMinutes = it) }, 
-                c = c,
-                modifier = Modifier.fillMaxWidth(),
-                itemHeight = 36.dp,
-                visibleItems = 3
+                value = m, range = 0..59,
+                onValueChange = { emit(h, it, s) }, c = c,
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
-        Column(
-            Modifier.weight(1f), 
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                S.secondsShort, 
-                color = c.textMuted, 
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
+        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
             VerticalWheelPicker(
-                value = currentSeconds, 
-                range = 0..59,
-                onValueChange = { emitChange(newSecs = it) }, 
-                c = c,
-                modifier = Modifier.fillMaxWidth(),
-                itemHeight = 36.dp,
-                visibleItems = 3
+                value = s, range = 0..59,
+                onValueChange = { emit(h, m, it) }, c = c,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

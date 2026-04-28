@@ -35,6 +35,7 @@ fun DetailScreen(
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
+    onReplayCircuit: (String) -> Unit = {},
     onDeleted: () -> Unit
 ) {
     val c = GainzThemeColors(darkTheme, blackBg)
@@ -121,6 +122,16 @@ fun DetailScreen(
                     Text(S.useAsTemplate, color = if (darkTheme) Color.Black else Color.White,
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
+                if (w.type == WorkoutType.CIRCUIT) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { onReplayCircuit(w.id) },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, typeAccent)
+                    ) {
+                        Text(S.replayCircuit, color = typeAccent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    }
                 }
                 Spacer(Modifier.height(32.dp))
             }

@@ -511,11 +511,6 @@ object S {
         Lang.FR -> "Démarrer"
         Lang.EN -> "Start"
     }
-
-    val newWorkout get() = when (lang) {
-        Lang.FR -> "Nouvel entraînement"
-        Lang.EN -> "New Workout"
-    }
     val inputType get() = when (lang) {
         Lang.FR -> "Type de saisie"
         Lang.EN -> "Input type"

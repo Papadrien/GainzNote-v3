@@ -85,15 +85,6 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Titre "Nouvel entraînement"
-            Text(
-                text = S.newWorkout,
-                color = colors.text,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
             WorkoutTypeDropdown(
                 selected = selectedWorkoutType,
                 onSelected = { onSelectedWorkoutTypeChange(it) },

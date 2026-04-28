@@ -342,8 +342,8 @@ private fun ActiveExerciseCard(
             }
             CircuitInputType.REPS_WEIGHT -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f)) { NumberField(S.weight, weight, onWeightChange, c, decimal = true) }
                     Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c) }
+                    Box(Modifier.weight(1f)) { NumberField(S.weight, weight, onWeightChange, c, decimal = true) }
                 }
             }
             CircuitInputType.DURATION -> {
@@ -540,8 +540,8 @@ private fun EditPerfDialog(
                     CircuitInputType.REPS -> NumberField(S.reps, reps, { reps = it }, c)
                     CircuitInputType.REPS_WEIGHT -> {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) { NumberField(S.weight, weight, { weight = it }, c, decimal = true) }
                             Box(Modifier.weight(1f)) { NumberField(S.reps, reps, { reps = it }, c) }
+                            Box(Modifier.weight(1f)) { NumberField(S.weight, weight, { weight = it }, c, decimal = true) }
                         }
                     }
                     CircuitInputType.DURATION -> {
