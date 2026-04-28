@@ -154,10 +154,9 @@ fun GainzTheme(dark: Boolean, content: @Composable () -> Unit) {
 fun WorkoutTypeTheme(
     type: WorkoutType,
     dark: Boolean,
-    blackBg: Boolean = false,
     content: @Composable (GainzThemeColors) -> Unit
 ) {
-    val c = GainzThemeColors(dark = dark, blackBg = blackBg, type = type)
+    val c = GainzThemeColors(dark = dark, type = type)
     val scheme = if (dark) darkColorScheme(
         primary = c.accent, onPrimary = Color.Black,
         background = c.background, surface = c.surface,

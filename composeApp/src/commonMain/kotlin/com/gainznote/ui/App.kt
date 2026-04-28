@@ -107,9 +107,6 @@ fun App(
                     darkTheme = !darkTheme
                     persistSettings()
                 },
-                onToggleBlackBg = {
-                    persistSettings()
-                },
                 onToggleChronoNotif = {
                     if (chronoNotifEnabled) {
                         // Désactivation — pas besoin de permission
