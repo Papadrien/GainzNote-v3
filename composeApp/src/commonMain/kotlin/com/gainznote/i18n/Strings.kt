@@ -29,10 +29,12 @@ object S {
         Lang.FR -> "Nouvel entraînement"
         Lang.EN -> "New workout"
     }
+        Lang.FR -> "Nouvel entraînement"
+        Lang.EN -> "New workout"
+    }
 
 
     // ── Home ──────────────────────────────────────────────────────────────
-        val newWorkoutTitle get() = when (lang) {
         Lang.FR -> "Nouvel entraînement"
         Lang.EN -> "New workout"
     }

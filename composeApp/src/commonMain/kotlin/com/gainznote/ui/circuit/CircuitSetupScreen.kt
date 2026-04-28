@@ -56,7 +56,7 @@ fun CircuitSetupScreen(
         CircuitViewModel(repo, scope, templateId, resumeId)
     }
     val workout by vm.state.collectAsState()
-    val c = themeColorsFor(WorkoutType.CIRCUIT, darkTheme, blackBg)
+    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CIRCUIT)
     val cfg = workout.circuitConfig
     var showLeaveDialog by remember { mutableStateOf(false) }
 

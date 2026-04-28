@@ -48,14 +48,14 @@ class CircuitViewModel(
 
     init {
         when {
-            resumeId != null -> scope.launch {
+            resumeId != null ->         scope.launch {
                 repo.getWorkoutById(resumeId)?.let { existing ->
                     // Garantir qu'un circuit a toujours une config non-null
                     val cfg = existing.circuitConfig ?: CircuitConfig(workoutId = existing.id)
                     _state.value = existing.copy(circuitConfig = cfg)
                 }
             }
-            templateId != null -> scope.launch {
+            templateId != null ->         scope.launch {
                 repo.getWorkoutById(templateId)?.let { t ->
                     val newExercises = t.circuitExercises.map { ce ->
                         // Copier la structure (sans les perfs)
@@ -73,11 +73,11 @@ class CircuitViewModel(
                 }
                 repo.saveWorkout(_state.value)
             }
-            else -> scope.launch { repo.saveWorkout(_state.value) }
+            else ->         scope.launch { repo.saveWorkout(_state.value) }
         }
 
         @OptIn(FlowPreview::class)
-        saveJob = scope.launch {
+        saveJob =         scope.launch {
             _state.debounce(2000).collect { w -> if (!isFinished) repo.saveWorkout(w) }
         }
     }
@@ -151,9 +151,10 @@ class CircuitViewModel(
         }
     }
 
-    fun finish(onDone: () -> Unit) {
+        fun finish(onDone: () -> Unit) {
         isFinished = true
-        scope.launch {
+        isFinished = true
+                scope.launch {
         saveJob?.cancel()
         repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
         onDone()

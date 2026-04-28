@@ -71,7 +71,7 @@ fun HistoryScreen(
 
 @Composable
 fun HistoryCard(workout: Workout, c: GainzThemeColors, darkTheme: Boolean, onClick: () -> Unit, onUseAsTemplate: () -> Unit) {
-    val (typeAccent, typeAccentDim) = accentPairFor(workout.type, darkTheme)
+    val (typeAccent, typeAccentDim) = Pair(c.accent, c.accentDim)
     Column(Modifier.fillMaxWidth()
         .border(1.dp, c.border, RoundedCornerShape(14.dp))
         .background(c.surface, RoundedCornerShape(14.dp))) {

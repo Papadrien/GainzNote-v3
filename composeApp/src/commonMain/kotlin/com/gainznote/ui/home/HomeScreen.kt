@@ -96,7 +96,7 @@ fun HomeScreen(
                 darkTheme = darkTheme,
                 modifier = Modifier.weight(1f)
             )
-            val (accent, _) = accentPairFor(selectedWorkoutType, darkTheme)
+            val (accent, _) = Pair(c.accent, c.accentDim)
             Button(
                 onClick = { tryStart(selectedWorkoutType) },
                 modifier = Modifier.weight(1.2f).height(58.dp),
@@ -392,7 +392,7 @@ fun InProgressCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val (typeAccent, _) = accentPairFor(workout.type, c.dark)
+                    val (typeAccent, _) = Pair(c.accent, c.accentDim)
                     Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
                     Text(
                         workout.title.ifBlank { S.untitledWorkout },
@@ -456,7 +456,7 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val (typeAccent, _) = accentPairFor(workout.type, c.dark)
+            val (typeAccent, _) = Pair(c.accent, c.accentDim)
             Box(Modifier.size(8.dp).background(typeAccent, RoundedCornerShape(4.dp)))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
@@ -572,7 +572,7 @@ fun WorkoutTypeDropdown(
                     WorkoutType.CARDIO -> S.workoutTypeCardio
                     WorkoutType.CIRCUIT -> S.workoutTypeCircuit
                 }
-                val (typeAccent, _) = accentPairFor(type, darkTheme)
+                val (typeAccent, _) = Pair(c.accent, c.accentDim)
                 DropdownMenuItem(
                     text = {
                         Text(

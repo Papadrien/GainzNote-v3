@@ -51,7 +51,7 @@ fun CardioSetupScreen(
         CardioViewModel(repo, scope, templateId, resumeId)
     }
     val workout by vm.state.collectAsState()
-    val c = themeColorsFor(WorkoutType.CARDIO, darkTheme, blackBg)
+    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CARDIO)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showLeaveDialog by remember { mutableStateOf(false) }
 

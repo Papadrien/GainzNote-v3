@@ -66,7 +66,7 @@ fun DetailScreen(
                 CircularProgressIndicator(color = c.accent)
             }
         } else {
-            val (typeAccent, typeAccentDim) = accentPairFor(w.type, darkTheme)
+            val (typeAccent, typeAccentDim) = Pair(c.accent, c.accentDim)
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {

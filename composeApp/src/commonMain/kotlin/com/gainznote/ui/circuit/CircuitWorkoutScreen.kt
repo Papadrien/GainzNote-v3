@@ -32,7 +32,7 @@ import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.BackHandler
 import com.gainznote.ui.components.DurationWheelPicker
 import com.gainznote.ui.theme.GainzThemeColors
-import com.gainznote.ui.theme.themeColorsFor
+
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
@@ -57,7 +57,7 @@ fun CircuitWorkoutScreen(
         CircuitViewModel(repo, scope, templateId = null, resumeId = workoutId)
     }
     val workout by vm.state.collectAsState()
-    val c = themeColorsFor(WorkoutType.CIRCUIT, darkTheme, blackBg)
+    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CIRCUIT)
 
     val exercises = workout.circuitExercises
     val totalRounds = workout.circuitConfig?.totalRounds ?: 1
