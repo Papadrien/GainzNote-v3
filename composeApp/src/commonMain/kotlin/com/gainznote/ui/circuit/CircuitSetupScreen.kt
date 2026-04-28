@@ -41,7 +41,7 @@ import com.gainznote.ui.theme.GainzThemeColors
 fun CircuitSetupScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
+    
     templateId: String? = null,
     resumeId: String? = null,
     skipSetup: Boolean = false,
@@ -55,7 +55,7 @@ fun CircuitSetupScreen(
         CircuitViewModel(repo, scope, templateId, resumeId)
     }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CIRCUIT)
+    val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CIRCUIT)
     val cfg = workout.circuitConfig
     var showLeaveDialog by remember { mutableStateOf(false) }
 

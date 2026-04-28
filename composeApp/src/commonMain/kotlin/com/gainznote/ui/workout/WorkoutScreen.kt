@@ -28,7 +28,7 @@ import kotlinx.coroutines.delay
 fun WorkoutScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
+    
     templateId: String?,
     resumeId: String? = null,
     onBack: () -> Unit,
@@ -41,7 +41,7 @@ fun WorkoutScreen(
     // Key sur resumeId+templateId pour recréer le VM si on change d'entraînement
     val vm = remember(resumeId, templateId) { WorkoutViewModel(repo, scope, templateId, resumeId) }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(darkTheme, blackBg)
+    val c = GainzThemeColors(darkTheme)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showSupersetPicker by remember { mutableStateOf<String?>(null) }
     var showAddSetsFor by remember { mutableStateOf<String?>(null) }

@@ -38,7 +38,7 @@ import com.gainznote.ui.theme.GainzThemeColors
 fun CardioSetupScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
+    
     templateId: String? = null,
     resumeId: String? = null,
     adFree: Boolean = false,
@@ -50,7 +50,7 @@ fun CardioSetupScreen(
         CardioViewModel(repo, scope, templateId, resumeId)
     }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CARDIO)
+    val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CARDIO)
     var showFinishDialog by remember { mutableStateOf(false) }
     var showLeaveDialog by remember { mutableStateOf(false) }
 

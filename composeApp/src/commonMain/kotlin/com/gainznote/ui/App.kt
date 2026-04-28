@@ -52,7 +52,7 @@ fun App(
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.last()
     var darkTheme by remember { mutableStateOf(true) }
-    var blackBg by remember { mutableStateOf(false) }
+    
     var chronoNotifEnabled by remember { mutableStateOf(false) }
     var adFree by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf("auto") }
@@ -63,7 +63,6 @@ fun App(
     LaunchedEffect(Unit) {
         val settings = repo.getAppSettings()
         darkTheme = settings.darkTheme
-        blackBg = settings.blackBg
         chronoNotifEnabled = settings.chronoNotifEnabled
         adFree = settings.adFree
         language = settings.language
@@ -79,7 +78,6 @@ fun App(
             repo.saveAppSettings(
                 AppSettings(
                     darkTheme = darkTheme,
-                    blackBg = blackBg,
                     chronoNotifEnabled = chronoNotifEnabled,
                     adFree = adFree,
                     language = language,
@@ -99,20 +97,17 @@ fun App(
 
     BackHandler(enabled = backStack.size > 1) { navigateBack() }
 
-    GainzTheme(dark = darkTheme, blackBg = blackBg) {
+    GainzTheme(dark = darkTheme) {
         when (val s = currentScreen) {
             Screen.Home -> HomeScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 chronoNotifEnabled = chronoNotifEnabled,
                 onToggleTheme = {
                     darkTheme = !darkTheme
-                    if (!darkTheme) blackBg = false
                     persistSettings()
                 },
                 onToggleBlackBg = {
-                    blackBg = !blackBg
                     persistSettings()
                 },
                 onToggleChronoNotif = {
@@ -196,7 +191,6 @@ fun App(
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 onBack = { navigateBack() },
@@ -236,7 +230,6 @@ fun App(
             is Screen.CardioSetup -> CardioSetupScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 adFree = adFree,
@@ -256,7 +249,6 @@ fun App(
             is Screen.CircuitSetup -> CircuitSetupScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 templateId = s.templateId,
                 resumeId = s.resumeId,
                 skipSetup = s.skipSetup,
@@ -282,7 +274,6 @@ fun App(
             is Screen.CircuitWorkout -> CircuitWorkoutScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 workoutId = s.workoutId,
                 adFree = adFree,
                 chronoNotifEnabled = chronoNotifEnabled,
@@ -304,7 +295,6 @@ fun App(
             is Screen.Detail -> DetailScreen(
                 repo = repo,
                 darkTheme = darkTheme,
-                blackBg = blackBg,
                 workoutId = s.workoutId,
                 onBack = { navigateBack() },
                 onUseAsTemplate = { id ->

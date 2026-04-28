@@ -25,10 +25,8 @@ import com.gainznote.ui.ads.AdBanner
 fun HomeScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
     chronoNotifEnabled: Boolean = false,
     onToggleTheme: () -> Unit,
-    onToggleBlackBg: () -> Unit = {},
     onToggleChronoNotif: () -> Unit = {},
     selectedWorkoutType: WorkoutType = WorkoutType.MUSCULATION,
     onSelectedWorkoutTypeChange: (WorkoutType) -> Unit = {},
@@ -47,7 +45,7 @@ fun HomeScreen(
     onChangeLang: (String) -> Unit = {},
     refreshKey: Int = 0
 ) {
-    val c = GainzThemeColors(darkTheme, blackBg)
+    val c = GainzThemeColors(darkTheme, type = selectedWorkoutType)
     var recentWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
     var inProgressWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
 
@@ -72,7 +70,6 @@ fun HomeScreen(
         var pendingTypeForStart by remember { mutableStateOf<WorkoutType?>(null) }
 
                 
-        Spacer(Modifier.height(16.dp))
 
         fun tryStart(type: WorkoutType) {
             if (inProgressWorkouts.isNotEmpty()) {
@@ -83,7 +80,6 @@ fun HomeScreen(
         }
 
         
-        Spacer(Modifier.height(16.dp))
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -238,26 +234,6 @@ fun HomeScreen(
                             checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
                         )
                     )
-                }
-                // Fond noir — visible seulement en mode sombre
-                if (darkTheme) {
-                    HorizontalDivider(
-                        color = c.border, thickness = 0.5.dp,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Row(
-                        Modifier.fillMaxWidth().padding(start = 32.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(S.blackBg, color = c.textSec, fontSize = 14.sp)
-                        Switch(
-                            checked = blackBg, onCheckedChange = { onToggleBlackBg() },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
-                            )
-                        )
-                    }
                 }
             }
         }

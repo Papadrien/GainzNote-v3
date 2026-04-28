@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 fun DetailScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
+    
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
@@ -38,7 +38,7 @@ fun DetailScreen(
 
     onDeleted: () -> Unit
 ) {
-    val c = GainzThemeColors(darkTheme, blackBg)
+    val c = GainzThemeColors(darkTheme)
     val scope = rememberCoroutineScope()
     var workout by remember { mutableStateOf<Workout?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }

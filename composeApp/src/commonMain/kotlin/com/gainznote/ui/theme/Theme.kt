@@ -82,7 +82,6 @@ object GainzColors {
 
 data class GainzThemeColors(
     val dark: Boolean,
-    val blackBg: Boolean = false,
     val type: WorkoutType = WorkoutType.MUSCULATION
 ) {
     val accent: Color get() = when(type) {
@@ -95,19 +94,7 @@ data class GainzThemeColors(
         WorkoutType.CARDIO -> if (dark) GainzColors.CardioAccentDimDark else GainzColors.CardioAccentDimLight
         WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitAccentDimDark else GainzColors.CircuitAccentDimLight
     }
-    val background: Color get() = when {
-        dark && blackBg -> GainzColors.BackgroundBlack
-        dark -> when(type) {
-            WorkoutType.MUSCULATION -> GainzColors.BackgroundDark
-            WorkoutType.CARDIO -> GainzColors.CardioBackgroundDark
-            WorkoutType.CIRCUIT -> GainzColors.CircuitBackgroundDark
-        }
-        else -> when(type) {
-            WorkoutType.MUSCULATION -> GainzColors.BackgroundLight
-            WorkoutType.CARDIO -> GainzColors.CardioBackgroundLight
-            WorkoutType.CIRCUIT -> GainzColors.CircuitBackgroundLight
-        }
-    }
+    val background: Color get() = if (dark) GainzColors.BackgroundBlack else Color.White
     val surface: Color get() = when(type) {
         WorkoutType.MUSCULATION -> if (dark) GainzColors.SurfaceDark else GainzColors.SurfaceLight
         WorkoutType.CARDIO -> if (dark) GainzColors.CardioSurfaceDark else GainzColors.CardioSurfaceLight
@@ -144,8 +131,8 @@ data class GainzThemeColors(
 }
 
 @Composable
-fun GainzTheme(dark: Boolean, blackBg: Boolean = false, content: @Composable () -> Unit) {
-    val c = GainzThemeColors(dark, blackBg)
+fun GainzTheme(dark: Boolean, content: @Composable () -> Unit) {
+    val c = GainzThemeColors(dark)
     val scheme = if (dark) darkColorScheme(
         primary = c.accent, onPrimary = Color.Black,
         background = c.background, surface = c.surface,

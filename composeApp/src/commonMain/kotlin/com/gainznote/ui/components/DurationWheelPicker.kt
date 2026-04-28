@@ -113,54 +113,57 @@ fun DurationWheelPicker(
     modifier: Modifier = Modifier,
     showHours: Boolean = true
 ) {
-    var internalSeconds by remember { mutableStateOf(totalSeconds) }
+    var h by remember { mutableStateOf((totalSeconds / 3600L).toInt().coerceIn(0, 23)) }
+    var m by remember { mutableStateOf(((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)) }
+    var s by remember { mutableStateOf((totalSeconds % 60L).toInt().coerceIn(0, 59)) }
 
     LaunchedEffect(totalSeconds) {
-        if (internalSeconds != totalSeconds) {
-            internalSeconds = totalSeconds
+        val currentTotal = h * 3600L + m * 60L + s.toLong()
+        if (currentTotal != totalSeconds) {
+            h = (totalSeconds / 3600L).toInt().coerceIn(0, 23)
+            m = ((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
+            s = (totalSeconds % 60L).toInt().coerceIn(0, 59)
         }
     }
 
-    val h = (internalSeconds / 3600L).toInt().coerceIn(0, 23)
-    val m = ((internalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
-    val s = (internalSeconds % 60L).toInt().coerceIn(0, 59)
-
     fun update(nh: Int = h, nm: Int = m, ns: Int = s) {
-        val newTotalSeconds = nh * 3600L + nm * 60L + ns.toLong()
-        internalSeconds = newTotalSeconds
-        onChange(newTotalSeconds)
+        h = nh
+        m = nm
+        s = ns
+        onChange(nh * 3600L + nm * 60L + ns.toLong())
     }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (showHours) {
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(S.hoursShort, color = c.textMuted, fontSize = 11.sp)
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (showHours) {
+                Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(S.hoursShort, color = c.textMuted, fontSize = 11.sp)
+                    VerticalWheelPicker(
+                        value = h, range = 0..23,
+                        onValueChange = { update(nh = it) }, c = c,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+            Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(S.minutesShort, color = c.textMuted, fontSize = 11.sp)
                 VerticalWheelPicker(
-                    value = h, range = 0..23,
-                    onValueChange = { update(nh = it) }, c = c,
+                    value = m, range = 0..59,
+                    onValueChange = { update(nm = it) }, c = c,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        }
-        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(S.minutesShort, color = c.textMuted, fontSize = 11.sp)
-            VerticalWheelPicker(
-                value = m, range = 0..59,
-                onValueChange = { update(nm = it) }, c = c,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
-            VerticalWheelPicker(
-                value = s, range = 0..59,
-                onValueChange = { update(ns = it) }, c = c,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
+                VerticalWheelPicker(
+                    value = s, range = 0..59,
+                    onValueChange = { update(ns = it) }, c = c,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

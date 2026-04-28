@@ -42,7 +42,7 @@ import com.gainznote.ui.components.FloatingTimer
 fun CircuitWorkoutScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
-    blackBg: Boolean = false,
+    
     workoutId: String,
     adFree: Boolean = false,
     chronoNotifEnabled: Boolean = false,
@@ -56,7 +56,7 @@ fun CircuitWorkoutScreen(
         CircuitViewModel(repo, scope, templateId = null, resumeId = workoutId)
     }
     val workout by vm.state.collectAsState()
-    val c = GainzThemeColors(dark = darkTheme, blackBg = blackBg, type = WorkoutType.CIRCUIT)
+    val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CIRCUIT)
 
     val exercises = workout.circuitExercises
     val totalRounds = workout.circuitConfig?.totalRounds ?: 1
