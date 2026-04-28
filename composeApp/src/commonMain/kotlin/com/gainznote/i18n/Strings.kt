@@ -21,24 +21,17 @@ object S {
 
     // ── App ───────────────────────────────────────────────────────────────
     val appName get() = "GainzNote"
+        val newWorkoutTitle get() = when (lang) {
+        Lang.FR -> "Nouvel entraînement"
+        Lang.EN -> "New workout"
+    }
+
     val subtitle get() = when (lang) {
         Lang.FR -> "Ton carnet de musculation"
         Lang.EN -> "Your workout logbook"
     }
-    val newWorkoutTitle get() = when (lang) {
-        Lang.FR -> "Nouvel entraînement"
-        Lang.EN -> "New workout"
-    }
-        Lang.FR -> "Nouvel entraînement"
-        Lang.EN -> "New workout"
-    }
-
 
     // ── Home ──────────────────────────────────────────────────────────────
-        Lang.FR -> "Nouvel entraînement"
-        Lang.EN -> "New workout"
-    }
-
     val newWorkout get() = when (lang) {
         Lang.FR -> "Démarrer"
         Lang.EN -> "Start"
