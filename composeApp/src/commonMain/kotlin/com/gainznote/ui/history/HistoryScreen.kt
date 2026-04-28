@@ -93,9 +93,7 @@ fun HistoryCard(workout: Workout, c: GainzThemeColors, darkTheme: Boolean, onCli
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
-        TextButton(onClick = onUseAsTemplate, modifier = Modifier.fillMaxWidth()) {
-            Text(S.useAsTemplate, color = typeAccent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-        }
+
     }
 }
 

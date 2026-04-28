@@ -35,8 +35,8 @@ fun VerticalWheelPicker(
     onValueChange: (Int) -> Unit,
     c: GainzThemeColors,
     modifier: Modifier = Modifier,
-    itemHeight: Dp = 40.dp,
-    visibleItems: Int = 5,
+    itemHeight: Dp = 30.dp, // Changed from 40.dp
+    visibleItems: Int = 3,   // Changed from 5
     format: (Int) -> String = { it.toString().padStart(2, '0') }
 ) {
     require(visibleItems % 2 == 1) { "visibleItems must be odd" }
@@ -113,12 +113,22 @@ fun DurationWheelPicker(
     modifier: Modifier = Modifier,
     showHours: Boolean = true
 ) {
-    val h = (totalSeconds / 3600L).toInt().coerceIn(0, 23)
-    val m = ((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
-    val s = (totalSeconds % 60L).toInt().coerceIn(0, 59)
+    var internalSeconds by remember { mutableStateOf(totalSeconds) }
 
-    fun emit(nh: Int, nm: Int, ns: Int) {
-        onChange(nh * 3600L + nm * 60L + ns.toLong())
+    LaunchedEffect(totalSeconds) {
+        if (internalSeconds != totalSeconds) {
+            internalSeconds = totalSeconds
+        }
+    }
+
+    val h = (internalSeconds / 3600L).toInt().coerceIn(0, 23)
+    val m = ((internalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
+    val s = (internalSeconds % 60L).toInt().coerceIn(0, 59)
+
+    fun update(nh: Int = h, nm: Int = m, ns: Int = s) {
+        val newTotalSeconds = nh * 3600L + nm * 60L + ns.toLong()
+        internalSeconds = newTotalSeconds
+        onChange(newTotalSeconds)
     }
 
     Row(
@@ -131,7 +141,7 @@ fun DurationWheelPicker(
                 Text(S.hoursShort, color = c.textMuted, fontSize = 11.sp)
                 VerticalWheelPicker(
                     value = h, range = 0..23,
-                    onValueChange = { emit(it, m, s) }, c = c,
+                    onValueChange = { update(nh = it) }, c = c,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -140,7 +150,7 @@ fun DurationWheelPicker(
             Text(S.minutesShort, color = c.textMuted, fontSize = 11.sp)
             VerticalWheelPicker(
                 value = m, range = 0..59,
-                onValueChange = { emit(h, it, s) }, c = c,
+                onValueChange = { update(nm = it) }, c = c,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -148,7 +158,7 @@ fun DurationWheelPicker(
             Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
             VerticalWheelPicker(
                 value = s, range = 0..59,
-                onValueChange = { emit(h, m, it) }, c = c,
+                onValueChange = { update(ns = it) }, c = c,
                 modifier = Modifier.fillMaxWidth()
             )
         }

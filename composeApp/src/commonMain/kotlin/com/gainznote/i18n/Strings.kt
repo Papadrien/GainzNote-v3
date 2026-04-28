@@ -25,11 +25,21 @@ object S {
         Lang.FR -> "Ton carnet de musculation"
         Lang.EN -> "Your workout logbook"
     }
+    val newWorkoutTitle get() = when (lang) {
+        Lang.FR -> "Nouvel entraînement"
+        Lang.EN -> "New workout"
+    }
+
 
     // ── Home ──────────────────────────────────────────────────────────────
+        val newWorkoutTitle get() = when (lang) {
+        Lang.FR -> "Nouvel entraînement"
+        Lang.EN -> "New workout"
+    }
+
     val newWorkout get() = when (lang) {
-        Lang.FR -> "+ Nouvel entraînement"
-        Lang.EN -> "+ New workout"
+        Lang.FR -> "Démarrer"
+        Lang.EN -> "Start"
     }
     val inProgress get() = when (lang) {
         Lang.FR -> "En cours"

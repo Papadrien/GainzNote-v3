@@ -9,6 +9,7 @@ import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.workout.newId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,9 @@ class CircuitViewModel(
     private val repo: WorkoutRepository,
     private val scope: CoroutineScope,
     private val templateId: String?,
-    private val resumeId: String? = null
+    private val resumeId: String? = null,
+    private var saveJob: Job? = null
+    private var isFinished = false
 ) {
     private val _state = MutableStateFlow(
         Workout(
@@ -74,8 +77,8 @@ class CircuitViewModel(
         }
 
         @OptIn(FlowPreview::class)
-        scope.launch {
-            _state.debounce(2000).collect { w -> repo.saveWorkout(w) }
+        saveJob = scope.launch {
+            _state.debounce(2000).collect { w -> if (!isFinished) repo.saveWorkout(w) }
         }
     }
 
@@ -148,7 +151,10 @@ class CircuitViewModel(
         }
     }
 
-    fun finish(onDone: () -> Unit) = scope.launch {
+    fun finish(onDone: () -> Unit) {
+        isFinished = true
+        scope.launch {
+        saveJob?.cancel()
         repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
         onDone()
     }

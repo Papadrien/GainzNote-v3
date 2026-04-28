@@ -27,32 +27,6 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Extract version information
-        script: |
-          # Méthode robuste d'extraction de version
-          if [ -f "androidApp/build.gradle.kts" ]; then
-            VERSION=$(grep -E '\s*versionName\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
-            VERSION_CODE=$(grep -E '\s*versionCode\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
-
-            if [ -z "$VERSION" ]; then
-              VERSION="1.0.0"
-              echo "⚠️  Version par défaut utilisée: $VERSION"
-            fi
-
-            if [ -z "$VERSION_CODE" ]; then
-              VERSION_CODE="1"
-              echo "⚠️  Version code par défaut utilisé: $VERSION_CODE"
-            fi
-
-            echo "✅ Version extraite: $VERSION (code: $VERSION_CODE)"
-            export VERSION_NAME="$VERSION"
-            export VERSION_CODE="$VERSION_CODE"
-          else
-            echo "⚠️  Fichier androidApp/build.gradle.kts non trouvé, utilisation des valeurs par défaut"
-            export VERSION_NAME="1.0.0"
-            export VERSION_CODE="1"
-          fi
-
       - name: Build Debug APK
         script: |
           ./gradlew :androidApp:assembleDebug
@@ -103,32 +77,6 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Extract version information
-        script: |
-          # Méthode robuste d'extraction de version
-          if [ -f "androidApp/build.gradle.kts" ]; then
-            VERSION=$(grep -E '\s*versionName\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
-            VERSION_CODE=$(grep -E '\s*versionCode\s*=' androidApp/build.gradle.kts | head -n1 | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
-
-            if [ -z "$VERSION" ]; then
-              VERSION="1.0.0"
-              echo "⚠️  Version par défaut utilisée: $VERSION"
-            fi
-
-            if [ -z "$VERSION_CODE" ]; then
-              VERSION_CODE="1"
-              echo "⚠️  Version code par défaut utilisé: $VERSION_CODE"
-            fi
-
-            echo "✅ Version extraite: $VERSION (code: $VERSION_CODE)"
-            export VERSION_NAME="$VERSION"
-            export VERSION_CODE="$VERSION_CODE"
-          else
-            echo "⚠️  Fichier androidApp/build.gradle.kts non trouvé, utilisation des valeurs par défaut"
-            export VERSION_NAME="1.0.0"
-            export VERSION_CODE="1"
-          fi
-
       - name: Build Release APK + AAB
         script: |
           ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease \
@@ -177,12 +125,7 @@ workflows:
       - name: Build iOS (simulator)
         script: |
           cd iosApp
-          xcodebuild -project iosApp.xcodeproj \
-            -scheme iosApp \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            build
+          xcodebuild -project iosApp.xcodeproj             -scheme iosApp             -sdk iphonesimulator             -configuration Debug             -destination 'generic/platform=iOS Simulator'             build
 
     artifacts:
       - iosApp/build/**/*.app
@@ -225,21 +168,12 @@ workflows:
       - name: Build iOS archive
         script: |
           cd iosApp
-          xcodebuild archive \
-            -project iosApp.xcodeproj \
-            -scheme iosApp \
-            -configuration Release \
-            -archivePath build/iosApp.xcarchive \
-            CODE_SIGN_IDENTITY="$APPLE_SIGN_IDENTITY" \
-            PROVISIONING_PROFILE_SPECIFIER="$APPLE_PROVISIONING_PROFILE"
+          xcodebuild archive             -project iosApp.xcodeproj             -scheme iosApp             -configuration Release             -archivePath build/iosApp.xcarchive             CODE_SIGN_IDENTITY="$APPLE_SIGN_IDENTITY"             PROVISIONING_PROFILE_SPECIFIER="$APPLE_PROVISIONING_PROFILE"
 
       - name: Export IPA
         script: |
           cd iosApp
-          xcodebuild -exportArchive \
-            -archivePath build/iosApp.xcarchive \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath build/ipa
+          xcodebuild -exportArchive             -archivePath build/iosApp.xcarchive             -exportOptionsPlist exportOptions.plist             -exportPath build/ipa
 
     artifacts:
       - iosApp/build/ipa/*.ipa

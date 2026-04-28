@@ -72,6 +72,9 @@ fun HomeScreen(
         // State local pour le dialog "écraser entraînement en cours"
         var pendingTypeForStart by remember { mutableStateOf<WorkoutType?>(null) }
 
+                
+        Spacer(Modifier.height(16.dp))
+
         fun tryStart(type: WorkoutType) {
             if (inProgressWorkouts.isNotEmpty()) {
                 pendingTypeForStart = type
@@ -80,6 +83,8 @@ fun HomeScreen(
             }
         }
 
+        
+        Spacer(Modifier.height(16.dp))
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

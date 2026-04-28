@@ -37,6 +37,9 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
 @Composable
+import com.gainznote.ui.components.FloatingTimer
+
+@Composable
 fun CircuitWorkoutScreen(
     repo: WorkoutRepository,
     darkTheme: Boolean,
@@ -96,8 +99,8 @@ fun CircuitWorkoutScreen(
 
     val currentExo = exercises.getOrNull(currentExIdx)
 
-    // Layout
-    Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
+        Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
         // TopBar
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -128,37 +131,7 @@ fun CircuitWorkoutScreen(
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
-        // Countdown de repos (bannière)
-        AnimatedVisibility(
-            visible = restEndMs != null,
-            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
-        ) {
-            Row(
-                Modifier.fillMaxWidth().background(c.accentDim)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("⏱  ${S.restInProgress}", color = c.accent, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        restDisplay,
-                        color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.semantics { contentDescription = "${S.restTimerLabel} $restDisplay" }
-                    )
-                    TextButton(
-                        onClick = {
-                            restEndMs = null
-                            if (chronoNotifEnabled) onChronoStop()
-                        },
-                        modifier = Modifier.semantics { contentDescription = S.skipRestDesc }
-                    ) {
-                        Text(S.skipRest, color = c.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
+
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(10.dp))
@@ -231,7 +204,20 @@ fun CircuitWorkoutScreen(
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+                            Spacer(Modifier.height(32.dp))
+            }
+        }
+
+        Box(Modifier.fillMaxSize()) {
+            FloatingTimer(
+                visible = restEndMs != null,
+                timerDisplay = restDisplay,
+                onClose = {
+                    restEndMs = null
+                    if (chronoNotifEnabled) onChronoStop()
+                },
+                c = c
+            )
         }
     }
 
@@ -342,8 +328,8 @@ private fun ActiveExerciseCard(
             }
             CircuitInputType.REPS_WEIGHT -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c) }
                     Box(Modifier.weight(1f)) { NumberField(S.weight, weight, onWeightChange, c, decimal = true) }
+                    Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c) }
                 }
             }
             CircuitInputType.DURATION -> {
@@ -540,8 +526,8 @@ private fun EditPerfDialog(
                     CircuitInputType.REPS -> NumberField(S.reps, reps, { reps = it }, c)
                     CircuitInputType.REPS_WEIGHT -> {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) { NumberField(S.reps, reps, { reps = it }, c) }
                             Box(Modifier.weight(1f)) { NumberField(S.weight, weight, { weight = it }, c, decimal = true) }
+                            Box(Modifier.weight(1f)) { NumberField(S.reps, reps, { reps = it }, c) }
                         }
                     }
                     CircuitInputType.DURATION -> {
