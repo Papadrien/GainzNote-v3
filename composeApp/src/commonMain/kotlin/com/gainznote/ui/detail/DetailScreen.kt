@@ -24,7 +24,6 @@ import com.gainznote.ui.history.WorkoutTypeBadge
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
-import com.gainznote.ui.theme.accentPairFor
 import kotlinx.coroutines.launch
 
 @Composable

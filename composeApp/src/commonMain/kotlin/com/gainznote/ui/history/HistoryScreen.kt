@@ -14,7 +14,6 @@ import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDate
 import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
-import com.gainznote.ui.theme.accentPairFor
 
 @Composable
 fun HistoryScreen(

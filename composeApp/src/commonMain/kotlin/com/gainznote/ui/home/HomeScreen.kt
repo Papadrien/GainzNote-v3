@@ -15,7 +15,6 @@ import com.gainznote.model.Workout
 import com.gainznote.model.WorkoutType
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.theme.GainzThemeColors
-import com.gainznote.ui.theme.accentPairFor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -538,7 +537,7 @@ fun WorkoutTypeDropdown(
         WorkoutType.CARDIO -> S.workoutTypeCardio
         WorkoutType.CIRCUIT -> S.workoutTypeCircuit
     }
-    val (accent, _) = accentPairFor(selected, darkTheme)
+    val accent = GainzThemeColors(dark = darkTheme, type = selected).accent
 
     Box(modifier) {
         Surface(

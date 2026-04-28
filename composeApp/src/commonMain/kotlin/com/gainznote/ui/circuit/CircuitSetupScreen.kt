@@ -36,7 +36,6 @@ import com.gainznote.ui.ads.AdBanner
 import com.gainznote.ui.components.DurationWheelPicker
 import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
-import com.gainznote.ui.theme.themeColorsFor
 
 @Composable
 fun CircuitSetupScreen(
