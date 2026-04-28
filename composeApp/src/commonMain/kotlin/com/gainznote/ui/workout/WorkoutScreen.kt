@@ -100,29 +100,9 @@ fun WorkoutScreen(
             }
         }
 
-        // ── Chrono inline — juste sous la topbar, toujours visible même avec le clavier ──
-        // Positionné dans le flux normal (pas flottant) donc reste visible même si le contenu
-        // est décalé par le clavier. S'affiche/masque avec animation.
-        AnimatedVisibility(
-            visible = chronoStart != null,
-            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(c.accentDim)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "⏱  $chronoDisplay",
-                    color = c.accent,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
-            }
+        // ── Chronomètre flottant en haut à droite ──
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Contenu principal - début transféré plus bas
         }
 
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
@@ -413,4 +393,66 @@ fun CompactField(localValue: String, hint: String, c: GainzThemeColors, modifier
                 inner()
             }
         })
+}
+
+
+@Composable
+fun FloatingChrono(
+    isActive: Boolean,
+    display: String,
+    colors: GainzThemeColors,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = isActive,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(300)
+        ) + fadeIn(),
+        exit = slideOutVertically(
+            targetOffsetY = { -it },
+            animationSpec = tween(300)
+        ) + fadeOut(),
+        modifier = modifier
+    ) {
+        Card(
+            modifier = Modifier
+                .padding(8.dp)
+                .width(120.dp)
+                .height(40.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.accentDim),
+            border = BorderStroke(1.dp, colors.accent),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "⏱",
+                        color = colors.accent,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        display,
+                        color = colors.accent,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+            // Chronomètre flottant en haut à droite
+            FloatingChrono(
+                isActive = chronoStart != null,
+                display = chronoDisplay,
+                colors = c,
+                modifier = Modifier.align(Alignment.TopEnd)
+            )
+        }
 }

@@ -124,7 +124,10 @@ class CardioViewModel(
     }
 
     fun finish(onDone: () -> Unit) = scope.launch {
-        repo.saveWorkout(_state.value.copy(finishedAt = Clock.System.now().toString()))
+        val finishedWorkout = _state.value.copy(finishedAt = Clock.System.now().toString())
+        repo.saveWorkout(finishedWorkout)
+        // S'assurer que l'état local reflète la fin
+        _state.value = finishedWorkout
         onDone()
     }
 }

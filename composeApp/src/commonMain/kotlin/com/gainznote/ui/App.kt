@@ -15,6 +15,7 @@ import com.gainznote.ui.detail.DetailScreen
 import com.gainznote.ui.history.HistoryScreen
 import com.gainznote.ui.home.HomeScreen
 import com.gainznote.ui.theme.GainzTheme
+import com.gainznote.ui.theme.WorkoutTypeTheme
 import com.gainznote.ui.workout.WorkoutScreen
 import kotlinx.coroutines.launch
 
@@ -99,7 +100,21 @@ fun App(
 
     BackHandler(enabled = backStack.size > 1) { navigateBack() }
 
-    GainzTheme(dark = darkTheme, blackBg = blackBg) {
+    // Fonction pour déterminer le type d'entraînement actuel selon l'écran
+    fun getCurrentWorkoutType(): WorkoutType = when (val s = currentScreen) {
+        is Screen.Workout -> WorkoutType.MUSCULATION
+        is Screen.CardioSetup -> WorkoutType.CARDIO
+        is Screen.CircuitSetup -> WorkoutType.CIRCUIT
+        is Screen.CircuitWorkout -> WorkoutType.CIRCUIT
+        else -> lastWorkoutType
+    }
+
+    // Appliquer le thème dynamique selon le type d'entraînement
+    WorkoutTypeTheme(
+        type = getCurrentWorkoutType(),
+        dark = darkTheme,
+        blackBg = blackBg
+    ) { colors ->
         when (val s = currentScreen) {
             Screen.Home -> HomeScreen(
                 repo = repo,
@@ -191,7 +206,8 @@ fun App(
                     else S.setLang(if (newLang == "fr") Lang.FR else Lang.EN)
                     persistSettings()
                 },
-                refreshKey = refreshKey
+                refreshKey = refreshKey,
+                colors = colors
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
@@ -213,7 +229,8 @@ fun App(
                 },
                 chronoNotifEnabled = chronoNotifEnabled,
                 onChronoStart = onChronoStart,
-                onChronoStop = onChronoStop
+                onChronoStop = onChronoStop,
+                colors = colors
             )
             Screen.History -> HistoryScreen(
                 repo = repo,
@@ -231,7 +248,8 @@ fun App(
                             com.gainznote.model.WorkoutType.CIRCUIT -> Screen.CircuitSetup(templateId = id)
                         })
                     }
-                }
+                },
+                colors = colors
             )
             is Screen.CardioSetup -> CardioSetupScreen(
                 repo = repo,
@@ -251,7 +269,8 @@ fun App(
                             backStack.add(Screen.Home)
                         }
                     }
-                }
+                },
+                colors = colors
             )
             is Screen.CircuitSetup -> CircuitSetupScreen(
                 repo = repo,
@@ -277,7 +296,8 @@ fun App(
                             backStack.add(Screen.Home)
                         }
                     }
-                }
+                },
+                colors = colors
             )
             is Screen.CircuitWorkout -> CircuitWorkoutScreen(
                 repo = repo,
@@ -299,7 +319,8 @@ fun App(
                             backStack.add(Screen.Home)
                         }
                     }
-                }
+                },
+                colors = colors
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
@@ -323,7 +344,8 @@ fun App(
                     backStack.clear(); backStack.add(Screen.Home)
                     navigateTo(Screen.CircuitSetup(templateId = id, skipSetup = true))
                 },
-                onDeleted = { navigateBack() }
+                onDeleted = { navigateBack() },
+                colors = colors
             )
         }
     }
