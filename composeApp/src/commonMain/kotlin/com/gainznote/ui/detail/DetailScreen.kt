@@ -33,7 +33,8 @@ fun DetailScreen(
     
     workoutId: String,
     onBack: () -> Unit,
-    onUseAsTemplate: (String) -> Unit, // Add this line
+    onUseAsTemplate: (String) -> Unit,
+    onReplayCircuit: ((String) -> Unit)? = null,
 
     onDeleted: () -> Unit
 ) {
@@ -124,7 +125,7 @@ fun DetailScreen(
                         fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
 
-                if (w.type == WorkoutType.CIRCUIT) {
+                if (w.type == WorkoutType.CIRCUIT && onReplayCircuit != null) {
                     Spacer(Modifier.height(8.dp))
                     TextButton(
                         onClick = { onReplayCircuit(w.id) },

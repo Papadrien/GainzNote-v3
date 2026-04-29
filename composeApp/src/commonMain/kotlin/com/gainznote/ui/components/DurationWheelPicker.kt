@@ -159,12 +159,13 @@ fun DurationWheelPicker(
             }
             Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
+                val sIndex = (s / 5).coerceIn(0, 11)
                 VerticalWheelPicker(
-                value = sIndex, range = 0..11,
-                onValueChange = { update(ns = it * 5) }, c = c,
-                modifier = Modifier.fillMaxWidth(),
-                format = { (it * 5).toString().padStart(2, '0') }
-            )
+                    value = sIndex, range = 0..11,
+                    onValueChange = { update(ns = it * 5) }, c = c,
+                    modifier = Modifier.fillMaxWidth(),
+                    format = { (it * 5).toString().padStart(2, '0') }
+                )
             }
         }
     }

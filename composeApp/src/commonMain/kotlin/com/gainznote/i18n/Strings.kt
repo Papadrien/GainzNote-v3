@@ -209,6 +209,10 @@ object S {
         Lang.FR -> "↻  Utiliser comme base"
         Lang.EN -> "↻  Use as template"
     }
+    val replayCircuit get() = when (lang) {
+        Lang.FR -> "↻  Rejouer ce circuit"
+        Lang.EN -> "↻  Replay this circuit"
+    }
 
     // ── Detail ────────────────────────────────────────────────────────────
     val delete get() = when (lang) {
