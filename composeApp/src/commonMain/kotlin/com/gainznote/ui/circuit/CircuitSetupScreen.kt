@@ -57,9 +57,8 @@ fun CircuitSetupScreen(
     val workout by vm.state.collectAsState()
     val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CIRCUIT)
     val cfg = workout.circuitConfig
-    var showLeaveDialog by remember { mutableStateOf(false) }
-
-    BackHandler(enabled = true) { showLeaveDialog = true }
+    
+    BackHandler(enabled = true) { onBack() }
 
 
     // Mode "skipSetup" : on route directement vers l'écran de séance après chargement template
@@ -79,7 +78,7 @@ fun CircuitSetupScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(40.dp)
-                        .clickable(onClickLabel = S.backDesc) { showLeaveDialog = true },
+                        .clickable(onClickLabel = S.backDesc) { onBack() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("←", color = c.accent, fontSize = 22.sp)
@@ -301,25 +300,28 @@ private fun CircuitExerciseSetupCard(
 
 @Composable
 private fun InputTypeChip(
-    value: CircuitInputType,
     label: String,
-    current: CircuitInputType,
+    selected: Boolean,
     c: GainzThemeColors,
-    onPick: (CircuitInputType) -> Unit
+    onClick: () -> Unit
 ) {
-    val selected = value == current
-    Surface(
-        onClick = { onPick(value) },
-        shape = RoundedCornerShape(8.dp),
-        color = if (selected) c.accentDim else c.surfaceAlt,
-        border = BorderStroke(1.dp, if (selected) c.accent else c.border)
+    val bg = if (selected) c.accent else Color.Transparent
+    val tc = if (selected) {
+        if (c.dark) Color.Black else Color.White
+    } else c.textMuted
+    val fw = if (selected) FontWeight.Bold else FontWeight.Medium
+    val modifier = if (selected) {
+        Modifier.background(bg, RoundedCornerShape(8.dp))
+    } else {
+        Modifier.background(Color.Transparent, RoundedCornerShape(8.dp))
+    }
+
+    Box(
+        modifier = modifier
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            label,
-            color = if (selected) c.accent else c.textSec,
-            fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-        )
+        Text(label, color = tc, fontSize = 12.sp, fontWeight = fw)
     }
 }

@@ -306,10 +306,6 @@ fun App(
                         })
                     }
                 },
-                onReplayCircuit = { id ->
-                    backStack.clear(); backStack.add(Screen.Home)
-                    navigateTo(Screen.CircuitSetup(templateId = id, skipSetup = true))
-                },
                 onDeleted = { navigateBack() }
             )
         }

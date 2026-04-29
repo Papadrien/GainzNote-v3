@@ -24,7 +24,8 @@ fun FloatingTimer(
     visible: Boolean,
     timerDisplay: String,
     onClose: () -> Unit,
-    c: GainzThemeColors
+    c: GainzThemeColors,
+    modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
         visible = visible,

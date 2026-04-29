@@ -58,8 +58,15 @@ class CircuitViewModel(
             templateId != null ->         scope.launch {
                 repo.getWorkoutById(templateId)?.let { t ->
                     val newExercises = t.circuitExercises.map { ce ->
-                        // Copier la structure (sans les perfs)
-                        ce.copy(id = newId(), performances = emptyList())
+                        val firstPerf = ce.performances.find { it.roundNumber == 1 }
+                        // Copier la structure avec les références du 1er tour du template
+                        ce.copy(
+                            id = newId(), 
+                            performances = emptyList(),
+                            referenceReps = firstPerf?.reps,
+                            referenceWeightKg = firstPerf?.weightKg,
+                            referenceDurationSeconds = firstPerf?.durationSeconds
+                        )
                     }
                     val cfg = t.circuitConfig?.copy(workoutId = _state.value.id)
                         ?: CircuitConfig(workoutId = _state.value.id)

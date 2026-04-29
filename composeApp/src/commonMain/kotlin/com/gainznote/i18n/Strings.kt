@@ -560,7 +560,6 @@ object S {
         Lang.FR -> "Notes..."
         Lang.EN -> "Notes..."
     }
-    val replayCircuit get() = when (lang) {
         Lang.FR -> "Refaire ce circuit"
         Lang.EN -> "Replay this circuit"
     }

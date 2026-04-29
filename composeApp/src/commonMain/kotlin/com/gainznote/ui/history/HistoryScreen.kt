@@ -150,8 +150,10 @@ fun WorkoutPreview(workout: Workout, c: GainzThemeColors) {
 
 @Composable
 fun StatChip(text: String, c: GainzThemeColors) {
-    Box(Modifier.background(c.surfaceAlt, RoundedCornerShape(6.dp))
+    val chipBg = if (c.dark) Color(0xFF2C2C2C) else Color(0xFFF0F0F0)
+    val chipText = if (c.dark) Color(0xFFA0A0A0) else Color(0xFF666666)
+    Box(Modifier.background(chipBg, RoundedCornerShape(6.dp))
         .padding(horizontal = 8.dp, vertical = 3.dp)) {
-        Text(text, color = c.textSec, fontSize = 11.sp)
+        Text(text, color = chipText, fontSize = 11.sp)
     }
 }

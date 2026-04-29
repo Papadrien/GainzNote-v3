@@ -52,9 +52,8 @@ fun CardioSetupScreen(
     val workout by vm.state.collectAsState()
     val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CARDIO)
     var showFinishDialog by remember { mutableStateOf(false) }
-    var showLeaveDialog by remember { mutableStateOf(false) }
-
-    BackHandler(enabled = true) { showLeaveDialog = true }
+    
+    BackHandler(enabled = true) { onBack() }
 
 
     Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
@@ -67,9 +66,7 @@ fun CardioSetupScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(40.dp)
-                        .clickable(
-                            onClickLabel = S.backDesc
-                        ) { showLeaveDialog = true },
+                        .clickable(onClickLabel = S.backDesc) { onBack() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("←", color = c.accent, fontSize = 22.sp)

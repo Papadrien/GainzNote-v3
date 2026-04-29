@@ -15,6 +15,8 @@ object GainzColors {
     val BackgroundBlack   = Color(0xFF000000)
     val SurfaceDark       = Color(0xFF112240)
     val SurfaceAltDark    = Color(0xFF1A3050)
+    val NeutralSurfaceDark    = Color(0xFF1E1E1E)
+    val NeutralSurfaceAltDark = Color(0xFF2C2C2C)
     val BorderDark        = Color(0xFF1E3D63)
     val TextDark          = Color(0xFFE8F0FF)
     val TextSecDark       = Color(0xFF88AACC)
@@ -95,15 +97,23 @@ data class GainzThemeColors(
         WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitAccentDimDark else GainzColors.CircuitAccentDimLight
     }
     val background: Color get() = if (dark) GainzColors.BackgroundBlack else Color.White
-    val surface: Color get() = when(type) {
-        WorkoutType.MUSCULATION -> if (dark) GainzColors.SurfaceDark else GainzColors.SurfaceLight
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioSurfaceDark else GainzColors.CardioSurfaceLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitSurfaceDark else GainzColors.CircuitSurfaceLight
+        val surface: Color get() = if (dark) {
+        GainzColors.NeutralSurfaceDark
+    } else {
+        when(type) {
+            WorkoutType.MUSCULATION -> GainzColors.SurfaceLight
+            WorkoutType.CARDIO -> GainzColors.CardioSurfaceLight
+            WorkoutType.CIRCUIT -> GainzColors.CircuitSurfaceLight
+        }
     }
-    val surfaceAlt: Color get() = when(type) {
-        WorkoutType.MUSCULATION -> if (dark) GainzColors.SurfaceAltDark else GainzColors.SurfaceAltLight
-        WorkoutType.CARDIO -> if (dark) GainzColors.CardioSurfaceAltDark else GainzColors.CardioSurfaceAltLight
-        WorkoutType.CIRCUIT -> if (dark) GainzColors.CircuitSurfaceAltDark else GainzColors.CircuitSurfaceAltLight
+        val surfaceAlt: Color get() = if (dark) {
+        GainzColors.NeutralSurfaceAltDark
+    } else {
+        when(type) {
+            WorkoutType.MUSCULATION -> GainzColors.SurfaceAltLight
+            WorkoutType.CARDIO -> GainzColors.CardioSurfaceAltLight
+            WorkoutType.CIRCUIT -> GainzColors.CircuitSurfaceAltLight
+        }
     }
     val border: Color get() = when(type) {
         WorkoutType.MUSCULATION -> if (dark) GainzColors.BorderDark else GainzColors.BorderLight

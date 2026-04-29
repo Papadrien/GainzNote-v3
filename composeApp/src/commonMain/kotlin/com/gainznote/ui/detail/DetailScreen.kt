@@ -33,8 +33,7 @@ fun DetailScreen(
     
     workoutId: String,
     onBack: () -> Unit,
-    onUseAsTemplate: (String) -> Unit,
-    onReplayCircuit: (String) -> Unit, // Add this line
+    onUseAsTemplate: (String) -> Unit, // Add this line
 
     onDeleted: () -> Unit
 ) {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -159,10 +160,11 @@ fun DurationWheelPicker(
             Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
                 VerticalWheelPicker(
-                    value = s, range = 0..59,
-                    onValueChange = { update(ns = it) }, c = c,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                value = sIndex, range = 0..11,
+                onValueChange = { update(ns = it * 5) }, c = c,
+                modifier = Modifier.fillMaxWidth(),
+                format = { (it * 5).toString().padStart(2, '0') }
+            )
             }
         }
     }

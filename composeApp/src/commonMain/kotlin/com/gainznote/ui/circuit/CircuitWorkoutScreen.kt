@@ -6,6 +6,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -66,16 +67,40 @@ fun CircuitWorkoutScreen(
     var currentRound by remember { mutableStateOf(1) }
     var currentExIdx by remember { mutableStateOf(0) }
     var showFinishDialog by remember { mutableStateOf(false) }
-    var showLeaveDialog by remember { mutableStateOf(false) }
-
-    BackHandler(enabled = true) { showLeaveDialog = true }
+    
+    BackHandler(enabled = true) { onBack() }
 
     var editing by remember { mutableStateOf<Pair<String, Int>?>(null) } // exId, round (null = pas d'edit)
 
     // Saisie courante
-    var reps by remember(currentRound, currentExIdx) { mutableStateOf("") }
-    var weight by remember(currentRound, currentExIdx) { mutableStateOf("") }
-    var duration by remember(currentRound, currentExIdx) { mutableStateOf(0L) }
+    val currentExo = exercises.getOrNull(currentExIdx)
+    val pastPerf = currentExo?.performances?.find { it.roundNumber == 1 }
+
+    var reps by remember(currentRound, currentExIdx) {
+        mutableStateOf(
+            if (currentRound > 1 && currentExo?.inputType == CircuitInputType.REPS) {
+                pastPerf?.reps?.toString() ?: ""
+            } else ""
+        )
+    }
+    var weight by remember(currentRound, currentExIdx) {
+        mutableStateOf(
+            if (currentRound > 1) {
+                pastPerf?.weightKg?.let { it.toString().replace(".0", "") } ?: ""
+            } else {
+                currentExo?.referenceWeightKg?.let { it.toString().replace(".0", "") } ?: ""
+            }
+        )
+    }
+    var duration by remember(currentRound, currentExIdx) {
+        mutableStateOf(
+            if (currentRound > 1) {
+                pastPerf?.durationSeconds ?: 0L
+            } else {
+                currentExo?.referenceDurationSeconds ?: 0L
+            }
+        )
+    }
     var notes by remember(currentRound, currentExIdx) { mutableStateOf("") }
 
     // Countdown de repos (local display seulement — chrono notif déléguée)
@@ -99,7 +124,9 @@ fun CircuitWorkoutScreen(
     val currentExo = exercises.getOrNull(currentExIdx)
 
         Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
+        BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
+        val isLandscape = maxWidth > maxHeight
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
         // TopBar
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -109,7 +136,7 @@ fun CircuitWorkoutScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(40.dp)
-                        .clickable(onClickLabel = S.backDesc) { showLeaveDialog = true },
+                        .clickable(onClickLabel = S.backDesc) { onBack() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("←", color = c.accent, fontSize = 22.sp)
@@ -207,17 +234,20 @@ fun CircuitWorkoutScreen(
             }
         }
 
-        Box(Modifier.fillMaxSize()) {
-            FloatingTimer(
-                visible = restEndMs != null,
-                timerDisplay = restDisplay,
-                onClose = {
-                    restEndMs = null
-                    if (chronoNotifEnabled) onChronoStop()
-                },
-                c = c
-            )
-        }
+        FloatingTimer(
+            visible = restEndMs != null,
+            timerDisplay = restDisplay,
+            onClose = {
+                restEndMs = null
+                if (chronoNotifEnabled) onChronoStop()
+            },
+            c = c,
+            modifier = Modifier
+                .align(if (isLandscape) Alignment.TopEnd else Alignment.TopCenter)
+                .padding(top = 70.dp, end = if (isLandscape) 16.dp else 0.dp)
+                .safeDrawingPadding()
+        )
+    }
     }
 
     if (showFinishDialog) {
@@ -267,31 +297,7 @@ fun CircuitWorkoutScreen(
         )
     }
 
-    if (showLeaveDialog) {
-        AlertDialog(
-            onDismissRequest = { showLeaveDialog = false },
-            containerColor = c.surface,
-            title = { Text(S.leaveWorkoutTitle, color = c.text) },
-            text = { Text(S.leaveWorkoutBody, color = c.textSec) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLeaveDialog = false
-                        if (chronoNotifEnabled) onChronoStop()
-                        onBack()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-                ) {
-                    Text(S.leaveConfirm, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLeaveDialog = false }) {
-                    Text(S.stay, color = c.textMuted)
-                }
-            }
-        )
-    }
+
 }
 
 @Composable
@@ -323,12 +329,12 @@ private fun ActiveExerciseCard(
 
         when (exercise.inputType) {
             CircuitInputType.REPS -> {
-                NumberField(S.reps, reps, onRepsChange, c)
+                NumberField(S.reps, reps, onRepsChange, c, placeholder = exercise.referenceReps?.toString())
             }
             CircuitInputType.REPS_WEIGHT -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.weight(1f)) { NumberField(S.weight, weight, onWeightChange, c, decimal = true) }
-                    Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c) }
+                    Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c, placeholder = exercise.referenceReps?.toString()) }
                 }
             }
             CircuitInputType.DURATION -> {
@@ -374,7 +380,7 @@ private fun ActiveExerciseCard(
 @Composable
 private fun NumberField(
     label: String, value: String, onChange: (String) -> Unit,
-    c: GainzThemeColors, decimal: Boolean = false
+    c: GainzThemeColors, decimal: Boolean = false, placeholder: String? = null
 ) {
     Column {
         Text(label, color = c.textMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -390,7 +396,9 @@ private fun NumberField(
                 Box(Modifier.fillMaxWidth()
                     .background(c.surfaceAlt, RoundedCornerShape(10.dp))
                     .padding(horizontal = 14.dp, vertical = 12.dp)) {
-                    if (value.isEmpty()) Text("—", color = c.textMuted, fontSize = 20.sp)
+                    if (value.isEmpty()) {
+                        Text(placeholder ?: "—", color = c.textMuted, fontSize = 20.sp)
+                    }
                     inner()
                 }
             }

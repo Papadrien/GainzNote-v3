@@ -94,7 +94,10 @@ data class CircuitExercise(
     val name: String,
     val position: Int,
     val inputType: CircuitInputType = CircuitInputType.REPS,
-    val performances: List<CircuitPerformance> = emptyList()
+    val performances: List<CircuitPerformance> = emptyList(),
+    @Transient val referenceReps: Int? = null,
+    @Transient val referenceWeightKg: Double? = null,
+    @Transient val referenceDurationSeconds: Long? = null
 )
 
 // ── Workout (agrégé) ─────────────────────────────────────────────────────────

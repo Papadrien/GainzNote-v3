@@ -444,7 +444,7 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
                 Text(workoutTypeAndCount(workout), color = c.textMuted, fontSize = 12.sp)
             }
-            Text("›", color = c.textMuted, fontSize = 22.sp)
+            Text("›", color = if(c.dark) Color(0xFF666666) else Color(0xFFAAAAAA), fontSize = 22.sp)
         }
     }
 }

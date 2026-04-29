@@ -3,6 +3,7 @@ package com.gainznote.ui.workout
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,6 +22,7 @@ import com.gainznote.model.TrainingSet
 import com.gainznote.repository.WorkoutRepository
 import com.gainznote.ui.home.formatDisplayDateFull
 import com.gainznote.ui.theme.GainzThemeColors
+import com.gainznote.ui.components.FloatingTimer
 import com.gainznote.i18n.S
 import kotlinx.coroutines.delay
 import com.gainznote.ui.components.FloatingTimer
@@ -58,7 +60,9 @@ fun WorkoutScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(c.background).safeDrawingPadding()) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
+        val isLandscape = maxWidth > maxHeight
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
 
         // ── TopBar ────────────────────────────────────────────────────────────
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -101,17 +105,7 @@ fun WorkoutScreen(
             }
         }
 
-        // ── Chrono flottant — fenêtre au-dessus du contenu ──
-        FloatingTimer(
-            visible = chronoStart != null,
-            timerDisplay = chronoDisplay,
-            onClose = {
-                chronoStart = null
-                chronoDisplay = "00:00"
-                if (chronoNotifEnabled) onChronoStop()
-            },
-            c = c
-        )
+        
 
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
@@ -145,9 +139,24 @@ fun WorkoutScreen(
             }
             Spacer(Modifier.height(40.dp))
         }
+
+        FloatingTimer(
+            visible = chronoStart != null,
+            timerDisplay = chronoDisplay,
+            onClose = {
+                chronoStart = null
+                chronoDisplay = "00:00"
+                if (chronoNotifEnabled) onChronoStop()
+            },
+            c = c,
+            modifier = Modifier
+                .align(if (isLandscape) Alignment.TopEnd else Alignment.TopCenter)
+                .safeDrawingPadding()
+                .padding(top = 70.dp, end = if (isLandscape) 16.dp else 0.dp)
+        )
+    }
     }
 
-    // Dialogue terminer
     if (showFinishDialog) {
         AlertDialog(onDismissRequest = { showFinishDialog = false },
             containerColor = c.surface,
