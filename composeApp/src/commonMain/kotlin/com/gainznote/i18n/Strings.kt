@@ -560,9 +560,6 @@ object S {
         Lang.FR -> "Notes..."
         Lang.EN -> "Notes..."
     }
-        Lang.FR -> "Refaire ce circuit"
-        Lang.EN -> "Replay this circuit"
-    }
     fun roundProgress(current: Int, total: Int) = when (lang) {
         Lang.FR -> "Tour $current / $total"
         Lang.EN -> "Round $current / $total"

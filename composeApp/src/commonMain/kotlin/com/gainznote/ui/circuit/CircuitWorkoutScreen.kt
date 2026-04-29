@@ -73,6 +73,7 @@ fun CircuitWorkoutScreen(
     var editing by remember { mutableStateOf<Pair<String, Int>?>(null) } // exId, round (null = pas d'edit)
 
     // Saisie courante
+    
     val currentExo = exercises.getOrNull(currentExIdx)
     val pastPerf = currentExo?.performances?.find { it.roundNumber == 1 }
 
@@ -121,7 +122,7 @@ fun CircuitWorkoutScreen(
         }
     }
 
-    val currentExo = exercises.getOrNull(currentExIdx)
+    
 
         Box(Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {

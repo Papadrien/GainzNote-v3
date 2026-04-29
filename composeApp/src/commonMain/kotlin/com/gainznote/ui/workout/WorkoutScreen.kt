@@ -139,6 +139,7 @@ fun WorkoutScreen(
             }
             Spacer(Modifier.height(40.dp))
         }
+        }
 
         FloatingTimer(
             visible = chronoStart != null,
@@ -154,7 +155,6 @@ fun WorkoutScreen(
                 .safeDrawingPadding()
                 .padding(top = 70.dp, end = if (isLandscape) 16.dp else 0.dp)
         )
-    }
     }
 
     if (showFinishDialog) {

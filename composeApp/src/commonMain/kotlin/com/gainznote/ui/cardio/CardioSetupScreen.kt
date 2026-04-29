@@ -185,27 +185,7 @@ fun CardioSetupScreen(
         )
     }
 
-    if (showLeaveDialog) {
-        AlertDialog(
-            onDismissRequest = { showLeaveDialog = false },
-            containerColor = c.surface,
-            title = { Text(S.leaveWorkoutTitle, color = c.text) },
-            text = { Text(S.leaveWorkoutBody, color = c.textSec) },
-            confirmButton = {
-                Button(
-                    onClick = { showLeaveDialog = false; onBack() },
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-                ) {
-                    Text(S.leaveConfirm, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLeaveDialog = false }) {
-                    Text(S.stay, color = c.textMuted)
-                }
-            }
-        )
-    }
+
 }
 
 @Composable

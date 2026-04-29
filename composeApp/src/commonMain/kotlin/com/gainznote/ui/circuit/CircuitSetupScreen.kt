@@ -224,27 +224,7 @@ fun CircuitSetupScreen(
         }
     }
 
-    if (showLeaveDialog) {
-        AlertDialog(
-            onDismissRequest = { showLeaveDialog = false },
-            containerColor = c.surface,
-            title = { Text(S.leaveWorkoutTitle, color = c.text) },
-            text = { Text(S.leaveWorkoutBody, color = c.textSec) },
-            confirmButton = {
-                Button(
-                    onClick = { showLeaveDialog = false; onBack() },
-                    colors = ButtonDefaults.buttonColors(containerColor = c.accent)
-                ) {
-                    Text(S.leaveConfirm, color = if (darkTheme) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLeaveDialog = false }) {
-                    Text(S.stay, color = c.textMuted)
-                }
-            }
-        )
-    }
+
 }
 
 @Composable
@@ -300,11 +280,13 @@ private fun CircuitExerciseSetupCard(
 
 @Composable
 private fun InputTypeChip(
+    value: CircuitInputType,
     label: String,
-    selected: Boolean,
+    current: CircuitInputType,
     c: GainzThemeColors,
-    onClick: () -> Unit
+    onPick: (CircuitInputType) -> Unit
 ) {
+    val selected = value == current
     val bg = if (selected) c.accent else Color.Transparent
     val tc = if (selected) {
         if (c.dark) Color.Black else Color.White
@@ -318,7 +300,7 @@ private fun InputTypeChip(
 
     Box(
         modifier = modifier
-            .clickable { onClick() }
+            .clickable { onPick(value) }
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
