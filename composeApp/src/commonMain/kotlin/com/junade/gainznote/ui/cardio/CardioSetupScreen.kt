@@ -57,6 +57,15 @@ fun CardioSetupScreen(
     val workout by vm.state.collectAsState()
     val c = GainzThemeColors(dark = darkTheme, type = WorkoutType.CARDIO)
     var showFinishDialog by remember { mutableStateOf(false) }
+    var chronoStart by remember { mutableStateOf<Long?>(null) }
+    var chronoDisplay by remember { mutableStateOf("00:00") }
+    LaunchedEffect(chronoStart) {
+        while (chronoStart != null) {
+            val elapsed = (kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - chronoStart!!) / 1000L
+            chronoDisplay = "${(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}"
+            kotlinx.coroutines.delay(1000L)
+        }
+    }
     
     BackHandler(enabled = true) { onBack() }
 
