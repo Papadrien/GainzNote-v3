@@ -1,6 +1,7 @@
 package com.gainznote.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,18 +20,22 @@ import androidx.compose.ui.unit.sp
 import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 
 /**
- * Composant de sélection verticale (wheel / picker) type iOS.
- * Fix 2a: range commence à 0 (0..59, 0..23)
- * Fix 2b: onValueChange toujours appelé (pas de guard if > 0)
- * Fix 2c: LaunchedEffect(value) pour resynchroniser quand valeur externe change
- * Fix 2d: pointerInput(key) isolé par instance pour éviter vol de gestes entre roues
+ * Wheel picker vertical type iOS, snap sur l'item central.
+ *
+ * Bugs corrigés :
+ *  2a – range commence à 0 (0..59, 0..23)
+ *  2b – onValueChange toujours émis, même pour 0
+ *  2c – plus de LaunchedEffect(value) qui créait une boucle de sync ;
+ *       la clé de rememberLazyListState gère la réinitialisation externe
+ *  2d – pointerInput réel (awaitEachGesture) pour isoler les gestes de chaque roue
  */
 @Composable
 fun VerticalWheelPicker(
     value: Int,
-    range: IntRange,           // Fix 2a: doit toujours inclure 0 si voulu (ex: 0..59)
+    range: IntRange,
     onValueChange: (Int) -> Unit,
     c: GainzThemeColors,
     modifier: Modifier = Modifier,
@@ -42,41 +47,37 @@ fun VerticalWheelPicker(
     val total = range.last - range.first + 1
     val padding = visibleItems / 2
 
+    // Réinitialiser la liste quand la valeur externe change vraiment
+    // (ex: template chargé, reset) — pas de boucle car on ne scrolle pas depuis ici
     val initialIndex = (value - range.first).coerceIn(0, total - 1)
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
 
-    // Fix 2c: Observer scroll → notifier valeur sélectionnée
+    // Observer la fin du scroll pour notifier la valeur sélectionnée
     LaunchedEffect(listState) {
-        snapshotFlow {
-            // On attend que le scroll soit terminé pour lire la valeur stable
-            listState.firstVisibleItemIndex to listState.isScrollInProgress
-        }
+        snapshotFlow { listState.isScrollInProgress }
             .distinctUntilChanged()
-            .collect { (idx, scrolling) ->
-                if (!scrolling) {
-                    // Fix 2b: pas de guard if (value > 0) — on notifie toujours, y compris 0
-                    val newValue = (range.first + idx).coerceIn(range.first, range.last)
-                    if (newValue != value) onValueChange(newValue)
-                }
+            .filter { !it }                         // uniquement quand le scroll s'arrête
+            .collect {
+                val idx = listState.firstVisibleItemIndex
+                // 2b : pas de guard — 0 est valide
+                val newValue = (range.first + idx).coerceIn(range.first, range.last)
+                onValueChange(newValue)
             }
     }
 
-    // Fix 2c: resync scroll quand la valeur externe change
-    LaunchedEffect(value) {
-        val target = (value - range.first).coerceIn(0, total - 1)
-        if (listState.firstVisibleItemIndex != target) {
-            listState.scrollToItem(target)
-        }
-    }
-
     Box(
-        // Fix 2d: clipToBounds + pointerInput isolé empêche la propagation des gestes
         modifier = modifier
             .height(itemHeight * visibleItems)
             .clipToBounds()
-            .pointerInput(range) { /* consomme les events dans cette zone */ },
+            // 2d : consommation réelle des événements pour isoler cette roue
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitPointerEvent()   // consomme le premier événement → stop propagation latérale
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
+        // Indicateur de sélection (fond de l'item central)
         Box(
             Modifier
                 .fillMaxWidth()
@@ -87,7 +88,9 @@ fun VerticalWheelPicker(
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(lazyListState = listState),
             contentPadding = PaddingValues(vertical = itemHeight * padding),
-            modifier = Modifier.fillMaxWidth().height(itemHeight * visibleItems)  // Fix 2d: taille explicite
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(itemHeight * visibleItems)
         ) {
             items(total) { idx ->
                 val v = range.first + idx
@@ -109,10 +112,7 @@ fun VerticalWheelPicker(
 }
 
 /**
- * Sélecteur de durée composé de 2 ou 3 wheel pickers (heures, minutes, secondes).
- * @param totalSeconds durée totale actuelle en secondes
- * @param onChange callback avec la nouvelle durée totale en secondes
- * @param showHours si false, masque la colonne heures
+ * Sélecteur de durée : heures (optionnel) · minutes · secondes (pas de 5s).
  */
 @Composable
 fun DurationWheelPicker(
@@ -122,22 +122,15 @@ fun DurationWheelPicker(
     modifier: Modifier = Modifier,
     showHours: Boolean = true
 ) {
-    // Fix 2a: coerceIn 0..23 / 0..59 — range correct
-    var h by remember { mutableStateOf((totalSeconds / 3600L).toInt().coerceIn(0, 23)) }
-    var m by remember { mutableStateOf(((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)) }
-    var s by remember { mutableStateOf((totalSeconds % 60L).toInt().coerceIn(0, 59)) }
+    // États locaux initialisés depuis totalSeconds
+    // On n'utilise PAS de LaunchedEffect(totalSeconds) pour éviter la boucle de sync.
+    // Si le parent change totalSeconds de façon radicale (template), il doit
+    // passer une nouvelle key= sur DurationWheelPicker pour forcer la récomposition.
+    var h by remember(totalSeconds) { mutableStateOf((totalSeconds / 3600L).toInt().coerceIn(0, 23)) }
+    var m by remember(totalSeconds) { mutableStateOf(((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)) }
+    var s by remember(totalSeconds) { mutableStateOf((totalSeconds % 60L).toInt().coerceIn(0, 59)) }
 
-    // Fix 2c: LaunchedEffect pour resync si totalSeconds change de l'extérieur
-    LaunchedEffect(totalSeconds) {
-        val currentTotal = h * 3600L + m * 60L + s.toLong()
-        if (currentTotal != totalSeconds) {
-            h = (totalSeconds / 3600L).toInt().coerceIn(0, 23)
-            m = ((totalSeconds % 3600L) / 60L).toInt().coerceIn(0, 59)
-            s = (totalSeconds % 60L).toInt().coerceIn(0, 59)
-        }
-    }
-
-    // Fix 2b: update() appelé sans condition — 0 est une valeur valide
+    // 2b : update() sans condition, 0 est valide
     fun update(nh: Int = h, nm: Int = m, ns: Int = s) {
         h = nh; m = nm; s = ns
         onChange(nh * 3600L + nm * 60L + ns.toLong())
@@ -152,17 +145,17 @@ fun DurationWheelPicker(
                 Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(S.hoursShort, color = c.textMuted, fontSize = 11.sp)
                     VerticalWheelPicker(
-                        value = h, range = 0..23,  // Fix 2a
+                        value = h, range = 0..23,
                         onValueChange = { update(nh = it) }, c = c,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-            // Fix 2d: chaque Column est dans son propre scope de gestes
+            // 2d : chaque picker est isolé par pointerInput dans VerticalWheelPicker
             Column(Modifier.width(72.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(S.minutesShort, color = c.textMuted, fontSize = 11.sp)
                 VerticalWheelPicker(
-                    value = m, range = 0..59,  // Fix 2a: 0..59 (pas 1..59)
+                    value = m, range = 0..59,
                     onValueChange = { update(nm = it) }, c = c,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -171,7 +164,7 @@ fun DurationWheelPicker(
                 Text(S.secondsShort, color = c.textMuted, fontSize = 11.sp)
                 val sIndex = (s / 5).coerceIn(0, 11)
                 VerticalWheelPicker(
-                    value = sIndex, range = 0..11,  // Fix 2a: commence à 0
+                    value = sIndex, range = 0..11,
                     onValueChange = { update(ns = it * 5) }, c = c,
                     modifier = Modifier.fillMaxWidth(),
                     format = { (it * 5).toString().padStart(2, '0') }

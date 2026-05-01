@@ -6,17 +6,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gainznote.i18n.S
 import com.gainznote.ui.theme.GainzThemeColors
 
 @Composable
@@ -28,10 +24,12 @@ fun FloatingTimer(
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
+        modifier = modifier,          // ← applique le modifier (align, padding) ici
         visible = visible,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
     ) {
+        // Aligne le chip à droite, pleine largeur pour le placement
         Box(
             modifier = Modifier
                 .fillMaxWidth()

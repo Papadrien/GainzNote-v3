@@ -158,7 +158,15 @@ fun CircuitWorkoutScreen(
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
-
+        FloatingTimer(
+            visible = restEndMs != null,
+            timerDisplay = restDisplay,
+            onClose = {
+                restEndMs = null
+                if (chronoNotifEnabled) onChronoStop()
+            },
+            c = c
+        )
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(10.dp))
@@ -235,19 +243,7 @@ fun CircuitWorkoutScreen(
             }
         }
 
-        FloatingTimer(
-            visible = restEndMs != null,
-            timerDisplay = restDisplay,
-            onClose = {
-                restEndMs = null
-                if (chronoNotifEnabled) onChronoStop()
-            },
-            c = c,
-            modifier = Modifier
-                .align(if (isLandscape) Alignment.TopEnd else Alignment.TopCenter)
-                .padding(top = 70.dp, end = if (isLandscape) 16.dp else 0.dp)
-                .safeDrawingPadding()
-        )
+
     }
     }
 
