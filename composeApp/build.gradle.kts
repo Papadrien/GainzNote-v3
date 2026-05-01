@@ -51,7 +51,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.gainznote.shared"
+    namespace = "com.junade.gainznote.shared"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
     defaultConfig { minSdk = libs.versions.androidMinSdk.get().toInt() }
     compileOptions {
@@ -63,7 +63,7 @@ android {
 sqldelight {
     databases {
         create("GainzNoteDatabase") {
-            packageName.set("com.gainznote.db")
+            packageName.set("com.junade.gainznote.db")
         }
     }
 }

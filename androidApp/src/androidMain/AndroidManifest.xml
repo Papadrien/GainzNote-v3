@@ -12,10 +12,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.GainzNote.Launcher">
 
-        <!-- AdMob App ID — TEST ID (remplacer par le vrai avant publication) -->
+        <!-- AdMob App ID Android -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-7203301690798915~4344313577"/>
 
         <activity
             android:name=".MainActivity"
