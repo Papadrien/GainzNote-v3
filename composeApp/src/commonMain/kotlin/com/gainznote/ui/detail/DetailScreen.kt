@@ -79,7 +79,7 @@ fun DetailScreen(
                 Spacer(Modifier.height(6.dp))
                 Text(formatDisplayDate(w.startedAt), color = c.textMuted, fontSize = 13.sp)
                 Spacer(Modifier.height(10.dp))
-                WorkoutStatsRow(w, c)
+                WorkoutStatsRow(w, typeC)
                 if (w.notes.isNotBlank()) {
                     Spacer(Modifier.height(12.dp))
                     Box(Modifier.fillMaxWidth().background(c.surfaceAlt, RoundedCornerShape(10.dp)).padding(12.dp)) {

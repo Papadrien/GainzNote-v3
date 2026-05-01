@@ -89,8 +89,8 @@ fun HistoryCard(workout: Workout, c: GainzThemeColors, darkTheme: Boolean, onCli
                 Spacer(Modifier.height(4.dp))
                 Text(formatDisplayDate(workout.startedAt), color = c.textMuted, fontSize = 12.sp)
                 Spacer(Modifier.height(6.dp))
-                WorkoutStatsRow(workout, c)
-                WorkoutPreview(workout, c)
+                WorkoutStatsRow(workout, typeC)
+                WorkoutPreview(workout, typeC)
             }
             Text("›", color = c.textMuted, fontSize = 22.sp)
         }

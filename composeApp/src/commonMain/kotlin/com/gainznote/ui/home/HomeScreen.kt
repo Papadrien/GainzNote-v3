@@ -231,7 +231,8 @@ fun HomeScreen(
                     Switch(
                         checked = darkTheme, onCheckedChange = { onToggleTheme() },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = c.border
                         )
                     )
                 }
@@ -259,7 +260,8 @@ fun HomeScreen(
                 Switch(
                     checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
+                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = c.border
                     )
                 )
             }
@@ -319,7 +321,8 @@ fun HomeScreen(
                     Switch(
                         checked = adFree, onCheckedChange = { onToggleAdFree() },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim
+                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = c.border
                         )
                     )
                 }

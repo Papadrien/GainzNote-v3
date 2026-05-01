@@ -29,8 +29,8 @@ fun FloatingTimer(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
+        enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+        exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
     ) {
         Box(
             modifier = Modifier
