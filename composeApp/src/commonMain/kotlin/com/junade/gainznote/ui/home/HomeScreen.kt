@@ -230,9 +230,8 @@ fun HomeScreen(
                         checked = darkTheme, onCheckedChange = { onToggleTheme() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
- uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
+                            uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                         )
                     )
                 }
@@ -261,9 +260,7 @@ fun HomeScreen(
                     checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
- uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
+                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
                         uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                     )
                 )
@@ -325,9 +322,8 @@ fun HomeScreen(
                         checked = adFree, onCheckedChange = { onToggleAdFree() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
- uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
+                            uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                         )
                     )
                 }
