@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +40,7 @@ import com.junade.gainznote.ui.theme.GainzThemeColors
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import com.junade.gainznote.ui.ads.AdBanner
 import com.junade.gainznote.ui.components.FloatingTimer
 
 
@@ -158,16 +163,6 @@ fun CircuitWorkoutScreen(
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
 
-        FloatingTimer(
-            visible = restEndMs != null,
-            timerDisplay = restDisplay,
-            onClose = {
-                restEndMs = null
-                if (chronoNotifEnabled) onChronoStop()
-            },
-            c = c
-        )
-
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.height(10.dp))
             if (currentExo != null) {
@@ -188,6 +183,11 @@ fun CircuitWorkoutScreen(
                     weight = weight, onWeightChange = { weight = it },
                     duration = duration, onDurationChange = { duration = it },
                     notes = notes, onNotesChange = { notes = it },
+                    onStartTimer = { durationSec ->
+                        val end = Clock.System.now().toEpochMilliseconds() + durationSec * 1000
+                        restEndMs = end
+                        if (chronoNotifEnabled) onChronoStart(end)
+                    },
                     onValidateNext = {
                         // Enregistrer la perf
                         vm.upsertPerformance(
@@ -243,7 +243,29 @@ fun CircuitWorkoutScreen(
             }
         }
 
+        // FloatingTimer en overlay (au-dessus du contenu)
+        FloatingTimer(
+            visible = restEndMs != null,
+            timerDisplay = restDisplay,
+            onClose = {
+                restEndMs = null
+                if (chronoNotifEnabled) onChronoStop()
+            },
+            c = c,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .safeDrawingPadding()
+                .padding(top = 70.dp)
+        )
 
+        // Bannière pub en bas (overlay, hors scroll)
+        if (!adFree) {
+            AdBanner(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
+        }
     }
     }
 
@@ -307,6 +329,7 @@ private fun ActiveExerciseCard(
     weight: String, onWeightChange: (String) -> Unit,
     duration: Long, onDurationChange: (Long) -> Unit,
     notes: String, onNotesChange: (String) -> Unit,
+    onStartTimer: (Long) -> Unit = {},
     onValidateNext: () -> Unit
 ) {
     Column(Modifier.fillMaxWidth()
@@ -340,6 +363,22 @@ private fun ActiveExerciseCard(
                     onChange = onDurationChange,
                     c = c, showHours = false
                 )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { if (duration > 0L) onStartTimer(duration) },
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = c.accentDim,
+                        contentColor = c.accent
+                    )
+                ) {
+                    Text(
+                        "Démarrer",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -379,6 +418,7 @@ private fun NumberField(
     label: String, value: String, onChange: (String) -> Unit,
     c: GainzThemeColors, decimal: Boolean = false, placeholder: String? = null
 ) {
+    val focusManager = LocalFocusManager.current
     Column {
         Text(label, color = c.textMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
@@ -387,8 +427,10 @@ private fun NumberField(
             textStyle = TextStyle(color = c.text, fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
             cursorBrush = SolidColor(c.accent),
             keyboardOptions = KeyboardOptions(
-                keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number
+                keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number,
+                imeAction = ImeAction.Next
             ),
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
             decorationBox = { inner ->
                 Box(Modifier.fillMaxWidth()
                     .background(c.surfaceAlt, RoundedCornerShape(10.dp))

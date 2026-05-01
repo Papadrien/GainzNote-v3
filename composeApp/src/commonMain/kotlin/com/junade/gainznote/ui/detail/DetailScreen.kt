@@ -68,13 +68,18 @@ fun DetailScreen(
             val typeAccent = typeC.accent
             val typeAccentDim = typeC.accentDim
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        w.title.ifBlank { S.untitled }, color = c.text,
+                        fontSize = 24.sp, fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp, modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    )
                     WorkoutTypeBadge(w.type, typeAccent, typeAccentDim)
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(w.title.ifBlank { S.untitled }, color = c.text,
-                    fontSize = 24.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp)
                 Spacer(Modifier.height(6.dp))
                 Text(formatDisplayDate(w.startedAt), color = c.textMuted, fontSize = 13.sp)
                 Spacer(Modifier.height(10.dp))
@@ -102,10 +107,16 @@ fun DetailScreen(
                     WorkoutType.CIRCUIT -> {
                         val cfg = w.circuitConfig
                         if (cfg != null) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 StatChip(S.roundsCount(cfg.totalRounds), c)
                                 if (cfg.restBetweenExercisesSeconds > 0) {
-                                    StatChip("⏱ ${formatShortSec(cfg.restBetweenExercisesSeconds)}", c)
+                                    StatChip("Repos exo · ${formatShortSec(cfg.restBetweenExercisesSeconds)}", c)
+                                }
+                                if (cfg.restBetweenRoundsSeconds > 0) {
+                                    StatChip("Repos tour · ${formatShortSec(cfg.restBetweenRoundsSeconds)}", c)
                                 }
                             }
                             Spacer(Modifier.height(12.dp))
@@ -236,14 +247,28 @@ fun CircuitExerciseDetailCard(
     typeAccent: Color,
     typeAccentDim: Color
 ) {
-    Column(Modifier.fillMaxWidth()
-        .border(1.dp, c.border, RoundedCornerShape(12.dp))
-        .background(c.surface, RoundedCornerShape(12.dp))) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(exercise.name.ifBlank { S.unnamedExercise }, color = c.text,
-                fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Box(Modifier.background(typeAccentDim, RoundedCornerShape(5.dp))
-                .padding(horizontal = 5.dp, vertical = 2.dp)) {
+    Column(
+        Modifier.fillMaxWidth()
+            .border(1.dp, c.border, RoundedCornerShape(12.dp))
+            .background(c.surface, RoundedCornerShape(12.dp))
+    ) {
+        // En-tête : nom à gauche, tag inputType ancré à droite
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                exercise.name.ifBlank { S.unnamedExercise },
+                color = c.text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                Modifier
+                    .background(typeAccentDim, RoundedCornerShape(5.dp))
+                    .padding(horizontal = 6.dp, vertical = 3.dp)
+            ) {
                 val label = when (exercise.inputType) {
                     CircuitInputType.REPS -> S.inputTypeReps
                     CircuitInputType.REPS_WEIGHT -> S.inputTypeRepsWeight
@@ -253,34 +278,60 @@ fun CircuitExerciseDetailCard(
             }
         }
         HorizontalDivider(color = c.border, thickness = 0.5.dp)
-        // Tableau perfs par tour
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            (1..totalRounds).forEach { round ->
-                val perf = exercise.performances.firstOrNull { it.roundNumber == round }
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("T$round", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(32.dp))
-                    if (perf == null) {
-                        Text("—", color = c.textMuted, fontSize = 13.sp)
-                    } else {
-                        val desc: String = when (exercise.inputType) {
-                            CircuitInputType.REPS -> "${perf.reps ?: "?"} ${S.repsShort}"
-                            CircuitInputType.REPS_WEIGHT -> {
-                                val w = perf.weightKg?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "?"
-                                "${perf.reps ?: "?"} ${S.repsShort} × ${w} ${S.kgShort}"
-                            }
-                            CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
+
+        // Header colonnes
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            Text("Tour", color = c.textMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.width(36.dp))
+            Text("Résultat", color = c.textMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
+            Text("Notes", color = c.textMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
+        }
+        HorizontalDivider(color = c.border.copy(alpha = 0.4f), thickness = 0.5.dp)
+
+        // Lignes par tour
+        (1..totalRounds).forEachIndexed { idx, round ->
+            val perf = exercise.performances.firstOrNull { it.roundNumber == round }
+            val rowBg = if (idx % 2 == 0) c.surface else c.surfaceAlt
+            Row(
+                Modifier.fillMaxWidth()
+                    .background(rowBg)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "T$round",
+                    color = typeAccent,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.width(36.dp)
+                )
+                if (perf == null) {
+                    Text("—", color = c.textMuted, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                    Text("", modifier = Modifier.weight(1f))
+                } else {
+                    val desc: String = when (exercise.inputType) {
+                        CircuitInputType.REPS -> "${perf.reps ?: "?"} ${S.repsShort}"
+                        CircuitInputType.REPS_WEIGHT -> {
+                            val w = perf.weightKg?.let {
+                                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                            } ?: "?"
+                            "${perf.reps ?: "?"} ${S.repsShort} × ${w} ${S.kgShort}"
                         }
-                        Text(desc, color = c.text, fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-                        if (perf.notes.isNotBlank()) {
-                            Text(perf.notes, color = c.textSec, fontSize = 12.sp, maxLines = 1,
-                                modifier = Modifier.weight(1f))
-                        }
+                        CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
                     }
+                    Text(
+                        desc, color = c.text, fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        perf.notes.ifBlank { "—" },
+                        color = if (perf.notes.isNotBlank()) c.textSec else c.textMuted,
+                        fontSize = 12.sp, maxLines = 1, modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }

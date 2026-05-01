@@ -6,8 +6,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
@@ -228,10 +232,12 @@ fun GainzTextField(
     bold: Boolean = false, minLines: Int = 1,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Sentences
 ) {
+    val focusManager = LocalFocusManager.current
     BasicTextField(value = value, onValueChange = onValueChange, minLines = minLines,
         textStyle = TextStyle(color = c.text, fontSize = textSize,
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal),
-        keyboardOptions = KeyboardOptions(capitalization = capitalization),
+        keyboardOptions = KeyboardOptions(capitalization = capitalization, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
         cursorBrush = SolidColor(c.accent),
         decorationBox = { inner ->
             Box(Modifier.fillMaxWidth().border(1.dp, c.border, RoundedCornerShape(12.dp)).padding(12.dp)) {
@@ -401,11 +407,13 @@ fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
 fun CompactField(localValue: String, hint: String, c: GainzThemeColors, modifier: Modifier,
                  hintIsAccent: Boolean = false, keyboardType: KeyboardType = KeyboardType.Text,
                  onLocalChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
     BasicTextField(value = localValue, onValueChange = onLocalChange,
         modifier = modifier.background(c.surfaceAlt, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 0.dp),
         textStyle = TextStyle(color = c.text, fontSize = 14.sp, fontWeight = FontWeight.Medium),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
         cursorBrush = SolidColor(c.accent), singleLine = true,
         decorationBox = { inner ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {

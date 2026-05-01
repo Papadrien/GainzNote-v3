@@ -54,6 +54,17 @@ android {
     namespace = "com.junade.gainznote.shared"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
     defaultConfig { minSdk = libs.versions.androidMinSdk.get().toInt() }
+    buildFeatures {
+        buildConfig = true
+    }
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
+        release {
+            buildConfigField("boolean", "DEBUG", "false")
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

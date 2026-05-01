@@ -189,7 +189,6 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("\uD83D\uDEAB", fontSize = 18.sp)
                     Column(Modifier.weight(1f)) {
                         Text(S.removeAdsPrice, color = c.accent, fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold)
@@ -208,7 +207,6 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("\u2705", fontSize = 18.sp)
                     Text(S.adsRemoved, color = c.accent, fontSize = 15.sp)
                 }
             }
@@ -232,7 +230,9 @@ fun HomeScreen(
                         checked = darkTheme, onCheckedChange = { onToggleTheme() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
+ uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                         )
                     )
                 }
@@ -261,7 +261,10 @@ fun HomeScreen(
                     checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
+ uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
+                        uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                     )
                 )
             }
@@ -322,7 +325,9 @@ fun HomeScreen(
                         checked = adFree, onCheckedChange = { onToggleAdFree() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark,
+ uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
                         )
                     )
                 }
@@ -415,10 +420,8 @@ fun SettingButton(icon: String, label: String, c: GainzThemeColors, onClick: () 
     ) {
         Row(
             Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(icon, color = c.accent, fontSize = 18.sp)
             Text(label, color = c.text, fontSize = 15.sp)
         }
     }

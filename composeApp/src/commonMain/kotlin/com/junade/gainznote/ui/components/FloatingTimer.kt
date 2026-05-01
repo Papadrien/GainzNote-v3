@@ -3,7 +3,6 @@ package com.junade.gainznote.ui.components
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -24,12 +23,11 @@ fun FloatingTimer(
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        modifier = modifier,          // ← applique le modifier (align, padding) ici
+        modifier = modifier,
         visible = visible,
         enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
     ) {
-        // Aligne le chip à droite, pleine largeur pour le placement
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -42,30 +40,13 @@ fun FloatingTimer(
                     .background(c.surface, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        timerDisplay,
-                        color = c.text,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Box(
-                        Modifier
-                            .size(28.dp)
-                            .clickable(onClick = onClose),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "\u2715",
-                            color = c.textMuted,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
+                Text(
+                    timerDisplay,
+                    color = c.text,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
             }
         }
     }
