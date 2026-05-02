@@ -130,8 +130,8 @@ class _GrassPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final b in blades) _drawBlade(canvas, size, b);
-    for (final l in leaves) _drawLeaf(canvas, size, l);
+    for (final b in blades) { _drawBlade(canvas, size, b); }
+    for (final l in leaves) { _drawLeaf(canvas, size, l); }
   }
 
   void _drawBlade(Canvas canvas, Size size, _GrassBlade b) {

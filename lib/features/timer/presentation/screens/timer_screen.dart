@@ -11,7 +11,6 @@ import '../../../../shared/widgets/image_button.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
 import '../../../../shared/widgets/yarn_particles_overlay.dart';
 import '../../../../shared/widgets/grass_particles_overlay.dart';
-import '../../../../shared/widgets/dust_particles_overlay.dart';
 import '../../../../shared/widgets/straw_particles_overlay.dart';
 import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
