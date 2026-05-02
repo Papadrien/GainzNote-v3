@@ -9,6 +9,10 @@ import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
 import '../../../../shared/widgets/image_button.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
+import '../../../../shared/widgets/yarn_particles_overlay.dart';
+import '../../../../shared/widgets/grass_particles_overlay.dart';
+import '../../../../shared/widgets/dust_particles_overlay.dart';
+import '../../../../shared/widgets/straw_particles_overlay.dart';
 import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/radial_progress.dart';
@@ -71,6 +75,10 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     final circleSize = screenW * 0.78;
     final isPaused = ts.status == TimerStatus.paused;
     final isCrocodile = animal.id == 'crocodile';
+    final isCat = animal.id == 'cat';
+    final isDog = animal.id == 'dog';
+    final isPony = animal.id == 'pony';
+    final isChicken = animal.id == 'chicken';
 
     ref.listen<TimerState>(timerServiceProvider, (prev, next) {
       if (next.status == TimerStatus.finished &&
@@ -97,6 +105,10 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
         child: Stack(
           children: [
             if (isCrocodile) const WaterParticlesOverlay(),
+            if (isCat) const YarnParticlesOverlay(),
+            if (isDog) const GrassParticlesOverlay(),
+            if (isPony) const DustParticlesOverlay(),
+            if (isChicken) const StrawParticlesOverlay(),
             Column(
               children: [
                 const SizedBox(height: 8),
