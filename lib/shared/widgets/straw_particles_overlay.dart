@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Overlay de particules "paille" pour la poule.
+/// Overlay paille — poule.
+/// 40 brins, boucle 14 s, sans saccade.
 class StrawParticlesOverlay extends StatefulWidget {
   const StrawParticlesOverlay({super.key});
 
@@ -20,9 +21,10 @@ class _StrawParticlesOverlayState extends State<StrawParticlesOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 7),
+      duration: const Duration(seconds: 14),
     )..repeat();
-    _pieces = List.generate(25, (i) => _StrawPiece.random(_rng, i));
+    // 40 brins (au lieu de 25)
+    _pieces = List.generate(40, (i) => _StrawPiece.random(_rng, i, 40));
   }
 
   @override
@@ -67,27 +69,21 @@ class _StrawPiece {
   final Color color;
 
   const _StrawPiece({
-    required this.x,
-    required this.y,
-    required this.length,
-    required this.thickness,
-    required this.angle,
-    required this.phase,
-    required this.floatAmp,
-    required this.floatFreq,
-    required this.driftX,
-    required this.speed,
-    required this.color,
+    required this.x, required this.y, required this.length,
+    required this.thickness, required this.angle, required this.phase,
+    required this.floatAmp, required this.floatFreq, required this.driftX,
+    required this.speed, required this.color,
   });
 
-  factory _StrawPiece.random(Random rng, int index) {
+  factory _StrawPiece.random(Random rng, int index, int total) {
     return _StrawPiece(
       x: rng.nextDouble(),
       y: 0.58 + rng.nextDouble() * 0.40,
       length: 12.0 + rng.nextDouble() * 23.0,
       thickness: 1.5 + rng.nextDouble() * 1.5,
       angle: (rng.nextDouble() - 0.5) * pi * 0.40,
-      phase: index / 25.0,
+      // Phases uniformément espacées => début = fin d'état, pas de saccade
+      phase: index / total.toDouble(),
       floatAmp: 0.005 + rng.nextDouble() * 0.015,
       floatFreq: 0.8 + rng.nextDouble() * 1.5,
       driftX: (rng.nextDouble() - 0.5) * 0.008,
@@ -112,7 +108,7 @@ class _StrawPainter extends CustomPainter {
       final y = (p.y + sin(t * pi * 2 * p.floatFreq + p.phase * pi) * p.floatAmp) * size.height;
       final currentAngle = p.angle + sin(t * pi * 2 * 0.7) * 0.15;
 
-      // Fondu doux : 20% fade in / 20% fade out
+      // Fondu : 20 % fade in / 20 % fade out
       final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
       final alpha = (fade * (0.55 + 0.25 * sin(t * pi * 2))).clamp(0.0, 1.0);
       if (alpha <= 0) continue;
@@ -121,29 +117,24 @@ class _StrawPainter extends CustomPainter {
       canvas.translate(x, y);
       canvas.rotate(currentAngle);
 
-      final paint = Paint()
-        ..color = p.color.withValues(alpha: alpha)
-        ..style = PaintingStyle.fill
-        ..strokeCap = StrokeCap.round;
-
-      final rrect = RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: p.length,
-          height: p.thickness,
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset.zero, width: p.length, height: p.thickness),
+          Radius.circular(p.thickness / 2),
         ),
-        Radius.circular(p.thickness / 2),
+        Paint()
+          ..color = p.color.withValues(alpha: alpha)
+          ..style = PaintingStyle.fill
+          ..strokeCap = StrokeCap.round,
       );
-      canvas.drawRRect(rrect, paint);
 
-      final veinPaint = Paint()
-        ..color = p.color.withValues(alpha: alpha * 0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.6;
       canvas.drawLine(
         Offset(-p.length / 2 + 2, 0),
         Offset(p.length / 2 - 2, 0),
-        veinPaint,
+        Paint()
+          ..color = p.color.withValues(alpha: alpha * 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6,
       );
 
       canvas.restore();
