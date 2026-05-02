@@ -21,13 +21,13 @@ class TimePickerCard extends ConsumerWidget {
       child: Row(
         children: [
           _Col(value: setup.hours, label: context.l10n.hours, color: AppColors.crayonBlue,
-            max: 23, onChanged: ref.read(setupProvider.notifier).setHours),
+            max: 23, step: 1, onChanged: ref.read(setupProvider.notifier).setHours),
           const SizedBox(width: 8),
           _Col(value: setup.minutes, label: context.l10n.minutes, color: AppColors.crayonOrange,
-            max: 59, onChanged: ref.read(setupProvider.notifier).setMinutes),
+            max: 59, step: 1, onChanged: ref.read(setupProvider.notifier).setMinutes),
           const SizedBox(width: 8),
           _Col(value: setup.seconds, label: context.l10n.seconds, color: AppColors.crayonRed,
-            max: 59, onChanged: ref.read(setupProvider.notifier).setSeconds),
+            max: 59, step: 5, onChanged: ref.read(setupProvider.notifier).setSeconds),
         ],
       ),
     );
@@ -39,9 +39,10 @@ class _Col extends StatefulWidget {
   final String label;
   final Color color;
   final int max;
+  final int step;
   final ValueChanged<int> onChanged;
   const _Col({required this.value, required this.label,
-    required this.color, required this.max, required this.onChanged});
+    required this.color, required this.max, required this.step, required this.onChanged});
   @override
   State<_Col> createState() => _ColState();
 }
@@ -50,17 +51,26 @@ class _ColState extends State<_Col> {
   late FixedExtentScrollController _ctrl;
   bool _userScrolling = false;
 
+  /// Convertit une valeur réelle en index dans la liste
+  int _valueToIndex(int value) {
+    if (widget.step <= 1) return value;
+    return (value ~/ widget.step).clamp(0, _itemCount - 1);
+  }
+
+  /// Nombre d'items disponibles
+  int get _itemCount => widget.step <= 1 ? widget.max + 1 : (widget.max ~/ widget.step) + 1;
+
   @override
   void initState() {
     super.initState();
-    _ctrl = FixedExtentScrollController(initialItem: widget.value);
+    _ctrl = FixedExtentScrollController(initialItem: _valueToIndex(widget.value));
   }
 
   @override
   void didUpdateWidget(_Col old) {
     super.didUpdateWidget(old);
     if (!_userScrolling && old.value != widget.value && _ctrl.hasClients) {
-      _ctrl.jumpToItem(widget.value);
+      _ctrl.jumpToItem(_valueToIndex(widget.value));
     }
   }
 
@@ -106,16 +116,21 @@ class _ColState extends State<_Col> {
                         width: 1.5)),
                   ),
                 ),
-                onSelectedItemChanged: widget.onChanged,
-                childCount: widget.max + 1,
+                onSelectedItemChanged: (index) {
+                  final realValue = index * widget.step;
+                  widget.onChanged(realValue);
+                },
+                childCount: _itemCount,
                 itemBuilder: (context, index) {
+                  final displayValue = index * widget.step;
+                  final isSelected = displayValue == widget.value;
                   return Center(child: Text(
-                    '$index',
+                    '$displayValue',
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
-                      color: index == widget.value
+                      color: isSelected
                           ? widget.color
                           : AppColors.pencilFaint,
                     ),
