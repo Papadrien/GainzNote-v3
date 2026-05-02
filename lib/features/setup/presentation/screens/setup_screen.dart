@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
+import '../../../../shared/widgets/yarn_particles_overlay.dart';
+import '../../../../shared/widgets/grass_particles_overlay.dart';
+import '../../../../shared/widgets/dust_particles_overlay.dart';
+import '../../../../shared/widgets/straw_particles_overlay.dart';
 import '../../../timer/presentation/screens/timer_screen.dart';
 import '../../../settings/presentation/screens/settings_sheet.dart';
 import '../../providers/setup_provider.dart';
@@ -20,7 +24,7 @@ class SetupScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final setup = ref.watch(setupProvider);
     final bottomPad = MediaQuery.of(context).padding.bottom;
-    final isCrocodile = setup.selectedAnimal.id == 'crocodile';
+    final animalId = setup.selectedAnimal.id;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -30,10 +34,18 @@ class SetupScreen extends ConsumerWidget {
         gradient: setup.selectedAnimal.setupGradient,
         child: Stack(
           children: [
-            if (isCrocodile) const WaterParticlesOverlay(),
+            // Particules selon l'animal sélectionné
+            if (animalId == 'crocodile') const WaterParticlesOverlay(),
+            if (animalId == 'cat') const YarnParticlesOverlay(),
+            if (animalId == 'dog') const GrassParticlesOverlay(),
+            if (animalId == 'pony') ...[
+              const DustParticlesOverlay(),
+              const GrassParticlesOverlay(),
+            ],
+            if (animalId == 'chicken') const StrawParticlesOverlay(),
             SingleChildScrollView(
               padding: EdgeInsets.only(
-                left: 24, right: 24, bottom: bottomPad + 24),
+                  left: 24, right: 24, bottom: bottomPad + 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -41,7 +53,6 @@ class SetupScreen extends ConsumerWidget {
                   // Top row: title + settings gear
                   Row(
                     children: [
-                      // App title with black outline style
                       Expanded(
                         child: Text(
                           context.l10n.appName,
@@ -54,7 +65,6 @@ class SetupScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      // Settings gear with black outline
                       GestureDetector(
                         onTap: () {
                           HapticFeedback.selectionClick();
@@ -66,10 +76,10 @@ class SetupScreen extends ConsumerWidget {
                             shape: BoxShape.circle,
                             color: AppColors.paperLight.withValues(alpha: 0.6),
                             border: Border.all(
-                              color: AppColors.pencilDark, width: 2.5),
+                                color: AppColors.pencilDark, width: 2.5),
                           ),
                           child: const Icon(Icons.settings,
-                            color: AppColors.pencilDark, size: 22),
+                              color: AppColors.pencilDark, size: 22),
                         ),
                       ),
                     ],
@@ -77,10 +87,8 @@ class SetupScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   const Center(child: AnimalSelector()),
                   const SizedBox(height: 28),
-                  // Time picker FIRST
                   const TimePickerCard(),
                   const SizedBox(height: 24),
-                  // Start button
                   StartButton(onPressed: () {
                     if (!setup.isValid) { HapticFeedback.heavyImpact(); return; }
                     HapticFeedback.mediumImpact();
@@ -91,13 +99,12 @@ class SetupScreen extends ConsumerWidget {
                         opacity: anim,
                         child: ScaleTransition(
                           scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                              CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
                           child: child)),
                       transitionDuration: const Duration(milliseconds: 400),
                     ));
                   }),
                   const SizedBox(height: 32),
-                  // Recents AFTER
                   const RecentsSection(),
                   const SizedBox(height: 20),
                 ],

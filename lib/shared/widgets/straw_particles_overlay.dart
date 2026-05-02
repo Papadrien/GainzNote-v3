@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay de particules "paille" pour la poule.
-/// Brins de paille qui flottent doucement, restent proches du bas.
 class StrawParticlesOverlay extends StatefulWidget {
   const StrawParticlesOverlay({super.key});
 
@@ -23,8 +22,7 @@ class _StrawParticlesOverlayState extends State<StrawParticlesOverlay>
       vsync: this,
       duration: const Duration(seconds: 7),
     )..repeat();
-
-    _pieces = List.generate(25, (_) => _StrawPiece.random(_rng));
+    _pieces = List.generate(25, (i) => _StrawPiece.random(_rng, i));
   }
 
   @override
@@ -48,24 +46,24 @@ class _StrawParticlesOverlayState extends State<StrawParticlesOverlay>
 }
 
 const _strawColors = [
-  Color(0xFFD4A017), // jaune paille doré
-  Color(0xFFE8C84A), // jaune clair
-  Color(0xFFBF9B30), // paille foncée
-  Color(0xFFF0D060), // jaune doux
-  Color(0xFFC8A84B), // brun doré
+  Color(0xFFD4A017),
+  Color(0xFFE8C84A),
+  Color(0xFFBF9B30),
+  Color(0xFFF0D060),
+  Color(0xFFC8A84B),
 ];
 
 class _StrawPiece {
-  final double x;         // X normalisé [0,1]
-  final double y;         // Y normalisé (concentré en bas) [0.55, 1.0]
-  final double length;    // longueur du brin [12, 35]
-  final double thickness; // épaisseur [1.5, 3.0]
-  final double angle;     // angle initial (quasi horizontal ±30°)
-  final double phase;     // décalage phase
-  final double floatAmp;  // amplitude flottement vertical
-  final double floatFreq; // fréquence flottement
-  final double driftX;    // dérive X légère
-  final double speed;     // vitesse de dérive
+  final double x;
+  final double y;
+  final double length;
+  final double thickness;
+  final double angle;
+  final double phase;
+  final double floatAmp;
+  final double floatFreq;
+  final double driftX;
+  final double speed;
   final Color color;
 
   const _StrawPiece({
@@ -82,15 +80,14 @@ class _StrawPiece {
     required this.color,
   });
 
-  factory _StrawPiece.random(Random rng) {
+  factory _StrawPiece.random(Random rng, int index) {
     return _StrawPiece(
       x: rng.nextDouble(),
       y: 0.58 + rng.nextDouble() * 0.40,
       length: 12.0 + rng.nextDouble() * 23.0,
       thickness: 1.5 + rng.nextDouble() * 1.5,
-      // Angle quasi-horizontal avec légère inclinaison (−35° à +35°)
       angle: (rng.nextDouble() - 0.5) * pi * 0.40,
-      phase: rng.nextDouble(),
+      phase: index / 25.0,
       floatAmp: 0.005 + rng.nextDouble() * 0.015,
       floatFreq: 0.8 + rng.nextDouble() * 1.5,
       driftX: (rng.nextDouble() - 0.5) * 0.008,
@@ -111,23 +108,21 @@ class _StrawPainter extends CustomPainter {
     for (final p in pieces) {
       final t = (progress * p.speed + p.phase) % 1.0;
 
-      // Position avec flottement vertical léger
       final x = (p.x + sin(t * pi * 2) * p.driftX) * size.width;
       final y = (p.y + sin(t * pi * 2 * p.floatFreq + p.phase * pi) * p.floatAmp) * size.height;
-
-      // Légère rotation oscillante autour de l'angle de base
       final currentAngle = p.angle + sin(t * pi * 2 * 0.7) * 0.15;
 
-      // Opacité stable (paille posée)
-      final alpha = 0.55 + 0.25 * sin(t * pi * 2);
+      // Fondu doux : 20% fade in / 20% fade out
+      final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
+      final alpha = (fade * (0.55 + 0.25 * sin(t * pi * 2))).clamp(0.0, 1.0);
+      if (alpha <= 0) continue;
 
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(currentAngle);
 
-      // Brin de paille : rectangle arrondi allongé
       final paint = Paint()
-        ..color = p.color.withValues(alpha: alpha.clamp(0.0, 1.0))
+        ..color = p.color.withValues(alpha: alpha)
         ..style = PaintingStyle.fill
         ..strokeCap = StrokeCap.round;
 
@@ -141,7 +136,6 @@ class _StrawPainter extends CustomPainter {
       );
       canvas.drawRRect(rrect, paint);
 
-      // Ligne centrale légèrement plus sombre (nervure)
       final veinPaint = Paint()
         ..color = p.color.withValues(alpha: alpha * 0.4)
         ..style = PaintingStyle.stroke
@@ -154,6 +148,12 @@ class _StrawPainter extends CustomPainter {
 
       canvas.restore();
     }
+  }
+
+  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
+    if (t < fadeIn) return t / fadeIn;
+    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
+    return 1.0;
   }
 
   @override

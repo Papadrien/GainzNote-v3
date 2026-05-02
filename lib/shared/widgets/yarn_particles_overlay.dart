@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay de particules "pelotes de laine" pour le chat.
+/// Couleur rouge translucide, animation en boucle avec fondu pour éviter
+/// toute disparition brusque.
 class YarnParticlesOverlay extends StatefulWidget {
   const YarnParticlesOverlay({super.key});
 
@@ -22,7 +24,7 @@ class _YarnParticlesOverlayState extends State<YarnParticlesOverlay>
       vsync: this,
       duration: const Duration(seconds: 8),
     )..repeat();
-    _particles = List.generate(14, (i) => _YarnParticle.random(_rng));
+    _particles = List.generate(14, (i) => _YarnParticle.random(_rng, i));
   }
 
   @override
@@ -45,27 +47,27 @@ class _YarnParticlesOverlayState extends State<YarnParticlesOverlay>
   }
 }
 
-/// Couleurs douces de laine
+/// Palette rouge translucide
 const _yarnColors = [
-  Color(0xFFE91E8C), // rose vif
-  Color(0xFFFF6FB7), // rose clair
-  Color(0xFFA855F7), // violet
-  Color(0xFFFF9800), // orange
-  Color(0xFF42A5F5), // bleu ciel
-  Color(0xFFEC407A), // framboise
+  Color(0xFFE53935), // rouge vif
+  Color(0xFFEF5350), // rouge moyen
+  Color(0xFFC62828), // rouge foncé
+  Color(0xFFFF5252), // rouge clair
+  Color(0xFFB71C1C), // rouge très foncé
+  Color(0xFFFF1744), // rouge-rose
 ];
 
 class _YarnParticle {
-  final double x;        // position X normalisée [0,1]
-  final double y;        // position Y normalisée [0,1]
-  final double radius;   // rayon de la pelote [10, 22]
-  final double phase;    // décalage de phase
-  final double driftX;   // amplitude dérive X
-  final double driftY;   // amplitude dérive Y
-  final double speed;    // vitesse de déplacement
-  final double rotation; // rotation initiale
-  final Color color;     // couleur de la laine
-  final int loops;       // nombre de spirales [3,6]
+  final double x;
+  final double y;
+  final double radius;
+  final double phase;      // phase de départ dans le cycle [0,1]
+  final double driftX;
+  final double driftY;
+  final double speed;
+  final double rotation;
+  final Color color;
+  final int loops;
 
   const _YarnParticle({
     required this.x,
@@ -80,15 +82,17 @@ class _YarnParticle {
     required this.loops,
   });
 
-  factory _YarnParticle.random(Random rng) {
+  factory _YarnParticle.random(Random rng, int index) {
     return _YarnParticle(
       x: 0.05 + rng.nextDouble() * 0.90,
       y: 0.05 + rng.nextDouble() * 0.90,
       radius: 10.0 + rng.nextDouble() * 12.0,
-      phase: rng.nextDouble(),
+      // Phases décalées régulièrement pour que les particules n'apparaissent
+      // et disparaissent à des moments différents (pas toutes en même temps).
+      phase: index / 14.0,
       driftX: 0.03 + rng.nextDouble() * 0.06,
       driftY: 0.02 + rng.nextDouble() * 0.04,
-      speed: 0.5 + rng.nextDouble() * 0.5,
+      speed: 0.4 + rng.nextDouble() * 0.4,
       rotation: rng.nextDouble() * pi * 2,
       color: _yarnColors[rng.nextInt(_yarnColors.length)],
       loops: 3 + rng.nextInt(4),
@@ -107,9 +111,15 @@ class _YarnPainter extends CustomPainter {
     for (final p in particles) {
       final t = (progress * p.speed + p.phase) % 1.0;
 
-      // Position flottante avec oscillation douce
+      // Fondu entrée/sortie sur 20% du cycle pour éviter la disparition brusque
+      final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
+      if (fade <= 0) continue;
+
+      // Opacité globale faible pour rester discret (translucide)
+      final globalAlpha = fade * 0.42;
+
       final cx = (p.x + sin(t * pi * 2) * p.driftX) * size.width;
-      final cy = (p.y + cos(t * pi * 2 + p.phase) * p.driftY) * size.height;
+      final cy = (p.y + cos(t * pi * 2 + p.phase * pi) * p.driftY) * size.height;
 
       // Légère pulsation du rayon
       final r = p.radius * (0.9 + 0.1 * sin(t * pi * 4));
@@ -120,30 +130,34 @@ class _YarnPainter extends CustomPainter {
       canvas.save();
       canvas.translate(cx, cy);
       canvas.rotate(rot);
-
-      _drawYarnBall(canvas, r, p.color, p.loops);
-
+      _drawYarnBall(canvas, r, p.color, p.loops, globalAlpha);
       canvas.restore();
     }
   }
 
-  void _drawYarnBall(Canvas canvas, double r, Color color, int loops) {
-    // Corps principal de la pelote (cercle de base)
+  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
+    if (t < fadeIn) return t / fadeIn;
+    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
+    return 1.0;
+  }
+
+  void _drawYarnBall(Canvas canvas, double r, Color color, int loops, double alpha) {
+    // Corps principal : rouge translucide
     final bodyPaint = Paint()
-      ..color = color.withValues(alpha: 0.85)
+      ..color = color.withValues(alpha: alpha * 0.75)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset.zero, r, bodyPaint);
 
-    // Contour
+    // Contour légèrement plus opaque
     final borderPaint = Paint()
-      ..color = color.withValues(alpha: 1.0)
+      ..color = color.withValues(alpha: alpha)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     canvas.drawCircle(Offset.zero, r, borderPaint);
 
-    // Fils en spirale autour de la pelote
+    // Fils en spirale
     final threadPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.45)
+      ..color = Colors.white.withValues(alpha: alpha * 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
@@ -154,7 +168,6 @@ class _YarnPainter extends CustomPainter {
       bool first = true;
       for (int i = 0; i <= 40; i++) {
         final a = (i / 40) * pi * 2;
-        // Ellipse inclinée simulant le fil enroulé
         final ex = cos(a + angleOffset) * r;
         final ey = sin(a + angleOffset) * r * 0.35;
         if (first) {
@@ -167,9 +180,9 @@ class _YarnPainter extends CustomPainter {
       canvas.drawPath(path, threadPaint);
     }
 
-    // Petit fil libre qui dépasse (queue de laine)
+    // Petit fil libre
     final tailPaint = Paint()
-      ..color = color.withValues(alpha: 0.9)
+      ..color = color.withValues(alpha: alpha * 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
@@ -179,9 +192,9 @@ class _YarnPainter extends CustomPainter {
     tail.quadraticBezierTo(r * 1.3, -r * 0.6, r * 1.1, -r * 1.1);
     canvas.drawPath(tail, tailPaint);
 
-    // Reflet brillant
+    // Reflet discret
     final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
+      ..color = Colors.white.withValues(alpha: alpha * 0.25)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(-r * 0.3, -r * 0.3), r * 0.22, highlightPaint);
   }

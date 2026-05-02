@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Overlay de particules "gazon et herbe" pour le chien.
+/// Overlay de particules "gazon et herbe" pour le chien (et le cheval).
 class GrassParticlesOverlay extends StatefulWidget {
   const GrassParticlesOverlay({super.key});
 
@@ -24,10 +24,10 @@ class _GrassParticlesOverlayState extends State<GrassParticlesOverlay>
       duration: const Duration(seconds: 5),
     )..repeat();
 
-    // Brins d'herbe ancrés en bas
-    _blades = List.generate(30, (_) => _GrassBlade.random(_rng));
-    // Feuilles flottantes
-    _leaves = List.generate(10, (_) => _LeafParticle.random(_rng));
+    // Plus de brins d'herbe ancrés en bas
+    _blades = List.generate(65, (_) => _GrassBlade.random(_rng));
+    // Plus de feuilles flottantes
+    _leaves = List.generate(18, (_) => _LeafParticle.random(_rng));
   }
 
   @override
@@ -61,16 +61,18 @@ const _grassColors = [
   Color(0xFF2E7D32), // vert foncé
   Color(0xFF81C784), // vert pastel
   Color(0xFF388E3C), // vert prairie
+  Color(0xFF1B5E20), // vert très foncé
+  Color(0xFFA5D6A7), // vert très clair
 ];
 
 class _GrassBlade {
-  final double x;       // position X normalisée [0,1]
-  final double height;  // hauteur normalisée [0.05, 0.18]
-  final double width;   // épaisseur [1.5, 3.5]
-  final double phase;   // décalage de phase oscillation
-  final double sway;    // amplitude de balancement
+  final double x;
+  final double height;
+  final double width;
+  final double phase;
+  final double sway;
   final Color color;
-  final double curve;   // courbure du brin [0.3, 0.8]
+  final double curve;
 
   const _GrassBlade({
     required this.x,
@@ -85,10 +87,10 @@ class _GrassBlade {
   factory _GrassBlade.random(Random rng) {
     return _GrassBlade(
       x: rng.nextDouble(),
-      height: 0.06 + rng.nextDouble() * 0.12,
-      width: 1.5 + rng.nextDouble() * 2.0,
+      height: 0.05 + rng.nextDouble() * 0.15,
+      width: 1.2 + rng.nextDouble() * 2.5,
       phase: rng.nextDouble(),
-      sway: 0.008 + rng.nextDouble() * 0.012,
+      sway: 0.006 + rng.nextDouble() * 0.014,
       color: _grassColors[rng.nextInt(_grassColors.length)],
       curve: 0.3 + rng.nextDouble() * 0.5,
     );
@@ -97,7 +99,7 @@ class _GrassBlade {
 
 class _LeafParticle {
   final double x;
-  final double startY; // position Y de départ normalisée (bas de l'écran)
+  final double startY;
   final double size;
   final double phase;
   final double speed;
@@ -117,7 +119,7 @@ class _LeafParticle {
   factory _LeafParticle.random(Random rng) {
     return _LeafParticle(
       x: rng.nextDouble(),
-      startY: 0.7 + rng.nextDouble() * 0.3,
+      startY: 0.65 + rng.nextDouble() * 0.30,
       size: 4.0 + rng.nextDouble() * 6.0,
       phase: rng.nextDouble(),
       speed: 0.04 + rng.nextDouble() * 0.06,
@@ -140,11 +142,9 @@ class _GrassPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Dessiner les brins d'herbe en bas de l'écran
     for (final b in blades) {
       _drawBlade(canvas, size, b);
     }
-    // Dessiner les feuilles qui se soulèvent
     for (final l in leaves) {
       _drawLeaf(canvas, size, l);
     }
@@ -152,18 +152,14 @@ class _GrassPainter extends CustomPainter {
 
   void _drawBlade(Canvas canvas, Size size, _GrassBlade b) {
     final t = (progress + b.phase) % 1.0;
-    // Oscillation sinusoïdale du sommet du brin
     final swayOffset = sin(t * pi * 2) * b.sway * size.width;
 
     final baseX = b.x * size.width;
-    final baseY = size.height; // ancré tout en bas
+    final baseY = size.height;
     final bladeH = b.height * size.height;
 
-    // Pointe du brin (avec balancement)
     final tipX = baseX + swayOffset;
     final tipY = baseY - bladeH;
-
-    // Point de contrôle bezier pour la courbure
     final ctrlX = baseX + swayOffset * b.curve + (swayOffset * 0.5);
     final ctrlY = baseY - bladeH * 0.6;
 
@@ -180,13 +176,18 @@ class _GrassPainter extends CustomPainter {
   }
 
   void _drawLeaf(Canvas canvas, Size size, _LeafParticle l) {
+    // t va de 0 à 1 sur le cycle complet
     final t = ((progress * l.speed * 15 + l.phase) % 1.0);
-    // Monte depuis le bas puis disparaît
+
+    // Fondu : apparaît sur 15%, stable, disparaît sur 15% avant la fin
+    final alpha = _fadeAlpha(t, fadeIn: 0.15, fadeOut: 0.15) * 0.75;
+    if (alpha <= 0) return;
+
+    // Monte depuis le bas
     final rawY = l.startY - t * 0.35;
     final normY = rawY < 0.55 ? rawY + 0.5 : rawY;
     final y = normY * size.height;
     final x = (l.x + sin(t * pi * 3) * l.driftX) * size.width;
-    final alpha = (1.0 - t).clamp(0.0, 1.0) * 0.75;
     final rotation = t * pi * 1.5;
 
     final paint = Paint()
@@ -197,7 +198,6 @@ class _GrassPainter extends CustomPainter {
     canvas.translate(x, y);
     canvas.rotate(rotation);
 
-    // Petite feuille ovale
     final rect = Rect.fromCenter(
       center: Offset.zero,
       width: l.size,
@@ -205,7 +205,6 @@ class _GrassPainter extends CustomPainter {
     );
     canvas.drawOval(rect, paint);
 
-    // Nervure centrale
     final veinPaint = Paint()
       ..color = Colors.white.withValues(alpha: alpha * 0.4)
       ..style = PaintingStyle.stroke
@@ -216,6 +215,13 @@ class _GrassPainter extends CustomPainter {
     canvas.drawPath(vein, veinPaint);
 
     canvas.restore();
+  }
+
+  /// Courbe de fondu : fade in puis fade out en douceur.
+  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
+    if (t < fadeIn) return t / fadeIn;
+    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
+    return 1.0;
   }
 
   @override

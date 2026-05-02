@@ -108,6 +108,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
             if (isCat) const YarnParticlesOverlay(),
             if (isDog) const GrassParticlesOverlay(),
             if (isPony) const DustParticlesOverlay(),
+            if (isPony) const GrassParticlesOverlay(),
             if (isChicken) const StrawParticlesOverlay(),
             Column(
               children: [

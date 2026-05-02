@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay de particules "poussière et vent" pour le cheval.
-/// Les particules se déplacent horizontalement (gauche → droite).
 class DustParticlesOverlay extends StatefulWidget {
   const DustParticlesOverlay({super.key});
 
@@ -23,8 +22,7 @@ class _DustParticlesOverlayState extends State<DustParticlesOverlay>
       vsync: this,
       duration: const Duration(seconds: 6),
     )..repeat();
-
-    _particles = List.generate(35, (_) => _DustParticle.random(_rng));
+    _particles = List.generate(35, (i) => _DustParticle.random(_rng, i));
   }
 
   @override
@@ -39,10 +37,7 @@ class _DustParticlesOverlayState extends State<DustParticlesOverlay>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) => CustomPaint(
-          painter: _DustPainter(
-            particles: _particles,
-            progress: _controller.value,
-          ),
+          painter: _DustPainter(particles: _particles, progress: _controller.value),
           size: Size.infinite,
         ),
       ),
@@ -51,13 +46,13 @@ class _DustParticlesOverlayState extends State<DustParticlesOverlay>
 }
 
 class _DustParticle {
-  final double startX;  // X de départ normalisé [−0.1, 0] (hors écran gauche)
-  final double y;       // Y normalisée [0.4, 1.0] (moitié basse)
-  final double speed;   // vitesse horizontale normalisée
-  final double size;    // taille ellipse [3, 12]
-  final double opacity; // opacité max
-  final double phase;   // décalage de phase
-  final double waveAmp; // amplitude ondulation verticale
+  final double startX;
+  final double y;
+  final double speed;
+  final double size;
+  final double opacity;
+  final double phase;
+  final double waveAmp;
   final double waveFreq;
   final Color color;
 
@@ -73,14 +68,13 @@ class _DustParticle {
     required this.color,
   });
 
-  factory _DustParticle.random(Random rng) {
-    // Tons beige / sable / brun clair
-    final colors = [
-      const Color(0xFFD4A96A),
-      const Color(0xFFC8956C),
-      const Color(0xFFE8C99A),
-      const Color(0xFFBFA07A),
-      const Color(0xFFD2B48C),
+  factory _DustParticle.random(Random rng, int index) {
+    const colors = [
+      Color(0xFFD4A96A),
+      Color(0xFFC8956C),
+      Color(0xFFE8C99A),
+      Color(0xFFBFA07A),
+      Color(0xFFD2B48C),
     ];
     return _DustParticle(
       startX: -0.05 - rng.nextDouble() * 0.10,
@@ -88,7 +82,7 @@ class _DustParticle {
       speed: 0.15 + rng.nextDouble() * 0.25,
       size: 3.0 + rng.nextDouble() * 9.0,
       opacity: 0.12 + rng.nextDouble() * 0.30,
-      phase: rng.nextDouble(),
+      phase: index / 35.0,
       waveAmp: 0.01 + rng.nextDouble() * 0.025,
       waveFreq: 1.0 + rng.nextDouble() * 2.0,
       color: colors[rng.nextInt(colors.length)],
@@ -105,25 +99,18 @@ class _DustPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
-      // Progression cyclique avec phase décalée
       final t = ((progress * p.speed + p.phase) % 1.0);
 
-      // Déplacement horizontal gauche → droite
       final x = (p.startX + t * 1.15) * size.width;
-
-      // Légère ondulation verticale
       final y = (p.y + sin(t * pi * 2 * p.waveFreq) * p.waveAmp) * size.height;
 
-      // Fade in sur le premier quart, fade out sur le dernier quart
-      final alpha = (t < 0.2
-          ? t / 0.2
-          : t > 0.75
-              ? (1.0 - t) / 0.25
-              : 1.0) * p.opacity;
+      // Fondu : 20% fade in, 20% fade out
+      final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
+      final alpha = (fade * p.opacity).clamp(0.0, 1.0);
+      if (alpha <= 0) continue;
 
-      // Ellipse aplatie (nuage de poussière)
       final paint = Paint()
-        ..color = p.color.withValues(alpha: alpha.clamp(0.0, 1.0))
+        ..color = p.color.withValues(alpha: alpha)
         ..style = PaintingStyle.fill;
 
       final rect = Rect.fromCenter(
@@ -133,22 +120,25 @@ class _DustPainter extends CustomPainter {
       );
       canvas.drawOval(rect, paint);
 
-      // Rafale de vent : petits traits fins à côté
       if (p.size > 7) {
         _drawWindStreak(canvas, Offset(x, y), p.size, alpha, p.color);
       }
     }
   }
 
-  void _drawWindStreak(
-      Canvas canvas, Offset center, double sz, double alpha, Color color) {
+  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
+    if (t < fadeIn) return t / fadeIn;
+    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
+    return 1.0;
+  }
+
+  void _drawWindStreak(Canvas canvas, Offset center, double sz, double alpha, Color color) {
     final paint = Paint()
       ..color = color.withValues(alpha: alpha * 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8
       ..strokeCap = StrokeCap.round;
 
-    // 2 petits traits horizontaux
     for (int i = 0; i < 2; i++) {
       final offsetY = (i == 0 ? -sz * 0.6 : sz * 0.5);
       final len = sz * (0.8 + i * 0.4);
