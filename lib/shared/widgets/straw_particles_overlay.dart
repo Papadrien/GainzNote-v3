@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay paille — poule.
-/// 80 brins, boucle 14 s, sans saccade.
+/// Chaque brin a son propre cycle de vie (naissance → flottement → disparition)
+/// identique au fonctionnement des feuilles et des bulles.
 class StrawParticlesOverlay extends StatefulWidget {
   const StrawParticlesOverlay({super.key});
 
@@ -23,7 +24,6 @@ class _StrawParticlesOverlayState extends State<StrawParticlesOverlay>
       vsync: this,
       duration: const Duration(seconds: 14),
     )..repeat();
-    // 80 brins (doublement)
     _pieces = List.generate(80, (i) => _StrawPiece.random(_rng, i, 80));
   }
 
@@ -57,36 +57,36 @@ const _strawColors = [
 
 class _StrawPiece {
   final double x;
-  final double y;
+  final double startY;    // Y de départ
+  final double riseY;     // amplitude de montée (fraction écran)
   final double length;
   final double thickness;
   final double angle;
-  final double phase;
+  final double phase;     // offset uniforme dans [0,1]
   final double floatAmp;
-  final double floatFreq;
   final double driftX;
   final double speed;
   final Color color;
 
   const _StrawPiece({
-    required this.x, required this.y, required this.length,
-    required this.thickness, required this.angle, required this.phase,
-    required this.floatAmp, required this.floatFreq, required this.driftX,
+    required this.x, required this.startY, required this.riseY,
+    required this.length, required this.thickness, required this.angle,
+    required this.phase, required this.floatAmp, required this.driftX,
     required this.speed, required this.color,
   });
 
   factory _StrawPiece.random(Random rng, int index, int total) {
     return _StrawPiece(
       x: rng.nextDouble(),
-      y: 0.58 + rng.nextDouble() * 0.40,
+      startY: 0.60 + rng.nextDouble() * 0.30,
+      riseY: 0.08 + rng.nextDouble() * 0.12,
       length: 12.0 + rng.nextDouble() * 23.0,
       thickness: 1.5 + rng.nextDouble() * 1.5,
       angle: (rng.nextDouble() - 0.5) * pi * 0.40,
-      // Phases uniformément espacées => début = fin d'état, pas de saccade
+      // Phases régulièrement espacées → pas de saut à la boucle
       phase: index / total.toDouble(),
       floatAmp: 0.005 + rng.nextDouble() * 0.015,
-      floatFreq: 0.8 + rng.nextDouble() * 1.5,
-      driftX: (rng.nextDouble() - 0.5) * 0.008,
+      driftX: (rng.nextDouble() - 0.5) * 0.03,
       speed: 0.3 + rng.nextDouble() * 0.4,
       color: _strawColors[rng.nextInt(_strawColors.length)],
     );
@@ -102,15 +102,18 @@ class _StrawPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final p in pieces) {
+      // t local [0,1] : chaque brin a son propre décalage de phase
       final t = (progress * p.speed + p.phase) % 1.0;
 
-      final x = (p.x + sin(t * pi * 2) * p.driftX) * size.width;
-      final y = (p.y + sin(t * pi * 2 * p.floatFreq + p.phase * pi) * p.floatAmp) * size.height;
-      final currentAngle = p.angle + sin(t * pi * 2 * 0.7) * 0.15;
+      // sin(t*pi) : 0 en t=0 et t=1, max en t=0.5 → fondu naturel naissance/mort
+      final alpha = (sin(t * pi) * 0.85).clamp(0.0, 1.0);
+      if (alpha <= 0.01) continue;
 
-      // Alpha continu via sin² — aucune discontinuité entre boucles
-      final alpha = (0.40 + 0.40 * sin(t * pi * 2 + pi / 2)).clamp(0.0, 1.0);
-      if (alpha <= 0) continue;
+      // Montée en easeOut comme les feuilles
+      final rise = 1.0 - (1.0 - t) * (1.0 - t);
+      final y = (p.startY - rise * p.riseY + sin(t * pi * 2) * p.floatAmp) * size.height;
+      final x = (p.x + sin(t * pi) * p.driftX) * size.width;
+      final currentAngle = p.angle + sin(t * pi * 2 * 0.7) * 0.15;
 
       canvas.save();
       canvas.translate(x, y);

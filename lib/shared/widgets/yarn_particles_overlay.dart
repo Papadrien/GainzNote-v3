@@ -2,7 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay pelotes de laine — chat.
-/// Boucle 16 s, très translucides, sans saccade.
+/// Chaque pelote a son propre cycle de vie (naissance → montée → disparition)
+/// identique au fonctionnement des feuilles et des bulles.
 class YarnParticlesOverlay extends StatefulWidget {
   const YarnParticlesOverlay({super.key});
 
@@ -57,19 +58,19 @@ const _yarnColors = [
 
 class _YarnParticle {
   final double x;
-  final double y;
+  final double startY;   // Y de départ (bas)
+  final double riseY;    // amplitude de montée (fraction écran)
   final double radius;
-  final double phase;
-  final double driftX;
-  final double driftY;
+  final double phase;    // offset uniforme dans [0,1]
+  final double driftX;   // dérive horizontale douce
   final double speed;
   final double rotation;
   final Color color;
   final int loops;
 
   const _YarnParticle({
-    required this.x, required this.y, required this.radius,
-    required this.phase, required this.driftX, required this.driftY,
+    required this.x, required this.startY, required this.riseY,
+    required this.radius, required this.phase, required this.driftX,
     required this.speed, required this.rotation, required this.color,
     required this.loops,
   });
@@ -77,12 +78,12 @@ class _YarnParticle {
   factory _YarnParticle.random(Random rng, int index, int total) {
     return _YarnParticle(
       x: 0.05 + rng.nextDouble() * 0.90,
-      y: 0.05 + rng.nextDouble() * 0.90,
+      startY: 0.65 + rng.nextDouble() * 0.25,
+      riseY: 0.12 + rng.nextDouble() * 0.15,
       radius: 10.0 + rng.nextDouble() * 12.0,
-      // Phases régulièrement espacées => début = fin d'état, pas de saccade
+      // Phases régulièrement espacées → pas de saut à la boucle
       phase: index / total.toDouble(),
-      driftX: 0.03 + rng.nextDouble() * 0.06,
-      driftY: 0.02 + rng.nextDouble() * 0.04,
+      driftX: (rng.nextDouble() - 0.5) * 0.04,
       speed: 0.4 + rng.nextDouble() * 0.4,
       rotation: rng.nextDouble() * pi * 2,
       color: _yarnColors[rng.nextInt(_yarnColors.length)],
@@ -100,21 +101,24 @@ class _YarnPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
+      // t local [0,1] : chaque pelote a son propre décalage de phase
       final t = (progress * p.speed + p.phase) % 1.0;
 
-      // Alpha continu via sin² — aucune discontinuité entre boucles
-      final globalAlpha = 0.13 + 0.13 * sin(t * pi * 2 + pi / 2);
-      if (globalAlpha <= 0.01) continue;
+      // sin(t*pi) : 0 en t=0 et t=1, max en t=0.5 → fondu naturel naissance/mort
+      final alpha = (sin(t * pi) * 0.55).clamp(0.0, 1.0);
+      if (alpha <= 0.01) continue;
 
-      final cx = (p.x + sin(t * pi * 2) * p.driftX) * size.width;
-      final cy = (p.y + cos(t * pi * 2 + p.phase * pi) * p.driftY) * size.height;
+      // Montée en easeOut comme les feuilles
+      final rise = 1.0 - (1.0 - t) * (1.0 - t);
+      final y = (p.startY - rise * p.riseY) * size.height;
+      final x = (p.x + sin(t * pi) * p.driftX) * size.width;
       final r = p.radius * (0.9 + 0.1 * sin(t * pi * 4));
       final rot = p.rotation + t * pi * 2;
 
       canvas.save();
-      canvas.translate(cx, cy);
+      canvas.translate(x, y);
       canvas.rotate(rot);
-      _drawYarnBall(canvas, r, p.color, p.loops, globalAlpha);
+      _drawYarnBall(canvas, r, p.color, p.loops, alpha);
       canvas.restore();
     }
   }

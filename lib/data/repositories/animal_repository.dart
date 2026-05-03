@@ -65,6 +65,18 @@ class AnimalRepository {
       primaryColor: AppColors.chickenPrimary,
       secondaryColor: AppColors.chickenSecondary,
     ),
+    AnimalModel(
+      id: 'shark',
+      name: 'Shark',
+      emoji: '\u{1F988}',
+      imageAsset: 'assets/images/shark.png',
+      ambientAudioPath: 'audio/ambient_shark_128.mp3',
+      endSoundPath: 'audio/end_crocodile.mp3',
+      setupGradient: AppGradients.sharkSetup,
+      timerGradient: AppGradients.sharkTimer,
+      primaryColor: AppColors.sharkPrimary,
+      secondaryColor: AppColors.sharkSecondary,
+    ),
   ];
 
   AnimalModel getById(String id) {
