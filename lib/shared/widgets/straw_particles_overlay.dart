@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 /// Overlay paille — poule.
-/// 40 brins, boucle 14 s, sans saccade.
+/// 80 brins, boucle 14 s, sans saccade.
 class StrawParticlesOverlay extends StatefulWidget {
   const StrawParticlesOverlay({super.key});
 
@@ -23,8 +23,8 @@ class _StrawParticlesOverlayState extends State<StrawParticlesOverlay>
       vsync: this,
       duration: const Duration(seconds: 14),
     )..repeat();
-    // 40 brins (au lieu de 25)
-    _pieces = List.generate(40, (i) => _StrawPiece.random(_rng, i, 40));
+    // 80 brins (doublement)
+    _pieces = List.generate(80, (i) => _StrawPiece.random(_rng, i, 80));
   }
 
   @override
@@ -108,9 +108,8 @@ class _StrawPainter extends CustomPainter {
       final y = (p.y + sin(t * pi * 2 * p.floatFreq + p.phase * pi) * p.floatAmp) * size.height;
       final currentAngle = p.angle + sin(t * pi * 2 * 0.7) * 0.15;
 
-      // Fondu : 20 % fade in / 20 % fade out
-      final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
-      final alpha = (fade * (0.55 + 0.25 * sin(t * pi * 2))).clamp(0.0, 1.0);
+      // Alpha continu via sin² — aucune discontinuité entre boucles
+      final alpha = (0.40 + 0.40 * sin(t * pi * 2 + pi / 2)).clamp(0.0, 1.0);
       if (alpha <= 0) continue;
 
       canvas.save();
@@ -139,12 +138,6 @@ class _StrawPainter extends CustomPainter {
 
       canvas.restore();
     }
-  }
-
-  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
-    if (t < fadeIn) return t / fadeIn;
-    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
-    return 1.0;
   }
 
   @override

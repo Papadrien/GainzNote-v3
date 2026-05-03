@@ -38,11 +38,9 @@ class SetupScreen extends ConsumerWidget {
             if (animalId == 'crocodile') const WaterParticlesOverlay(),
             if (animalId == 'cat') const YarnParticlesOverlay(),
             if (animalId == 'dog') const GrassParticlesOverlay(),
-            if (animalId == 'pony') ...[
-              const DustParticlesOverlay(),
-              const GrassParticlesOverlay(),
-            ],
+            if (animalId == 'pony') const GrassParticlesOverlay(),
             if (animalId == 'chicken') const StrawParticlesOverlay(),
+            if (animalId == 'shark') const WaterParticlesOverlay(),
             SingleChildScrollView(
               padding: EdgeInsets.only(
                   left: 24, right: 24, bottom: bottomPad + 24),

@@ -77,4 +77,17 @@ class AppGradients {
     colors: [Color(0xFFF5ECD7), Color(0xFFEBDCC4), Color(0xFFE0CCB0)],
     stops: [0.0, 0.5, 1.0],
   );
+  // Requin — bleu océan
+  static const LinearGradient sharkSetup = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF00608D), Color(0xFF004E75), Color(0xFF003D5C)],
+    stops: [0.0, 0.5, 1.0],
+  );
+  static const LinearGradient sharkTimer = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF00608D), Color(0xFF004E75), Color(0xFF003D5C)],
+    stops: [0.0, 0.5, 1.0],
+  );
 }

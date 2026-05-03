@@ -161,29 +161,16 @@ class _GrassPainter extends CustomPainter {
     // t local dans [0,1] : chaque feuille a son propre décalage de phase
     final t = (progress + l.phase) % 1.0;
 
-    // Fenêtre de visibilité : 50 % du cycle (le reste = invisible)
-    // Fade in sur 20 %, plateau, fade out sur 20 %
-    const vis = 0.50;
-    const fade = 0.20;
-    double alpha;
-    if (t < fade) {
-      alpha = (t / fade) * 0.80;
-    } else if (t < vis - fade) {
-      alpha = 0.80;
-    } else if (t < vis) {
-      alpha = ((vis - t) / fade) * 0.80;
-    } else {
-      return; // invisible pendant l'autre moitié du cycle
-    }
-    if (alpha <= 0) return;
+    // Alpha continu via sin — aucune discontinuité entre boucles
+    // sin(t*pi) est 0 en t=0 et t=1, max en t=0.5 → fondu naturel
+    final alpha = (sin(t * pi) * 0.80).clamp(0.0, 1.0);
+    if (alpha <= 0.01) return;
 
-    // Progression locale dans la fenêtre visible (0 → 1)
-    final lt = (t / vis).clamp(0.0, 1.0);
-    // Montée douce via easeOut
-    final rise = 1.0 - (1.0 - lt) * (1.0 - lt);
+    // Progression de montée = t directement (0→1 sur tout le cycle)
+    final rise = 1.0 - (1.0 - t) * (1.0 - t); // easeOut
     final y = (l.startY - rise * l.riseY) * size.height;
-    final x = (l.x + sin(lt * pi) * l.driftX) * size.width;
-    final rotation = lt * pi * 0.6;
+    final x = (l.x + sin(t * pi) * l.driftX) * size.width;
+    final rotation = t * pi * 0.6;
 
     final paint = Paint()
       ..color = l.color.withValues(alpha: alpha)

@@ -35,6 +35,7 @@ flutter:
     - assets/images/crocodile/
     - assets/images/dog/
     - assets/images/pony/
+    - assets/images/shark/
     - assets/audio/
 
   fonts:

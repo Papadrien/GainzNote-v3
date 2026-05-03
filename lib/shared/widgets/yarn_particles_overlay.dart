@@ -102,10 +102,9 @@ class _YarnPainter extends CustomPainter {
     for (final p in particles) {
       final t = (progress * p.speed + p.phase) % 1.0;
 
-      // Fondu entrée/sortie sur 20 % — plus translucide (max 0.26)
-      final fade = _fadeAlpha(t, fadeIn: 0.20, fadeOut: 0.20);
-      if (fade <= 0) continue;
-      final globalAlpha = fade * 0.26;   // encore plus translucide
+      // Alpha continu via sin² — aucune discontinuité entre boucles
+      final globalAlpha = 0.13 + 0.13 * sin(t * pi * 2 + pi / 2);
+      if (globalAlpha <= 0.01) continue;
 
       final cx = (p.x + sin(t * pi * 2) * p.driftX) * size.width;
       final cy = (p.y + cos(t * pi * 2 + p.phase * pi) * p.driftY) * size.height;
@@ -118,12 +117,6 @@ class _YarnPainter extends CustomPainter {
       _drawYarnBall(canvas, r, p.color, p.loops, globalAlpha);
       canvas.restore();
     }
-  }
-
-  double _fadeAlpha(double t, {required double fadeIn, required double fadeOut}) {
-    if (t < fadeIn) return t / fadeIn;
-    if (t > 1.0 - fadeOut) return (1.0 - t) / fadeOut;
-    return 1.0;
   }
 
   void _drawYarnBall(Canvas canvas, double r, Color color, int loops, double alpha) {

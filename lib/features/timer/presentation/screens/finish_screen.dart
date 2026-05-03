@@ -55,8 +55,10 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
         final audio = ref.read(audioServiceProvider);
         // Jouer le son de canon et attendre sa fin réelle
         await audio.playFinishSoundAndWait(volume: settings.volume);
-        // Enchaîner immédiatement avec le son d'animal
-        audio.playEndSound(animal.endSoundPath, volume: settings.volume);
+        // Enchaîner avec le son d'animal (sauf pour le requin)
+        if (animal.endSoundPath.isNotEmpty) {
+          audio.playEndSound(animal.endSoundPath, volume: settings.volume);
+        }
       }
     });
   }

@@ -59,6 +59,8 @@ class AppColors {
   static const Color ponySecondary  = Color(0xFF7A9E3A);  // vert olive foncé
   static const Color chickenPrimary = Color(0xFFC2956A);  // marron clair
   static const Color chickenSecondary = Color(0xFF8B5E3C);  // marron foncé
+  static const Color sharkPrimary    = Color(0xFF00608D);  // bleu requin
+  static const Color sharkSecondary  = Color(0xFF004466);  // bleu requin foncé
 
   // ── Recents card colors ──
   static const Color recentBlue    = Color(0xFFBBDEFB);

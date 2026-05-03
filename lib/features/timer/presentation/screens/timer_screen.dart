@@ -78,6 +78,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     final isDog = animal.id == 'dog';
     final isPony = animal.id == 'pony';
     final isChicken = animal.id == 'chicken';
+    final isShark = animal.id == 'shark';
 
     ref.listen<TimerState>(timerServiceProvider, (prev, next) {
       if (next.status == TimerStatus.finished &&
@@ -108,6 +109,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
             if (isDog) const GrassParticlesOverlay(),
             if (isPony) const GrassParticlesOverlay(),
             if (isChicken) const StrawParticlesOverlay(),
+            if (isShark) const WaterParticlesOverlay(),
             Column(
               children: [
                 const SizedBox(height: 8),
