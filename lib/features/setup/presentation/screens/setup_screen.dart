@@ -24,6 +24,12 @@ class SetupScreen extends ConsumerWidget {
     final setup = ref.watch(setupProvider);
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final animalId = setup.selectedAnimal.id;
+    final isDark = setup.selectedAnimal.isDarkTheme;
+    final textColor = isDark ? AppColors.textOnColor : AppColors.pencilDark;
+    final iconColor = isDark ? AppColors.textOnColor : AppColors.pencilDark;
+    final gearBg = isDark
+        ? Colors.white.withValues(alpha: 0.15)
+        : AppColors.paperLight.withValues(alpha: 0.6);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -51,15 +57,16 @@ class SetupScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          context.l10n.appName,
-                          style: const TextStyle(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 300),
+                          style: TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.pencilDark,
+                            color: textColor,
                             letterSpacing: 0.5,
                           ),
+                          child: Text(context.l10n.appName),
                         ),
                       ),
                       GestureDetector(
@@ -67,16 +74,17 @@ class SetupScreen extends ConsumerWidget {
                           HapticFeedback.selectionClick();
                           _showSettings(context);
                         },
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           width: 44, height: 44,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.paperLight.withValues(alpha: 0.6),
+                            color: gearBg,
                             border: Border.all(
-                                color: AppColors.pencilDark, width: 2.5),
+                                color: iconColor, width: 2.5),
                           ),
-                          child: const Icon(Icons.settings,
-                              color: AppColors.pencilDark, size: 22),
+                          child: Icon(Icons.settings,
+                              color: iconColor, size: 22),
                         ),
                       ),
                     ],
@@ -84,7 +92,7 @@ class SetupScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   const Center(child: AnimalSelector()),
                   const SizedBox(height: 28),
-                  const TimePickerCard(),
+                  TimePickerCard(isDark: isDark),
                   const SizedBox(height: 24),
                   StartButton(onPressed: () {
                     if (!setup.isValid) { HapticFeedback.heavyImpact(); return; }
@@ -102,7 +110,7 @@ class SetupScreen extends ConsumerWidget {
                     ));
                   }),
                   const SizedBox(height: 32),
-                  const RecentsSection(),
+                  RecentsSection(isDark: isDark),
                   const SizedBox(height: 20),
                 ],
               ),
