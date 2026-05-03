@@ -7,7 +7,6 @@ import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
 import '../../../../shared/widgets/yarn_particles_overlay.dart';
 import '../../../../shared/widgets/grass_particles_overlay.dart';
-import '../../../../shared/widgets/dust_particles_overlay.dart';
 import '../../../../shared/widgets/straw_particles_overlay.dart';
 import '../../../timer/presentation/screens/timer_screen.dart';
 import '../../../settings/presentation/screens/settings_sheet.dart';
