@@ -158,12 +158,12 @@ void main() {
     final repo = AnimalRepository();
 
     test('contains exactly 5 animals', () {
-      expect(repo.getAll().length, 5);
+      expect(repo.getAll().length, 6);
     });
 
     test('all animals have unique ids', () {
       final ids = repo.getAll().map((a) => a.id).toSet();
-      expect(ids.length, 5);
+      expect(ids.length, 6);
     });
 
     test('all animals have required assets', () {
@@ -204,6 +204,7 @@ void main() {
       expect(ids.contains('crocodile'), true);
       expect(ids.contains('pony'), true);
       expect(ids.contains('chicken'), true);
+      expect(ids.contains('shark'), true);
     });
   });
 
