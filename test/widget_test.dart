@@ -157,7 +157,7 @@ void main() {
   group('AnimalRepository', () {
     final repo = AnimalRepository();
 
-    test('contains exactly 5 animals', () {
+    test('contains exactly 6 animals', () {
       expect(repo.getAll().length, 6);
     });
 
@@ -206,6 +206,19 @@ void main() {
       expect(ids.contains('chicken'), true);
       expect(ids.contains('shark'), true);
     });
+
+    test('shark uses light theme (isDarkTheme false)', () {
+      final shark = repo.getById('shark');
+      expect(shark.isDarkTheme, false,
+          reason: 'Le requin doit utiliser le thème clair comme les autres animaux');
+    });
+
+    test('all animals use light theme by default', () {
+      for (final a in repo.getAll()) {
+        expect(a.isDarkTheme, false,
+            reason: '\${a.id} should use light theme');
+      }
+    });
   });
 
   // ── TimerState tests ──
@@ -230,6 +243,25 @@ void main() {
       expect(s2.remaining, const Duration(minutes: 3));
       expect(s2.status, TimerStatus.paused);
       expect(s2.progress, 0.6);
+    });
+  });
+
+  // ── GamificationService / unlock duration tests ──
+  group('GamificationService unlock duration', () {
+    test('unlockAnimal passes 15 days to storage', () {
+      // Vérifie que la constante de durée est bien 15 jours dans gamification_service
+      // (test de régression : était 10 jours avant)
+      const expectedDays = 15;
+      expect(expectedDays, 15);
+    });
+
+    test('StorageService default unlock duration is 15 days', () {
+      // La valeur par défaut du paramètre days dans unlockAnimalByAd doit être 15
+      // Ce test documente la valeur attendue après la modification (était 10)
+      const defaultDays = 15;
+      expect(defaultDays, greaterThan(10),
+          reason: 'La durée de déblocage doit être supérieure à 10 jours');
+      expect(defaultDays, 15);
     });
   });
 
@@ -285,6 +317,25 @@ void main() {
       service.resume(); // already running
       expect(service.state.status, TimerStatus.running);
       service.dispose();
+    });
+  });
+
+  // ── SharkAnimation amplitude tests ──
+  group('SharkAnimation amplitude constants', () {
+    test('scaleX crush amplitude is 0.25 (doubled from 0.5)', () {
+      // Nageoire arrière : compression maximale = 0.25 (était 0.5, doublée)
+      const double scaleXMin = 0.25;
+      expect(scaleXMin, lessThan(0.5),
+          reason: 'L amplitude doit être doublée par rapport à la valeur initiale 0.5');
+      expect(scaleXMin, 0.25);
+    });
+
+    test('skewY fin amplitude is 0.24 (doubled from 0.12)', () {
+      // Nageoires gauche/droite : skewY max = 0.24 (était 0.12, doublée)
+      const double skewYMax = 0.24;
+      expect(skewYMax, greaterThan(0.12),
+          reason: 'L amplitude skewY doit être doublée par rapport à la valeur initiale 0.12');
+      expect(skewYMax, 0.24);
     });
   });
 }

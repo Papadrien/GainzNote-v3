@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Affichage animé du requin.
 ///
 /// Animation : déformation uniquement (pas de déplacement des nageoires).
-///   - Nageoire arrière  : scaleX depuis Alignment.centerLeft
+///   - Nageoire arrière  : scaleX depuis Alignment.center (écrasement centré, sans déplacement)
 ///   - Nageoire droite   : skewY depuis Alignment.topCenter, DERRIÈRE le body, déphasé 1/2 cycle
 ///   - Corps             : statique
 ///   - Nageoire gauche   : skewY depuis Alignment.topCenter, devant le body
@@ -38,13 +38,13 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       TweenSequence<double>([
         TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 1.0, end: 0.5)
+          tween: Tween<double>(begin: 1.0, end: 0.25)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
-        TweenSequenceItem(tween: ConstantTween<double>(0.5), weight: 40),
+        TweenSequenceItem(tween: ConstantTween<double>(0.25), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 0.5, end: 1.0)
+          tween: Tween<double>(begin: 0.25, end: 1.0)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
@@ -54,13 +54,13 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       TweenSequence<double>([
         TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: 0.12)
+          tween: Tween<double>(begin: 0.0, end: 0.24)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
-        TweenSequenceItem(tween: ConstantTween<double>(0.12), weight: 40),
+        TweenSequenceItem(tween: ConstantTween<double>(0.24), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 0.12, end: 0.0)
+          tween: Tween<double>(begin: 0.24, end: 0.0)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
@@ -124,7 +124,7 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             child: AnimatedBuilder(
               animation: _tailScaleX,
               builder: (_, child) => Transform(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.center,
                 transform: Matrix4.identity()..scale(_tailScaleX.value, 1.0, 1.0),
                 child: child,
               ),

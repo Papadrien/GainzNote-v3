@@ -76,7 +76,7 @@ class AnimalRepository {
       timerGradient: AppGradients.sharkTimer,
       primaryColor: AppColors.sharkPrimary,
       secondaryColor: AppColors.sharkSecondary,
-      isDarkTheme: true,
+      isDarkTheme: false,
     ),
   ];
 
