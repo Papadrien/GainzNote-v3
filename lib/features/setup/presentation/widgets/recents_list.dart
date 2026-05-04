@@ -34,10 +34,9 @@ class RecentsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 300),
+        Text(
+          context.l10n.recentTimers,
           style: AppTextStyles.sectionTitle.copyWith(color: titleColor),
-          child: Text(context.l10n.recentTimers),
         ),
         const SizedBox(height: 12),
         ...presets.take(3).toList().asMap().entries.map((entry) {

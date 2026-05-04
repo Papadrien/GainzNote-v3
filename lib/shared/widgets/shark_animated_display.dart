@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Layering (du fond vers le haut) :
 ///   1. Nageoire droite   → DERRIÈRE le body
-///   2. Nageoire arrière  → DERRIÈRE le body
+///   2. Nageoire arrière  → DERRIÈRE le body  ← derrière le body
 ///   3. Body              → statique
 ///   4. Nageoire gauche   → DEVANT le body
 ///
@@ -123,12 +123,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       child: Stack(
         children: [
           // Layer 1 : Nageoire droite   — DERRIÈRE le body.
-          // Ancrage topCenter (haut-milieu), écrasement vertical.
+          // Ancrage bottomRight, écrasement vertical.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.center,
+                alignment: Alignment.bottomRight,
                 transform: Matrix4.identity()
                   ..scale(_finScaleX.value, _finScaleY.value, 1.0),
                 child: child,
@@ -145,7 +145,7 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.center,
+                alignment: Alignment.centerRight,
                 transform: Matrix4.identity()
                   ..scale(_tailScaleX.value, _tailScaleY.value, 1.0),
                 child: child,
@@ -170,7 +170,7 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.center,
+                alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
                   ..scale(_finScaleX.value, _finScaleY.value, 1.0),
                 child: child,
