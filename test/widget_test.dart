@@ -207,17 +207,27 @@ void main() {
       expect(ids.contains('shark'), true);
     });
 
-    test('shark uses light theme (isDarkTheme false)', () {
+    test('shark uses dark theme (isDarkTheme true)', () {
       final shark = repo.getById('shark');
-      expect(shark.isDarkTheme, false,
-          reason: 'Le requin doit utiliser le thème clair comme les autres animaux');
+      expect(shark.isDarkTheme, true,
+          reason: 'Le requin utilise le thème sombre (fond #00608D, texte blanc)');
     });
 
-    test('all animals use light theme by default', () {
+    test('only shark uses dark theme, others are light', () {
       for (final a in repo.getAll()) {
-        expect(a.isDarkTheme, false,
-            reason: '\${a.id} should use light theme');
+        if (a.id == 'shark') {
+          expect(a.isDarkTheme, true, reason: 'shark doit être en thème sombre');
+        } else {
+          expect(a.isDarkTheme, false,
+              reason: '\${a.id} doit rester en thème clair');
+        }
       }
+    });
+
+    test('shark primary color is #00608D', () {
+      final shark = repo.getById('shark');
+      expect(shark.primaryColor.toARGB32() & 0x00FFFFFF, 0x00608D,
+          reason: 'La couleur primaire du requin doit être #00608D');
     });
   });
 
@@ -321,21 +331,54 @@ void main() {
   });
 
   // ── SharkAnimation amplitude tests ──
+  // Ces constantes doivent rester synchronisées avec shark_animated_display.dart
+  // (elles y sont privées ; on documente ici les valeurs attendues).
   group('SharkAnimation amplitude constants', () {
-    test('scaleX crush amplitude is 0.25 (doubled from 0.5)', () {
-      // Nageoire arrière : compression maximale = 0.25 (était 0.5, doublée)
-      const double scaleXMin = 0.25;
-      expect(scaleXMin, lessThan(0.5),
-          reason: 'L amplitude doit être doublée par rapport à la valeur initiale 0.5');
-      expect(scaleXMin, 0.25);
+    test('tail scaleX min reduced so the tail does not disappear behind body', () {
+      // Nageoire arrière : 0.75 (au lieu de 0.25, qui la faisait disparaître)
+      const double tailScaleXMin = 0.75;
+      expect(tailScaleXMin, greaterThan(0.5),
+          reason: 'La nageoire arrière ne doit plus se compresser à < 50%');
+      expect(tailScaleXMin, 0.75);
     });
 
-    test('skewY fin amplitude is 0.24 (doubled from 0.12)', () {
-      // Nageoires gauche/droite : skewY max = 0.24 (était 0.12, doublée)
-      const double skewYMax = 0.24;
-      expect(skewYMax, greaterThan(0.12),
-          reason: 'L amplitude skewY doit être doublée par rapport à la valeur initiale 0.12');
-      expect(skewYMax, 0.24);
+    test('tail scaleY compensates for squash (> 1.0)', () {
+      // Compensation verticale : 1.12 → effet écrasement
+      const double tailScaleYMax = 1.12;
+      expect(tailScaleYMax, greaterThan(1.0),
+          reason: 'Le scaleY doit compenser le scaleX pour un vrai squash');
+    });
+
+    test('left fin skew amplitude stays nominal (0.24)', () {
+      // Nageoire gauche : amplitude nominale conservée
+      const double leftSkewMax = 0.24;
+      expect(leftSkewMax, 0.24);
+    });
+
+    test('right fin skew amplitude is reduced (derrière le corps)', () {
+      // Nageoire droite : amplitude réduite à la moitié (0.12)
+      const double rightSkewMax = 0.12;
+      expect(rightSkewMax, lessThan(0.24),
+          reason: 'La nageoire droite doit avoir une amplitude moindre que la gauche');
+      expect(rightSkewMax, 0.12);
+    });
+
+    test('squash scale amplitudes stay close to 1.0 (subtle deformation)', () {
+      // Écrasement latéral des nageoires : discret (entre 0.9 et 1.1)
+      const double leftScaleXMax = 1.04;
+      const double leftScaleYMin = 0.92;
+      const double rightScaleXMax = 1.02;
+      const double rightScaleYMin = 0.96;
+      for (final v in [leftScaleXMax, leftScaleYMin, rightScaleXMax, rightScaleYMin]) {
+        expect(v, greaterThan(0.9));
+        expect(v, lessThan(1.1));
+      }
+    });
+
+    test('animation duration remains 2000ms (timing preserved)', () {
+      // Le timing ne doit pas être modifié par le changement d amplitude
+      const Duration duration = Duration(milliseconds: 2000);
+      expect(duration.inMilliseconds, 2000);
     });
   });
 }

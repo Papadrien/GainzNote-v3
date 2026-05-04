@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Affichage animé du requin.
 ///
-/// Animation : déformation uniquement (pas de déplacement des nageoires).
-///   - Nageoire arrière  : scaleX depuis Alignment.center (écrasement centré, sans déplacement)
-///   - Nageoire droite   : skewY depuis Alignment.topCenter, DERRIÈRE le body, déphasé 1/2 cycle
-///   - Corps             : statique
-///   - Nageoire gauche   : skewY depuis Alignment.topCenter, devant le body
+/// Animation : déformations de type "écrasement" (squash) pour imiter la nage.
+/// Le timing (2000ms, weights 40/10/40/10, déphasage 1/2 cycle) est conservé.
+///
+///   - Nageoire arrière : squash horizontal (scaleX réduit, scaleY compensé)
+///     → imite le battement de queue sans disparaître derrière le corps
+///   - Nageoire droite  : skewY + squash, amplitude réduite (derrière le corps)
+///   - Corps            : statique
+///   - Nageoire gauche  : skewY + squash, amplitude nominale (devant le corps)
 class SharkAnimatedDisplay extends StatefulWidget {
   final double size;
   final bool animate;
@@ -28,39 +31,52 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
   late AnimationController _ctrlMain;   // nageoire arrière + nageoire gauche
   late AnimationController _ctrlRight;  // nageoire droite (déphasé 1/2 cycle)
 
-  late Animation<double> _tailScaleX;  // nageoire arrière : déformation horizontale
-  late Animation<double> _leftSkewY;   // nageoire gauche  : déformation verticale
-  late Animation<double> _rightSkewY;  // nageoire droite  : déformation verticale déphasée
+  // Nageoire arrière : squash horizontal (battement de queue)
+  late Animation<double> _tailScaleX;
+  late Animation<double> _tailScaleY;
+
+  // Nageoire gauche : amplitude nominale
+  late Animation<double> _leftSkewY;
+  late Animation<double> _leftScaleX;
+  late Animation<double> _leftScaleY;
+
+  // Nageoire droite : amplitude réduite (derrière le corps)
+  late Animation<double> _rightSkewY;
+  late Animation<double> _rightScaleX;
+  late Animation<double> _rightScaleY;
 
   static const _duration = Duration(milliseconds: 2000);
 
-  static Animation<double> _buildScaleX(AnimationController ctrl) =>
-      TweenSequence<double>([
-        TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
-        TweenSequenceItem(
-          tween: Tween<double>(begin: 1.0, end: 0.25)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 10,
-        ),
-        TweenSequenceItem(tween: ConstantTween<double>(0.25), weight: 40),
-        TweenSequenceItem(
-          tween: Tween<double>(begin: 0.25, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 10,
-        ),
-      ]).animate(ctrl);
+  // ── Amplitudes (timing conservé via weights identiques) ──
+  // Nageoire arrière : scaleX 1.0 → 0.75 (au lieu de 0.25, elle disparaissait)
+  static const double _tailScaleXMin = 0.75;
+  static const double _tailScaleYMax = 1.12; // compensation : squash vertical
+  // Nageoire gauche : nominale
+  static const double _leftSkewMax    = 0.24;
+  static const double _leftScaleXMax  = 1.04; // étirement latéral léger
+  static const double _leftScaleYMin  = 0.92; // écrasement vertical léger
+  // Nageoire droite : amplitude réduite de moitié
+  static const double _rightSkewMax   = 0.12;
+  static const double _rightScaleXMax = 1.02;
+  static const double _rightScaleYMin = 0.96;
 
-  static Animation<double> _buildSkewY(AnimationController ctrl) =>
+  /// Construit une TweenSequence "squash" : repos → déformation → repos → retour.
+  /// Weights 40/10/40/10 identiques à l'original : le timing reste inchangé.
+  static Animation<double> _buildSquash(
+    AnimationController ctrl, {
+    required double rest,
+    required double peak,
+  }) =>
       TweenSequence<double>([
-        TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
+        TweenSequenceItem(tween: ConstantTween<double>(rest), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: 0.24)
+          tween: Tween<double>(begin: rest, end: peak)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
-        TweenSequenceItem(tween: ConstantTween<double>(0.24), weight: 40),
+        TweenSequenceItem(tween: ConstantTween<double>(peak), weight: 40),
         TweenSequenceItem(
-          tween: Tween<double>(begin: 0.24, end: 0.0)
+          tween: Tween<double>(begin: peak, end: rest)
               .chain(CurveTween(curve: Curves.easeInOut)),
           weight: 10,
         ),
@@ -72,9 +88,19 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
     _ctrlMain  = AnimationController(vsync: this, duration: _duration);
     _ctrlRight = AnimationController(vsync: this, duration: _duration);
 
-    _tailScaleX = _buildScaleX(_ctrlMain);
-    _leftSkewY  = _buildSkewY(_ctrlMain);
-    _rightSkewY = _buildSkewY(_ctrlRight);
+    // Nageoire arrière (battement de queue : squash horizontal)
+    _tailScaleX = _buildSquash(_ctrlMain, rest: 1.0, peak: _tailScaleXMin);
+    _tailScaleY = _buildSquash(_ctrlMain, rest: 1.0, peak: _tailScaleYMax);
+
+    // Nageoire gauche
+    _leftSkewY   = _buildSquash(_ctrlMain, rest: 0.0, peak: _leftSkewMax);
+    _leftScaleX  = _buildSquash(_ctrlMain, rest: 1.0, peak: _leftScaleXMax);
+    _leftScaleY  = _buildSquash(_ctrlMain, rest: 1.0, peak: _leftScaleYMin);
+
+    // Nageoire droite (déphasée, amplitude réduite)
+    _rightSkewY  = _buildSquash(_ctrlRight, rest: 0.0, peak: _rightSkewMax);
+    _rightScaleX = _buildSquash(_ctrlRight, rest: 1.0, peak: _rightScaleXMax);
+    _rightScaleY = _buildSquash(_ctrlRight, rest: 1.0, peak: _rightScaleYMin);
 
     _startAnimation();
   }
@@ -119,13 +145,14 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       height: size,
       child: Stack(
         children: [
-          // Layer 1 : Nageoire arrière — scaleX (derrière tout)
+          // Layer 1 : Nageoire arrière — squash horizontal (battement de queue)
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _tailScaleX,
+              animation: _ctrlMain,
               builder: (_, child) => Transform(
                 alignment: Alignment.center,
-                transform: Matrix4.identity()..scale(_tailScaleX.value, 1.0, 1.0),
+                transform: Matrix4.identity()
+                  ..scale(_tailScaleX.value, _tailScaleY.value, 1.0),
                 child: child,
               ),
               child: Image.asset(
@@ -135,13 +162,15 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 2 : Nageoire droite — DERRIÈRE le body, skewY déphasé
+          // Layer 2 : Nageoire droite — DERRIÈRE le body, skewY + squash, amplitude réduite
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _rightSkewY,
+              animation: _ctrlRight,
               builder: (_, child) => Transform(
                 alignment: Alignment.topCenter,
-                transform: Matrix4.identity()..setEntry(1, 0, _rightSkewY.value),
+                transform: Matrix4.identity()
+                  ..scale(_rightScaleX.value, _rightScaleY.value, 1.0)
+                  ..setEntry(1, 0, _rightSkewY.value),
                 child: child,
               ),
               child: Image.asset(
@@ -159,13 +188,15 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 4 : Nageoire gauche — devant le body, skewY principal
+          // Layer 4 : Nageoire gauche — devant le body, skewY + squash nominal
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _leftSkewY,
+              animation: _ctrlMain,
               builder: (_, child) => Transform(
                 alignment: Alignment.topCenter,
-                transform: Matrix4.identity()..setEntry(1, 0, _leftSkewY.value),
+                transform: Matrix4.identity()
+                  ..scale(_leftScaleX.value, _leftScaleY.value, 1.0)
+                  ..setEntry(1, 0, _leftSkewY.value),
                 child: child,
               ),
               child: Image.asset(

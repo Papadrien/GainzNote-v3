@@ -68,12 +68,10 @@ class _FinishScreenState extends ConsumerState<FinishScreen>
   @override
   Widget build(BuildContext context) {
     final animal = ref.watch(setupProvider).selectedAnimal;
-    // Texte "c'est fini !" : couleur spécifique requin, blanc si dark, pencilDark sinon
-    final finishedTextColor = animal.id == 'shark'
-        ? AppColors.sharkPrimary
-        : animal.isDarkTheme
-            ? Colors.white
-            : AppColors.pencilDark;
+    // Texte "c'est fini !" : blanc si thème sombre, sinon pencilDark
+    final finishedTextColor = animal.isDarkTheme
+        ? Colors.white
+        : AppColors.pencilDark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,

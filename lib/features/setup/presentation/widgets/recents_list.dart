@@ -14,8 +14,7 @@ import '../../providers/setup_provider.dart';
 /// Fonds pastels et bordures internes : inchangés.
 class RecentsSection extends ConsumerWidget {
   final bool isDark;
-  final bool isShark;
-  const RecentsSection({super.key, this.isDark = false, this.isShark = false});
+  const RecentsSection({super.key, this.isDark = false});
 
   static const List<Color> _cardColors = [
     AppColors.recentBlue,
@@ -32,9 +31,7 @@ class RecentsSection extends ConsumerWidget {
     final animalRepo = AnimalRepository();
     final titleColor = isDark
         ? Colors.white
-        : isShark
-            ? AppColors.sharkPrimary
-            : AppTextStyles.sectionTitle.color;
+        : AppTextStyles.sectionTitle.color;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

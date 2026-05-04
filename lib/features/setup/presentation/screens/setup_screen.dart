@@ -25,17 +25,8 @@ class SetupScreen extends ConsumerWidget {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final animalId = setup.selectedAnimal.id;
     final isDark = setup.selectedAnimal.isDarkTheme;
-    final isShark = animalId == 'shark';
-    final textColor = isDark
-        ? AppColors.textOnColor
-        : isShark
-            ? AppColors.sharkPrimary
-            : AppColors.pencilDark;
-    final iconColor = isDark
-        ? AppColors.textOnColor
-        : isShark
-            ? AppColors.sharkPrimary
-            : AppColors.pencilDark;
+    final textColor = isDark ? AppColors.textOnColor : AppColors.pencilDark;
+    final iconColor = textColor;
     final gearBg = isDark
         ? Colors.white.withValues(alpha: 0.15)
         : AppColors.paperLight.withValues(alpha: 0.6);
@@ -119,7 +110,7 @@ class SetupScreen extends ConsumerWidget {
                     ));
                   }),
                   const SizedBox(height: 32),
-                  RecentsSection(isDark: isDark, isShark: isShark),
+                  RecentsSection(isDark: isDark),
                   const SizedBox(height: 20),
                 ],
               ),
