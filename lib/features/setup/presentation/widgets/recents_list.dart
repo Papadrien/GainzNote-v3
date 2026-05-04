@@ -10,12 +10,9 @@ import '../../providers/setup_provider.dart';
 
 /// Cards "Derniers minuteurs".
 ///
-/// Le thème clair/sombre n'a AUCUNE incidence sur ce composant : on garde
-/// en permanence le rendu "thème clair" (celui utilisé quand le requin est
-/// sélectionné). Le paramètre [isDark] est conservé pour compatibilité avec
-/// les appelants, mais il est ignoré.
+/// [isDark] : quand `true` (ex. requin), le titre passe en blanc,
+/// comme le titre "Animal Timer" dans SetupScreen.
 class RecentsSection extends ConsumerWidget {
-  // Conservé pour compat API ; ignoré : ce composant reste en thème clair.
   final bool isDark;
   const RecentsSection({super.key, this.isDark = false});
 
@@ -32,8 +29,7 @@ class RecentsSection extends ConsumerWidget {
     if (presets.isEmpty) return const SizedBox.shrink();
 
     final animalRepo = AnimalRepository();
-    // Toujours le thème clair : titre et bordures figés.
-    final titleColor = AppTextStyles.sectionTitle.color;
+    final titleColor = isDark ? AppColors.textOnColor : AppTextStyles.sectionTitle.color;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,18 +4,14 @@ import 'package:flutter/material.dart';
 ///
 /// Layering (du fond vers le haut) :
 ///   1. Nageoire droite   → DERRIÈRE le body
-///   2. Body              → statique
-///   3. Nageoire arrière  → DEVANT le body
+///   2. Nageoire arrière  → DERRIÈRE le body
+///   3. Body              → statique
 ///   4. Nageoire gauche   → DEVANT le body
 ///
 /// Animations (controller unique 2000ms, weights 40/10/40/10) :
-///   - Nageoires gauche & droite : squash VERTICAL (de bas en haut).
-///     Ancrage `topCenter` (haut-milieu de la nageoire). scaleY diminue pour
-///     donner l'impression d'une perspective / battement pendant la nage.
+///   - Nageoires gauche & droite : squash VERTICAL, ancrage `center`.
 ///     Les deux sont strictement synchronisées.
-///   - Nageoire arrière : squash HORIZONTAL (de droite vers gauche).
-///     Ancrage `centerLeft` (gauche-centre de la nageoire). scaleX diminue
-///     pour imiter le battement latéral de la queue.
+///   - Nageoire arrière : squash HORIZONTAL, ancrage `center`.
 class SharkAnimatedDisplay extends StatefulWidget {
   final double size;
   final bool animate;
@@ -126,13 +122,13 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       height: size,
       child: Stack(
         children: [
-          // Layer 1 : Nageoire droite — DERRIÈRE le body.
+          // Layer 1 : Nageoire droite   — DERRIÈRE le body.
           // Ancrage topCenter (haut-milieu), écrasement vertical.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.topCenter,
+                alignment: Alignment.center,
                 transform: Matrix4.identity()
                   ..scale(_finScaleX.value, _finScaleY.value, 1.0),
                 child: child,
@@ -144,21 +140,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 2 : Corps — statique.
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/shark/shark_body.png',
-              width: size, height: size, fit: BoxFit.contain,
-            ),
-          ),
-
-          // Layer 3 : Nageoire arrière — DEVANT le body.
-          // Ancrage centerLeft (gauche-centre), écrasement horizontal.
+          // Layer 2 : Nageoire arrière  — DERRIÈRE le body.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.center,
                 transform: Matrix4.identity()
                   ..scale(_tailScaleX.value, _tailScaleY.value, 1.0),
                 child: child,
@@ -170,13 +157,20 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
+          // Layer 3 : Corps             — statique.
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/shark/shark_body.png',
+              width: size, height: size, fit: BoxFit.contain,
+            ),
+          ),
+
           // Layer 4 : Nageoire gauche — DEVANT le body.
-          // Ancrage topCenter (haut-milieu), écrasement vertical (synchronisé avec droite).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.topCenter,
+                alignment: Alignment.center,
                 transform: Matrix4.identity()
                   ..scale(_finScaleX.value, _finScaleY.value, 1.0),
                 child: child,
