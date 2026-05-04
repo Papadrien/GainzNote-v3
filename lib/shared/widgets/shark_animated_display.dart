@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 /// Affichage animé du requin.
 ///
 /// Animation : déformations de type "écrasement" (squash) pour imiter la nage.
-/// Le timing (2000ms, weights 40/10/40/10, déphasage 1/2 cycle) est conservé.
+/// Le timing (2000ms, weights 40/10/40/10) est conservé.
 ///
 ///   - Nageoire arrière : squash horizontal (scaleX réduit, scaleY compensé)
-///     → imite le battement de queue sans disparaître derrière le corps
-///   - Nageoire droite  : skewY + squash, amplitude réduite (derrière le corps)
-///   - Corps            : statique
-///   - Nageoire gauche  : skewY + squash, amplitude nominale (devant le corps)
+///     ancré à gauche (côté corps) pour rester "accrochée" au body.
+///   - Nageoires gauche & droite : SYNCHRONISÉES — elles montent et
+///     descendent ensemble (même controller, mêmes amplitudes).
+///   - Corps            : statique.
 class SharkAnimatedDisplay extends StatefulWidget {
   final double size;
   final bool animate;
@@ -27,41 +27,31 @@ class SharkAnimatedDisplay extends StatefulWidget {
 }
 
 class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
-    with TickerProviderStateMixin {
-  late AnimationController _ctrlMain;   // nageoire arrière + nageoire gauche
-  late AnimationController _ctrlRight;  // nageoire droite (déphasé 1/2 cycle)
+    with SingleTickerProviderStateMixin {
+  // Un seul controller : les nageoires G/D sont parfaitement synchrones.
+  late AnimationController _ctrl;
 
   // Nageoire arrière : squash horizontal (battement de queue)
   late Animation<double> _tailScaleX;
   late Animation<double> _tailScaleY;
 
-  // Nageoire gauche : amplitude nominale
-  late Animation<double> _leftSkewY;
-  late Animation<double> _leftScaleX;
-  late Animation<double> _leftScaleY;
-
-  // Nageoire droite : amplitude réduite (derrière le corps)
-  late Animation<double> _rightSkewY;
-  late Animation<double> _rightScaleX;
-  late Animation<double> _rightScaleY;
+  // Nageoires gauche & droite : mêmes animations (synchronisées)
+  late Animation<double> _finSkewY;
+  late Animation<double> _finScaleX;
+  late Animation<double> _finScaleY;
 
   static const _duration = Duration(milliseconds: 2000);
 
-  // ── Amplitudes (timing conservé via weights identiques) ──
-  // Nageoire arrière : scaleX 1.0 → 0.75 (au lieu de 0.25, elle disparaissait)
+  // ── Amplitudes ──
+  // Nageoire arrière : scaleX 1.0 → 0.75 (évite la disparition derrière le body)
   static const double _tailScaleXMin = 0.75;
-  static const double _tailScaleYMax = 1.12; // compensation : squash vertical
-  // Nageoire gauche : nominale
-  static const double _leftSkewMax    = 0.24;
-  static const double _leftScaleXMax  = 1.04; // étirement latéral léger
-  static const double _leftScaleYMin  = 0.92; // écrasement vertical léger
-  // Nageoire droite : amplitude réduite de moitié
-  static const double _rightSkewMax   = 0.12;
-  static const double _rightScaleXMax = 1.02;
-  static const double _rightScaleYMin = 0.96;
+  static const double _tailScaleYMax = 1.12; // compensation squash vertical
+  // Nageoires (mêmes amplitudes pour synchro G/D)
+  static const double _finSkewMax    = 0.24;
+  static const double _finScaleXMax  = 1.04;
+  static const double _finScaleYMin  = 0.92;
 
   /// Construit une TweenSequence "squash" : repos → déformation → repos → retour.
-  /// Weights 40/10/40/10 identiques à l'original : le timing reste inchangé.
   static Animation<double> _buildSquash(
     AnimationController ctrl, {
     required double rest,
@@ -85,22 +75,16 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
   @override
   void initState() {
     super.initState();
-    _ctrlMain  = AnimationController(vsync: this, duration: _duration);
-    _ctrlRight = AnimationController(vsync: this, duration: _duration);
+    _ctrl = AnimationController(vsync: this, duration: _duration);
 
-    // Nageoire arrière (battement de queue : squash horizontal)
-    _tailScaleX = _buildSquash(_ctrlMain, rest: 1.0, peak: _tailScaleXMin);
-    _tailScaleY = _buildSquash(_ctrlMain, rest: 1.0, peak: _tailScaleYMax);
+    // Nageoire arrière
+    _tailScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _tailScaleXMin);
+    _tailScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _tailScaleYMax);
 
-    // Nageoire gauche
-    _leftSkewY   = _buildSquash(_ctrlMain, rest: 0.0, peak: _leftSkewMax);
-    _leftScaleX  = _buildSquash(_ctrlMain, rest: 1.0, peak: _leftScaleXMax);
-    _leftScaleY  = _buildSquash(_ctrlMain, rest: 1.0, peak: _leftScaleYMin);
-
-    // Nageoire droite (déphasée, amplitude réduite)
-    _rightSkewY  = _buildSquash(_ctrlRight, rest: 0.0, peak: _rightSkewMax);
-    _rightScaleX = _buildSquash(_ctrlRight, rest: 1.0, peak: _rightScaleXMax);
-    _rightScaleY = _buildSquash(_ctrlRight, rest: 1.0, peak: _rightScaleYMin);
+    // Nageoires gauche & droite (synchronisées — même controller, mêmes amplitudes)
+    _finSkewY   = _buildSquash(_ctrl, rest: 0.0, peak: _finSkewMax);
+    _finScaleX  = _buildSquash(_ctrl, rest: 1.0, peak: _finScaleXMax);
+    _finScaleY  = _buildSquash(_ctrl, rest: 1.0, peak: _finScaleYMin);
 
     _startAnimation();
   }
@@ -108,13 +92,9 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
   void _startAnimation() {
     if (!widget.animate) return;
     if (widget.playOnce) {
-      _ctrlMain.forward(from: 0.0);
-      _ctrlRight.forward(from: 0.5);
+      _ctrl.forward(from: 0.0);
     } else {
-      _ctrlMain.repeat();
-      _ctrlRight.forward(from: 0.5).then((_) {
-        if (mounted) _ctrlRight.repeat();
-      });
+      _ctrl.repeat();
     }
   }
 
@@ -124,15 +104,13 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
     if (widget.animate && !old.animate) {
       _startAnimation();
     } else if (!widget.animate && old.animate) {
-      _ctrlMain.stop();
-      _ctrlRight.stop();
+      _ctrl.stop();
     }
   }
 
   @override
   void dispose() {
-    _ctrlMain.dispose();
-    _ctrlRight.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
@@ -145,12 +123,14 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       height: size,
       child: Stack(
         children: [
-          // Layer 1 : Nageoire arrière — squash horizontal (battement de queue)
+          // Layer 1 : Nageoire arrière — squash horizontal (battement de queue).
+          // Ancrage à GAUCHE de la nageoire (donc côté droit du body) afin
+          // qu'elle reste "accrochée" au corps pendant l'animation.
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _ctrlMain,
+              animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.center,
+                alignment: Alignment.centerLeft,
                 transform: Matrix4.identity()
                   ..scale(_tailScaleX.value, _tailScaleY.value, 1.0),
                 child: child,
@@ -162,15 +142,15 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 2 : Nageoire droite — DERRIÈRE le body, skewY + squash, amplitude réduite
+          // Layer 2 : Nageoire droite — DERRIÈRE le body. Synchronisée avec la gauche.
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _ctrlRight,
+              animation: _ctrl,
               builder: (_, child) => Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..scale(_rightScaleX.value, _rightScaleY.value, 1.0)
-                  ..setEntry(1, 0, _rightSkewY.value),
+                  ..scale(_finScaleX.value, _finScaleY.value, 1.0)
+                  ..setEntry(1, 0, _finSkewY.value),
                 child: child,
               ),
               child: Image.asset(
@@ -180,7 +160,7 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 3 : Corps — statique, au-dessus de la nageoire droite
+          // Layer 3 : Corps — statique, au-dessus de la nageoire droite.
           Positioned.fill(
             child: Image.asset(
               'assets/images/shark/shark_body.png',
@@ -188,15 +168,15 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 4 : Nageoire gauche — devant le body, skewY + squash nominal
+          // Layer 4 : Nageoire gauche — devant le body. Synchronisée avec la droite.
           Positioned.fill(
             child: AnimatedBuilder(
-              animation: _ctrlMain,
+              animation: _ctrl,
               builder: (_, child) => Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..scale(_leftScaleX.value, _leftScaleY.value, 1.0)
-                  ..setEntry(1, 0, _leftSkewY.value),
+                  ..scale(_finScaleX.value, _finScaleY.value, 1.0)
+                  ..setEntry(1, 0, _finSkewY.value),
                 child: child,
               ),
               child: Image.asset(

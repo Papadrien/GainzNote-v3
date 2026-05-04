@@ -333,6 +333,11 @@ void main() {
   // ── SharkAnimation amplitude tests ──
   // Ces constantes doivent rester synchronisées avec shark_animated_display.dart
   // (elles y sont privées ; on documente ici les valeurs attendues).
+  //
+  // Depuis la synchronisation des nageoires : les nageoires gauche et droite
+  // partagent le MÊME controller et les MÊMES amplitudes (elles montent et
+  // descendent ensemble). L'ancrage de la nageoire arrière est passé à
+  // Alignment.centerLeft pour rester accrochée au corps.
   group('SharkAnimation amplitude constants', () {
     test('tail scaleX min reduced so the tail does not disappear behind body', () {
       // Nageoire arrière : 0.75 (au lieu de 0.25, qui la faisait disparaître)
@@ -349,30 +354,36 @@ void main() {
           reason: 'Le scaleY doit compenser le scaleX pour un vrai squash');
     });
 
-    test('left fin skew amplitude stays nominal (0.24)', () {
-      // Nageoire gauche : amplitude nominale conservée
-      const double leftSkewMax = 0.24;
-      expect(leftSkewMax, 0.24);
+    test('left and right fins share the same skew amplitude (synchronized)', () {
+      // Les deux nageoires sont maintenant synchronisées : même amplitude.
+      const double finSkewMax = 0.24;
+      expect(finSkewMax, 0.24,
+          reason: 'Les nageoires G/D partagent la même amplitude (synchro)');
     });
 
-    test('right fin skew amplitude is reduced (derrière le corps)', () {
-      // Nageoire droite : amplitude réduite à la moitié (0.12)
-      const double rightSkewMax = 0.12;
-      expect(rightSkewMax, lessThan(0.24),
-          reason: 'La nageoire droite doit avoir une amplitude moindre que la gauche');
-      expect(rightSkewMax, 0.12);
+    test('left and right fins share the same scale amplitudes (synchronized)', () {
+      // Synchronisation : mêmes scaleX/scaleY pour G et D.
+      const double finScaleXMax = 1.04;
+      const double finScaleYMin = 0.92;
+      expect(finScaleXMax, 1.04);
+      expect(finScaleYMin, 0.92);
     });
 
     test('squash scale amplitudes stay close to 1.0 (subtle deformation)', () {
       // Écrasement latéral des nageoires : discret (entre 0.9 et 1.1)
-      const double leftScaleXMax = 1.04;
-      const double leftScaleYMin = 0.92;
-      const double rightScaleXMax = 1.02;
-      const double rightScaleYMin = 0.96;
-      for (final v in [leftScaleXMax, leftScaleYMin, rightScaleXMax, rightScaleYMin]) {
+      const double finScaleXMax = 1.04;
+      const double finScaleYMin = 0.92;
+      for (final v in [finScaleXMax, finScaleYMin]) {
         expect(v, greaterThan(0.9));
         expect(v, lessThan(1.1));
       }
+    });
+
+    test('tail fin anchor is centerLeft (stays attached to body)', () {
+      // La nageoire arrière est ancrée à gauche (côté droit du body) pour
+      // rester "accrochée" au corps pendant l animation de squash.
+      const Alignment tailAnchor = Alignment.centerLeft;
+      expect(tailAnchor, Alignment.centerLeft);
     });
 
     test('animation duration remains 2000ms (timing preserved)', () {

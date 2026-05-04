@@ -6,16 +6,21 @@ import '../../../../core/theme/app_colors.dart';
 import '../../providers/setup_provider.dart';
 
 class TimePickerCard extends ConsumerWidget {
+  /// Conservé pour compat. API, mais la carte garde toujours un fond clair
+  /// identique entre tous les thèmes d'animaux (requin compris).
   final bool isDark;
   const TimePickerCard({super.key, this.isDark = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final setup = ref.watch(setupProvider);
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.4) : AppColors.pencilDark;
-    final bgColor = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : AppColors.paperLight.withValues(alpha: 0.8);
+    // Thème fixe (clair) pour la roue de sélection du temps, indépendant de
+    // l'animal sélectionné — demandé : le requin ne doit pas changer ce fond.
+    const bool forceLight = true;
+    final borderColor = forceLight ? AppColors.pencilDark : Colors.white.withValues(alpha: 0.4);
+    final bgColor = forceLight
+        ? AppColors.paperLight.withValues(alpha: 0.8)
+        : Colors.white.withValues(alpha: 0.1);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -89,12 +94,14 @@ class _ColState extends State<_Col> {
 
   @override
   Widget build(BuildContext context) {
-    final pickerBorder = widget.isDark
-        ? Colors.white.withValues(alpha: 0.3)
-        : AppColors.pencilDark;
-    final pickerBg = widget.isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.white;
+    // Fond/pick bordure fixés en clair : indépendant du thème de l'animal.
+    const bool forceLight = true;
+    final pickerBorder = forceLight
+        ? AppColors.pencilDark
+        : Colors.white.withValues(alpha: 0.3);
+    final pickerBg = forceLight
+        ? Colors.white
+        : Colors.white.withValues(alpha: 0.08);
 
     return Expanded(
       child: Column(
@@ -149,9 +156,9 @@ class _ColState extends State<_Col> {
                       fontWeight: FontWeight.w900,
                       color: isSelected
                           ? widget.color
-                          : (widget.isDark
-                              ? Colors.white.withValues(alpha: 0.4)
-                              : AppColors.pencilFaint),
+                          : (forceLight
+                              ? AppColors.pencilFaint
+                              : Colors.white.withValues(alpha: 0.4)),
                     ),
                   ));
                 },
@@ -164,7 +171,7 @@ class _ColState extends State<_Col> {
             style: TextStyle(
               fontFamily: 'Nunito', fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: widget.isDark ? Colors.white.withValues(alpha: 0.85) : widget.color,
+              color: forceLight ? widget.color : Colors.white.withValues(alpha: 0.85),
               letterSpacing: 0.5,
             ),
             child: Text(widget.label),
