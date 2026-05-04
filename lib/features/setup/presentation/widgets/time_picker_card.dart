@@ -16,11 +16,8 @@ class TimePickerCard extends ConsumerWidget {
     final setup = ref.watch(setupProvider);
     // Thème fixe (clair) pour la roue de sélection du temps, indépendant de
     // l'animal sélectionné — demandé : le requin ne doit pas changer ce fond.
-    const bool forceLight = true;
-    final borderColor = forceLight ? AppColors.pencilDark : Colors.white.withValues(alpha: 0.4);
-    final bgColor = forceLight
-        ? AppColors.paperLight.withValues(alpha: 0.8)
-        : Colors.white.withValues(alpha: 0.1);
+    const borderColor = AppColors.pencilDark;
+    final bgColor = AppColors.paperLight.withValues(alpha: 0.8);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -95,13 +92,8 @@ class _ColState extends State<_Col> {
   @override
   Widget build(BuildContext context) {
     // Fond/pick bordure fixés en clair : indépendant du thème de l'animal.
-    const bool forceLight = true;
-    final pickerBorder = forceLight
-        ? AppColors.pencilDark
-        : Colors.white.withValues(alpha: 0.3);
-    final pickerBg = forceLight
-        ? Colors.white
-        : Colors.white.withValues(alpha: 0.08);
+    const pickerBorder = AppColors.pencilDark;
+    const pickerBg = Colors.white;
 
     return Expanded(
       child: Column(
@@ -156,9 +148,7 @@ class _ColState extends State<_Col> {
                       fontWeight: FontWeight.w900,
                       color: isSelected
                           ? widget.color
-                          : (forceLight
-                              ? AppColors.pencilFaint
-                              : Colors.white.withValues(alpha: 0.4)),
+                          : AppColors.pencilFaint,
                     ),
                   ));
                 },
@@ -171,7 +161,7 @@ class _ColState extends State<_Col> {
             style: TextStyle(
               fontFamily: 'Nunito', fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: forceLight ? widget.color : Colors.white.withValues(alpha: 0.85),
+              color: widget.color,
               letterSpacing: 0.5,
             ),
             child: Text(widget.label),
