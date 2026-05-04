@@ -8,7 +8,10 @@ import '../../../../data/repositories/animal_repository.dart';
 import '../../../timer/presentation/screens/timer_screen.dart';
 import '../../providers/setup_provider.dart';
 
-/// Section "DERNIERS MINUTEURS" — seul le bouton lecture lance le timer.
+/// isDark affecte uniquement :
+///   - couleur du titre "DERNIERS MINUTEURS" (blanc)
+///   - bordure extérieure des cards (blanc semi-transparent)
+/// Fonds pastels et bordures internes : inchangés.
 class RecentsSection extends ConsumerWidget {
   final bool isDark;
   const RecentsSection({super.key, this.isDark = false});
@@ -26,16 +29,14 @@ class RecentsSection extends ConsumerWidget {
     if (presets.isEmpty) return const SizedBox.shrink();
 
     final animalRepo = AnimalRepository();
-    final titleColor = isDark ? Colors.white : null; // null = couleur par défaut du style
+    final titleColor = isDark ? Colors.white : AppTextStyles.sectionTitle.color;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 300),
-          style: AppTextStyles.sectionTitle.copyWith(
-            color: titleColor ?? AppTextStyles.sectionTitle.color,
-          ),
+          style: AppTextStyles.sectionTitle.copyWith(color: titleColor),
           child: Text(context.l10n.recentTimers),
         ),
         const SizedBox(height: 12),
@@ -43,37 +44,30 @@ class RecentsSection extends ConsumerWidget {
           final i = entry.key;
           final preset = entry.value;
           final animal = animalRepo.getById(preset.animalId);
-          final cardColor = _cardColors[i % _cardColors.length];
 
-          // En thème sombre, les cards deviennent semi-transparentes sombres
-          final effectiveCardColor = isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : cardColor.withValues(alpha: 0.7);
-          final effectiveBorder = isDark
-              ? Colors.white.withValues(alpha: 0.3)
+          // Fond pastel : toujours la même couleur, quel que soit le thème
+          final cardColor = _cardColors[i % _cardColors.length].withValues(alpha: 0.7);
+          // Bordure extérieure : blanc en thème sombre, pencilDark sinon
+          final effectiveOuterBorder = isDark
+              ? Colors.white.withValues(alpha: 0.4)
               : AppColors.pencilDark;
 
           void launchPreset() {
             HapticFeedback.mediumImpact();
             ref.read(setupProvider.notifier).loadPreset(preset);
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const TimerScreen(),
-                transitionsBuilder: (_, anim, __, child) => FadeTransition(
-                  opacity: anim,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: anim,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: child,
+            Navigator.of(context).push(PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const TimerScreen(),
+              transitionsBuilder: (_, anim, __, child) => FadeTransition(
+                opacity: anim,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
                   ),
+                  child: child,
                 ),
-                transitionDuration: const Duration(milliseconds: 400),
               ),
-            );
+              transitionDuration: const Duration(milliseconds: 400),
+            ));
           }
 
           return Padding(
@@ -82,9 +76,9 @@ class RecentsSection extends ConsumerWidget {
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: effectiveCardColor,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: effectiveBorder, width: 2.5),
+                border: Border.all(color: effectiveOuterBorder, width: 2.5),
               ),
               child: Row(
                 children: [
@@ -93,14 +87,13 @@ class RecentsSection extends ConsumerWidget {
                     height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.6),
-                      border: Border.all(color: effectiveBorder, width: 2),
+                      color: Colors.white.withValues(alpha: 0.6),
+                      border: Border.all(color: AppColors.pencilDark, width: 2),
                     ),
                     child: Center(
                       child: Image.asset(
                         animal.imageAsset,
-                        width: 32,
-                        height: 32,
+                        width: 32, height: 32,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -110,23 +103,9 @@ class RecentsSection extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 300),
-                          style: AppTextStyles.recentName.copyWith(
-                            color: isDark ? Colors.white : AppTextStyles.recentName.color,
-                          ),
-                          child: Text(preset.name),
-                        ),
+                        Text(preset.name, style: AppTextStyles.recentName),
                         const SizedBox(height: 2),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 300),
-                          style: AppTextStyles.recentDuration.copyWith(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.7)
-                                : AppTextStyles.recentDuration.color,
-                          ),
-                          child: Text(preset.formattedDuration),
-                        ),
+                        Text(preset.formattedDuration, style: AppTextStyles.recentDuration),
                       ],
                     ),
                   ),
@@ -134,18 +113,13 @@ class RecentsSection extends ConsumerWidget {
                     onTap: launchPreset,
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 34,
-                      height: 34,
+                      width: 34, height: 34,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.accentGreen.withValues(alpha: 0.15),
-                        border: Border.all(color: effectiveBorder, width: 2),
+                        border: Border.all(color: AppColors.pencilDark, width: 2),
                       ),
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: AppColors.accentGreen,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.play_arrow, color: AppColors.accentGreen, size: 20),
                     ),
                   ),
                 ],

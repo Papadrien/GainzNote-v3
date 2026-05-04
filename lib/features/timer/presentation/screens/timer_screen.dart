@@ -16,6 +16,7 @@ import '../../../setup/providers/setup_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../widgets/radial_progress.dart';
 import '../widgets/timer_display.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'finish_screen.dart';
 
 class TimerScreen extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       final setup = ref.read(setupProvider);
       final settings = ref.read(settingsProvider);
       ref.read(timerServiceProvider.notifier).start(setup.duration);
+      WakelockPlus.enable();
       if (settings.ambientSoundEnabled) {
         ref.read(audioServiceProvider).playAmbient(
           setup.selectedAnimal.ambientAudioPath,
@@ -45,6 +47,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

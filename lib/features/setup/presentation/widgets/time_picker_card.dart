@@ -142,7 +142,7 @@ class _ColState extends State<_Col> {
                   final displayValue = index * widget.step;
                   final isSelected = displayValue == widget.value;
                   return Center(child: Text(
-                    '\$displayValue',
+                    '$displayValue',
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 32,
