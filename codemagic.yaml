@@ -55,7 +55,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - $CM_NOTIFY_EMAIL
+          - ivorydu13@gmail.com
         notify:
           success: true
           failure: true
@@ -140,7 +140,7 @@ workflows:
         submit_as_draft: true
       email:
         recipients:
-          - $CM_NOTIFY_EMAIL
+          - ivorydu13@gmail.com
         notify:
           success: true
           failure: true
@@ -234,7 +234,7 @@ workflows:
         submit_to_testflight: true
       email:
         recipients:
-          - $CM_NOTIFY_EMAIL
+          - ivorydu13@gmail.com
         notify:
           success: true
           failure: true
