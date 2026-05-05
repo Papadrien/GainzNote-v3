@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
+import '../../../../shared/widgets/star_particles_overlay.dart';
 import '../../../../shared/widgets/yarn_particles_overlay.dart';
 import '../../../../shared/widgets/grass_particles_overlay.dart';
 import '../../../../shared/widgets/straw_particles_overlay.dart';
@@ -46,6 +47,7 @@ class SetupScreen extends ConsumerWidget {
             if (animalId == 'pony') const GrassParticlesOverlay(),
             if (animalId == 'chicken') const StrawParticlesOverlay(),
             if (animalId == 'shark') const WaterParticlesOverlay(),
+            if (animalId == 'unicorn') const StarParticlesOverlay(),
             SingleChildScrollView(
               padding: EdgeInsets.only(
                   left: 24, right: 24, bottom: bottomPad + 24),

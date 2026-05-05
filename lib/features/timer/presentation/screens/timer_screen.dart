@@ -9,6 +9,7 @@ import '../../../../shared/widgets/gradient_background.dart';
 import '../../../../shared/widgets/animal_display.dart';
 import '../../../../shared/widgets/image_button.dart';
 import '../../../../shared/widgets/water_particles_overlay.dart';
+import '../../../../shared/widgets/star_particles_overlay.dart';
 import '../../../../shared/widgets/yarn_particles_overlay.dart';
 import '../../../../shared/widgets/grass_particles_overlay.dart';
 import '../../../../shared/widgets/straw_particles_overlay.dart';
@@ -82,6 +83,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
     final isPony = animal.id == 'pony';
     final isChicken = animal.id == 'chicken';
     final isShark = animal.id == 'shark';
+    final isUnicorn = animal.id == 'unicorn';
 
     ref.listen<TimerState>(timerServiceProvider, (prev, next) {
       if (next.status == TimerStatus.finished &&
@@ -113,6 +115,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
             if (isPony) const GrassParticlesOverlay(),
             if (isChicken) const StrawParticlesOverlay(),
             if (isShark) const WaterParticlesOverlay(),
+            if (isUnicorn) const StarParticlesOverlay(),
             Column(
               children: [
                 const SizedBox(height: 8),
