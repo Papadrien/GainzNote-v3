@@ -26,7 +26,7 @@ workflows:
       flutter: 3.32.4
       java: 17
       groups:
-        - android_signing
+        - AnimalTimer
     scripts:
       - name: Get dependencies
         script: flutter pub get
@@ -81,7 +81,7 @@ workflows:
       flutter: 3.32.4
       java: 17
       groups:
-        - android_signing
+        - AnimalTimer
     scripts:
       - name: Get dependencies
         script: flutter pub get
