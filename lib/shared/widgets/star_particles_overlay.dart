@@ -61,7 +61,7 @@ class _StarParticle {
   final double rotation;   // rotation de base (rad)
   final double spinSpeed;  // vitesse de rotation (tours par cycle)
   final int points;        // 4, 5 ou 6 branches
-  final double hueShift;   // [0..1] pour varier la teinte
+  final int rainbowIndex; // index dans la palette arc-en-ciel (0..6)
 
   const _StarParticle({
     required this.x,
@@ -73,7 +73,7 @@ class _StarParticle {
     required this.rotation,
     required this.spinSpeed,
     required this.points,
-    required this.hueShift,
+    required this.rainbowIndex,
   });
 
   factory _StarParticle.random(Random rng, int index, int total) {
@@ -90,7 +90,8 @@ class _StarParticle {
       rotation: rng.nextDouble() * 2 * pi,
       spinSpeed: (rng.nextBool() ? 1 : -1) * (0.2 + rng.nextDouble() * 0.6),
       points: pts,
-      hueShift: rng.nextDouble(),
+      // Couleur arc-en-ciel fixe par étoile, cyclée sur les 7 couleurs
+      rainbowIndex: index % 7,
     );
   }
 }
@@ -126,7 +127,7 @@ class _StarParticlesPainter extends CustomPainter {
       if (alpha <= 0.01) continue;
 
       final angle = p.rotation + t * p.spinSpeed * 2 * pi;
-      final color = _starColor(p.hueShift);
+      final color = _starColor(p.rainbowIndex);
 
       _drawStar(
         canvas,
@@ -146,19 +147,18 @@ class _StarParticlesPainter extends CustomPainter {
     return 1.0;
   }
 
-  // Palette pastel rose/violet/or qui s'accorde avec la licorne (#FF61E7).
-  Color _starColor(double hueShift) {
-    // Trois teintes de base interpolées selon hueShift
+  // 7 couleurs arc-en-ciel pastel, une par étoile (fixe à l'apparition).
+  Color _starColor(int rainbowIndex) {
     const palette = <Color>[
-      Color(0xFFFFE27A), // or pastel
-      Color(0xFFFFB3F0), // rose pâle
-      Color(0xFFC9A7FF), // violet pastel
+      Color(0xFFFF6B6B), // rouge
+      Color(0xFFFFAA55), // orange
+      Color(0xFFFFE566), // jaune
+      Color(0xFF6BDD6B), // vert
+      Color(0xFF55BBFF), // bleu ciel
+      Color(0xFF5566FF), // indigo
+      Color(0xFFCC77FF), // violet
     ];
-    final scaled = hueShift * palette.length;
-    final i0 = scaled.floor() % palette.length;
-    final i1 = (i0 + 1) % palette.length;
-    final f = scaled - scaled.floor();
-    return Color.lerp(palette[i0], palette[i1], f)!;
+    return palette[rainbowIndex % palette.length];
   }
 
   void _drawStar(

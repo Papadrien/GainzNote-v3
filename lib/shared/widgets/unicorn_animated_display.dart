@@ -35,9 +35,9 @@ class _UnicornAnimatedDisplayState extends State<UnicornAnimatedDisplay>
   static const double _headPivotX = 0.479;
   static const double _headPivotY = 0.357;
 
-  // Pivot queue : point d'attache à la base (déduit de l'annotation image 1024×1024 : x=625, y=560)
-  static const double _tailPivotX = 0.610;
-  static const double _tailPivotY = 0.547;
+  // Pivot queue : point d'attache à la base (déduit de l'annotation unicorn_tail_2.png 1024×1024 : x=677, y=571)
+  static const double _tailPivotX = 0.661;
+  static const double _tailPivotY = 0.558;
 
   @override
   void initState() {
