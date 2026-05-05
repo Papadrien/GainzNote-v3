@@ -78,6 +78,18 @@ class AnimalRepository {
       secondaryColor: AppColors.sharkSecondary,
       isDarkTheme: true,
     ),
+    AnimalModel(
+      id: 'unicorn',
+      name: 'Unicorn',
+      emoji: '\u{1F984}',
+      imageAsset: 'assets/images/unicorn.png',
+      ambientAudioPath: 'audio/ambient_unicorn_128.mp3',
+      endSoundPath: 'audio/end_unicorn.mp3',
+      setupGradient: AppGradients.unicornSetup,
+      timerGradient: AppGradients.unicornTimer,
+      primaryColor: AppColors.unicornPrimary,
+      secondaryColor: AppColors.unicornSecondary,
+    ),
   ];
 
   AnimalModel getById(String id) {

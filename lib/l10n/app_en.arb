@@ -93,5 +93,6 @@
       }
     }
   },
-  "animalShark": "Shark"
+  "animalShark": "Shark",
+  "animalUnicorn": "Unicorn"
 }
