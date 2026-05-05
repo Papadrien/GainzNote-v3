@@ -31,13 +31,13 @@ class _UnicornAnimatedDisplayState extends State<UnicornAnimatedDisplay>
   static const double _headAngle = 0.10; // ~6°
   static const double _tailAngle = 0.18; // ~10°
 
-  // Pivot tête : à gauche de la bouche (bout du museau)
-  static const double _headPivotX = 0.22;
-  static const double _headPivotY = 0.45;
+  // Pivot tête : point d'attache au cou (déduit de l'annotation image 1024×1024 : x=490, y=365)
+  static const double _headPivotX = 0.479;
+  static const double _headPivotY = 0.357;
 
-  // Pivot queue : point d'attache en haut à gauche
-  static const double _tailPivotX = 0.72;
-  static const double _tailPivotY = 0.512;
+  // Pivot queue : point d'attache à la base (déduit de l'annotation image 1024×1024 : x=625, y=560)
+  static const double _tailPivotX = 0.610;
+  static const double _tailPivotY = 0.547;
 
   @override
   void initState() {
