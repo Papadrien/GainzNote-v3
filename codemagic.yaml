@@ -15,7 +15,7 @@ workflows:
   android-debug:
     name: Android Debug
     max_build_duration: 30
-    instance_type: linux
+    instance_type: mac_mini_m2
     triggering:
       events:
         - push
@@ -66,7 +66,7 @@ workflows:
   android-release:
     name: Android Release
     max_build_duration: 45
-    instance_type: linux
+    instance_type: mac_mini_m2
     triggering:
       events:
         - push
@@ -151,7 +151,7 @@ workflows:
   ios-debug:
     name: iOS Debug
     max_build_duration: 30
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     triggering:
       events: []          # Manuel uniquement (Start new build dans le dashboard)
     environment:
@@ -184,7 +184,7 @@ workflows:
   ios-release:
     name: iOS Release
     max_build_duration: 60
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     triggering:
       events:
         - tag
