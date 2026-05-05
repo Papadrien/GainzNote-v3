@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 ///
 /// Layering (du fond vers le haut) :
 ///   1. Nageoire droite   → DERRIÈRE le body
-///   2. Nageoire arrière  → DERRIÈRE le body  ← derrière le body
+///   2. Nageoire arrière  → DERRIÈRE le body
 ///   3. Body              → statique
 ///   4. Nageoire gauche   → DEVANT le body
 ///
 /// Animations (controller unique 2000ms, weights 40/10/40/10) :
-///   - Nageoires gauche & droite : squash VERTICAL, ancrage `center`.
-///     Les deux sont strictement synchronisées.
-///   - Nageoire arrière : squash HORIZONTAL, ancrage `center`.
+///   - Nageoire gauche  : ancrage topCenter  → descend (scaleY < 1, le haut reste fixe).
+///   - Nageoire droite  : ancrage topCenter  → monte  (scaleY > 1, le haut reste fixe).
+///   - Nageoire arrière : ancrage centerRight → glisse vers la gauche (scaleX < 1).
 class SharkAnimatedDisplay extends StatefulWidget {
   final double size;
   final bool animate;
@@ -30,28 +30,35 @@ class SharkAnimatedDisplay extends StatefulWidget {
 
 class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
     with SingleTickerProviderStateMixin {
-  // Un seul controller : toutes les nageoires sont synchrones.
   late AnimationController _ctrl;
 
-  // Nageoire arrière : squash horizontal (battement de queue)
+  // Nageoire arrière : squash horizontal (glisse vers la gauche)
   late Animation<double> _tailScaleX;
   late Animation<double> _tailScaleY;
 
-  // Nageoires gauche & droite : squash vertical (battement latéral)
-  late Animation<double> _finScaleX;
-  late Animation<double> _finScaleY;
+  // Nageoire gauche : descend depuis le haut (scaleY réduit)
+  late Animation<double> _leftFinScaleX;
+  late Animation<double> _leftFinScaleY;
+
+  // Nageoire droite : monte depuis le haut (scaleY augmenté)
+  late Animation<double> _rightFinScaleX;
+  late Animation<double> _rightFinScaleY;
 
   static const _duration = Duration(milliseconds: 2000);
 
-  // ── Amplitudes ──
-  // Nageoire arrière : écrasement horizontal droite→gauche.
-  static const double _tailScaleXMin = 0.72; // écrasement horizontal
-  static const double _tailScaleYMax = 1.10; // légère compensation verticale
-  // Nageoires G/D : écrasement vertical bas→haut.
-  static const double _finScaleYMin = 0.70; // écrasement vertical (perspective)
-  static const double _finScaleXMax = 1.06; // légère compensation horizontale
+  // ── Nageoire arrière : glissement gauche ──
+  static const double _tailScaleXMin = 0.72;
+  static const double _tailScaleYMax = 1.10;
 
-  /// Construit une TweenSequence "squash" : repos → déformation → repos → retour.
+  // ── Nageoire gauche : descend (haut fixe, bas descend) ──
+  static const double _leftFinScaleYMin  = 0.70;   // écrasement = descente vers le bas
+  static const double _leftFinScaleXMax  = 1.06;
+
+  // ── Nageoire droite : monte (haut fixe, bas remonte) ──
+  static const double _rightFinScaleYMax = 1.30;   // étirement = montée vers le bas (bas remonte)
+  static const double _rightFinScaleXMin = 0.94;
+
+  /// Squash : repos → pic → repos → retour (weights 40/10/40/10).
   static Animation<double> _buildSquash(
     AnimationController ctrl, {
     required double rest,
@@ -77,13 +84,17 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: _duration);
 
-    // Nageoire arrière (horizontal squash)
+    // Nageoire arrière
     _tailScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _tailScaleXMin);
     _tailScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _tailScaleYMax);
 
-    // Nageoires gauche & droite (vertical squash, synchronisées)
-    _finScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _finScaleXMax);
-    _finScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _finScaleYMin);
+    // Nageoire gauche (descend)
+    _leftFinScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _leftFinScaleXMax);
+    _leftFinScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _leftFinScaleYMin);
+
+    // Nageoire droite (monte)
+    _rightFinScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _rightFinScaleXMin);
+    _rightFinScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _rightFinScaleYMax);
 
     _startAnimation();
   }
@@ -122,15 +133,15 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       height: size,
       child: Stack(
         children: [
-          // Layer 1 : Nageoire droite   — DERRIÈRE le body.
-          // Ancrage bottomRight, écrasement vertical.
+          // Layer 1 : Nageoire droite — DERRIÈRE le body.
+          // Ancrage topCenter : le haut reste fixe, la nageoire monte légèrement.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.bottomRight,
+                alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..scale(_finScaleX.value, _finScaleY.value, 1.0),
+                  ..scale(_rightFinScaleX.value, _rightFinScaleY.value, 1.0),
                 child: child,
               ),
               child: Image.asset(
@@ -140,7 +151,8 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 2 : Nageoire arrière  — DERRIÈRE le body.
+          // Layer 2 : Nageoire arrière — DERRIÈRE le body.
+          // Ancrage centerRight : la coche droite reste fixe, la nageoire glisse à gauche.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
@@ -157,7 +169,7 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
             ),
           ),
 
-          // Layer 3 : Corps             — statique.
+          // Layer 3 : Corps — statique.
           Positioned.fill(
             child: Image.asset(
               'assets/images/shark/shark_body.png',
@@ -166,13 +178,14 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
           ),
 
           // Layer 4 : Nageoire gauche — DEVANT le body.
+          // Ancrage topCenter : le haut reste fixe, la nageoire descend légèrement.
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
                 alignment: Alignment.topCenter,
                 transform: Matrix4.identity()
-                  ..scale(_finScaleX.value, _finScaleY.value, 1.0),
+                  ..scale(_leftFinScaleX.value, _leftFinScaleY.value, 1.0),
                 child: child,
               ),
               child: Image.asset(
