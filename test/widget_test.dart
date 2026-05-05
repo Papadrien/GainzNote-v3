@@ -152,29 +152,19 @@ void main() {
       expect(p2.animalId, p.animalId);
       expect(p2.createdAt, p.createdAt);
     });
-
-    test('unicorn is a valid animalId for a preset', () {
-      final p = TimerPreset(
-        id: 'u1', name: 'Unicorn Timer',
-        duration: const Duration(minutes: 10),
-        animalId: 'unicorn',
-        createdAt: DateTime(2026, 5, 5));
-      expect(p.animalId, 'unicorn');
-      expect(p.formattedDuration, '10m');
-    });
   });
 
   // ── AnimalRepository tests ──
   group('AnimalRepository', () {
     final repo = AnimalRepository();
 
-    test('contains exactly 7 animals', () {
-      expect(repo.getAll().length, 7);
+    test('contains exactly 6 animals', () {
+      expect(repo.getAll().length, 6);
     });
 
     test('all animals have unique ids', () {
       final ids = repo.getAll().map((a) => a.id).toSet();
-      expect(ids.length, 7);
+      expect(ids.length, 6);
     });
 
     test('all animals have required assets', () {
@@ -191,9 +181,9 @@ void main() {
     test('all animals have custom audio (no default)', () {
       for (final a in repo.getAll()) {
         expect(a.ambientAudioPath.contains('default'), false,
-            reason: '\${a.id} still uses default ambient');
+            reason: '${a.id} still uses default ambient');
         expect(a.endSoundPath.contains('default'), false,
-            reason: '\${a.id} still uses default end sound');
+            reason: '${a.id} still uses default end sound');
       }
     });
 
@@ -201,7 +191,6 @@ void main() {
       expect(repo.getById('dog').name, 'Dog');
       expect(repo.getById('cat').name, 'Cat');
       expect(repo.getById('pony').name, 'Pony');
-      expect(repo.getById('unicorn').name, 'Unicorn');
     });
 
     test('getById with invalid id returns first animal', () {
@@ -217,19 +206,12 @@ void main() {
       expect(ids.contains('pony'), true);
       expect(ids.contains('chicken'), true);
       expect(ids.contains('shark'), true);
-      expect(ids.contains('unicorn'), true);
     });
 
     test('shark uses dark theme (isDarkTheme true)', () {
       final shark = repo.getById('shark');
       expect(shark.isDarkTheme, true,
           reason: 'Le requin utilise le thème sombre (fond #00608D, texte blanc)');
-    });
-
-    test('unicorn uses light theme (isDarkTheme false)', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.isDarkTheme, false,
-          reason: 'La licorne utilise le thème clair (fond rose pâle)');
     });
 
     test('only shark uses dark theme, others are light', () {
@@ -247,89 +229,6 @@ void main() {
       final shark = repo.getById('shark');
       expect(shark.primaryColor.toARGB32() & 0x00FFFFFF, 0x00608D,
           reason: 'La couleur primaire du requin doit être #00608D');
-    });
-
-    test('unicorn primary color is #FF61E7', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.primaryColor.toARGB32() & 0x00FFFFFF, 0xFF61E7,
-          reason: 'La couleur primaire de la licorne doit être #FF61E7');
-    });
-
-    test('unicorn secondary color is #E040CC', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.secondaryColor.toARGB32() & 0x00FFFFFF, 0xE040CC,
-          reason: 'La couleur secondaire de la licorne doit être #E040CC');
-    });
-
-    test('unicorn has correct image asset', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.imageAsset, 'assets/images/unicorn.png');
-    });
-
-    test('unicorn has correct audio assets', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.ambientAudioPath, 'audio/ambient_unicorn_128.mp3');
-      expect(unicorn.endSoundPath, 'audio/end_unicorn.mp3');
-    });
-
-    test('unicorn emoji is \u{1F984}', () {
-      final unicorn = repo.getById('unicorn');
-      expect(unicorn.emoji, '\u{1F984}');
-    });
-  });
-
-  // ── UnicornAnimation constants tests ──
-  // Ces constantes doivent rester synchronisées avec unicorn_animated_display.dart
-  // (elles y sont privées ; on documente ici les valeurs attendues).
-  //
-  // La tête oscille gauche/droite (pivot bas de la tête).
-  // La queue oscille haut/bas (pivot base gauche de la queue).
-  group('UnicornAnimation constants', () {
-    test('head angle amplitude is ~6° (0.10 rad)', () {
-      const double headAngle = 0.10;
-      expect(headAngle, 0.10,
-          reason: 'La tête oscille à ±0.10 rad (~6°)');
-    });
-
-    test('tail angle amplitude is ~10° (0.18 rad)', () {
-      const double tailAngle = 0.18;
-      expect(tailAngle, 0.18,
-          reason: 'La queue oscille à ±0.18 rad (~10°)');
-    });
-
-    test('head pivot is at bottom of head / neck junction', () {
-      const double headPivotX = 0.38;
-      const double headPivotY = 0.55;
-      expect(headPivotX, 0.38);
-      expect(headPivotY, 0.55);
-    });
-
-    test('tail pivot is at base-left of tail', () {
-      const double tailPivotX = 0.699;
-      const double tailPivotY = 0.680;
-      expect(tailPivotX, closeTo(0.699, 0.001));
-      expect(tailPivotY, closeTo(0.680, 0.001));
-    });
-
-    test('animation duration is 2000ms', () {
-      const Duration duration = Duration(milliseconds: 2000);
-      expect(duration.inMilliseconds, 2000);
-    });
-
-    test('unicorn uses 3 layers: tail, body, head', () {
-      // Ordre de rendu : tail (derrière) → body → head (devant)
-      const layers = ['unicorn_tail.png', 'unicorn_body.png', 'unicorn_head.png'];
-      expect(layers.length, 3);
-      expect(layers.first, 'unicorn_tail.png',
-          reason: 'La queue doit être rendue en premier (derrière le corps)');
-      expect(layers.last, 'unicorn_head.png',
-          reason: 'La tête doit être rendue en dernier (devant le corps)');
-    });
-
-    test('tint color is #FF61E7', () {
-      // La couleur de teinte de la licorne est le rose magenta #FF61E7
-      const int tintColor = 0xFFFF61E7;
-      expect(tintColor & 0x00FFFFFF, 0xFF61E7);
     });
   });
 
@@ -374,13 +273,6 @@ void main() {
       expect(defaultDays, greaterThan(10),
           reason: 'La durée de déblocage doit être supérieure à 10 jours');
       expect(defaultDays, 15);
-    });
-
-    test('unicorn can be unlocked individually', () {
-      // La licorne est un animal verrouillable/débloquable comme les autres
-      const animalId = 'unicorn';
-      expect(animalId.isNotEmpty, true,
-          reason: 'La licorne doit avoir un id valide pour le système de déblocage');
     });
   });
 
