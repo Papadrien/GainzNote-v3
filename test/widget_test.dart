@@ -159,12 +159,12 @@ void main() {
     final repo = AnimalRepository();
 
     test('contains exactly 6 animals', () {
-      expect(repo.getAll().length, 6);
+      expect(repo.getAll().length, 7);
     });
 
     test('all animals have unique ids', () {
       final ids = repo.getAll().map((a) => a.id).toSet();
-      expect(ids.length, 6);
+      expect(ids.length, 7);
     });
 
     test('all animals have required assets', () {
@@ -206,6 +206,7 @@ void main() {
       expect(ids.contains('pony'), true);
       expect(ids.contains('chicken'), true);
       expect(ids.contains('shark'), true);
+      expect(ids.contains('unicorn'), true);
     });
 
     test('shark uses dark theme (isDarkTheme true)', () {
