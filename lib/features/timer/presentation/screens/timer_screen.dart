@@ -101,7 +101,13 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
       }
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _showCancelConfirmDialog();
+      },
+      child: Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
       extendBodyBehindAppBar: true,
@@ -212,11 +218,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
                           backgroundAsset: ImageButton.redBg,
                           height: 80,
                           bounce: true,
-                          onPressed: () {
-                            ref.read(timerServiceProvider.notifier).cancel();
-                            ref.read(audioServiceProvider).stopAll();
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: () => _showCancelConfirmDialog(),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -251,6 +253,73 @@ class _TimerScreenState extends ConsumerState<TimerScreen>
           ],
         ),
       ),
+    ),
     );
+  }
+
+  Future<void> _showCancelConfirmDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          context.l10n.cancelConfirmTitle,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w900,
+            color: AppColors.pencilDark,
+          ),
+        ),
+        content: Text(
+          context.l10n.cancelConfirmBody,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.pencilDark,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.of(ctx).pop(false);
+            },
+            child: Text(
+              context.l10n.continueTimer,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w700,
+                color: AppColors.pencilLight,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.of(ctx).pop(true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              context.l10n.cancel,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      ref.read(timerServiceProvider.notifier).cancel();
+      ref.read(audioServiceProvider).stopAll();
+      Navigator.of(context).pop();
+    }
   }
 }
