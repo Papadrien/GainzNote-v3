@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 ///
 /// Animations (controller unique 2000ms, weights 40/10/40/10) :
 ///   - Nageoire gauche  : ancrage topCenter  → descend (scaleY < 1, le haut reste fixe).
-///   - Nageoire droite  : ancrage topCenter  → monte  (scaleY > 1, le haut reste fixe).
+///   - Nageoire droite  : ancrage topCenter  → s'écrase  (scaleY < 1, le haut reste fixe).
 ///   - Nageoire arrière : ancrage centerRight → glisse vers la gauche (scaleX < 1).
 class SharkAnimatedDisplay extends StatefulWidget {
   final double size;
@@ -54,8 +54,8 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
   static const double _leftFinScaleYMin  = 0.70;   // écrasement = descente vers le bas
   static const double _leftFinScaleXMax  = 1.06;
 
-  // ── Nageoire droite : monte (haut fixe, bas remonte) ──
-  static const double _rightFinScaleYMax = 1.30;   // étirement = montée vers le bas (bas remonte)
+  // ── Nageoire droite : écrasement (haut fixe, bas remonte → scaleY < 1) ──
+  static const double _rightFinScaleYMin = 0.70;   // écrasement = compression vers le haut
   static const double _rightFinScaleXMin = 0.94;
 
   /// Squash : repos → pic → repos → retour (weights 40/10/40/10).
@@ -92,9 +92,9 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
     _leftFinScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _leftFinScaleXMax);
     _leftFinScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _leftFinScaleYMin);
 
-    // Nageoire droite (monte)
+    // Nageoire droite (écrasement)
     _rightFinScaleX = _buildSquash(_ctrl, rest: 1.0, peak: _rightFinScaleXMin);
-    _rightFinScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _rightFinScaleYMax);
+    _rightFinScaleY = _buildSquash(_ctrl, rest: 1.0, peak: _rightFinScaleYMin);
 
     _startAnimation();
   }
