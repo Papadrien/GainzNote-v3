@@ -134,12 +134,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       child: Stack(
         children: [
           // Layer 1 : Nageoire droite — DERRIÈRE le body.
-          // Ancrage bottomLeft : coin bas-gauche fixe (point d'ancrage rouge).
+          // Ancrage sur le point rouge de l'image : (0.287, 0.612) → Alignment(-0.426, 0.224).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.bottomLeft,
+                alignment: const Alignment(-0.426, 0.224),
                 transform: Matrix4.identity()
                   ..scale(_rightFinScaleX.value, _rightFinScaleY.value, 1.0),
                 child: child,
@@ -152,12 +152,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
           ),
 
           // Layer 2 : Nageoire arrière — DERRIÈRE le body.
-          // Ancrage centerRight : la coche droite reste fixe, la nageoire glisse à gauche.
+          // Ancrage sur le point rouge de l'image : (0.736, 0.535) → Alignment(0.472, 0.070).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.centerRight,
+                alignment: const Alignment(0.472, 0.070),
                 transform: Matrix4.identity()
                   ..scale(_tailScaleX.value, _tailScaleY.value, 1.0),
                 child: child,
@@ -178,12 +178,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
           ),
 
           // Layer 4 : Nageoire gauche — DEVANT le body.
-          // Ancrage topLeft : coin haut-gauche fixe (point d'ancrage rouge).
+          // Ancrage sur le point rouge de l'image : (0.534, 0.536) → Alignment(0.068, 0.072).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.topLeft,
+                alignment: const Alignment(0.068, 0.072),
                 transform: Matrix4.identity()
                   ..scale(_leftFinScaleX.value, _leftFinScaleY.value, 1.0),
                 child: child,
