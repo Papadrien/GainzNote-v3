@@ -134,12 +134,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
       child: Stack(
         children: [
           // Layer 1 : Nageoire droite — DERRIÈRE le body.
-          // Ancrage topCenter : le haut reste fixe, la nageoire monte légèrement.
+          // Ancrage bottomLeft : coin bas-gauche fixe (point d'ancrage rouge).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.topCenter,
+                alignment: Alignment.bottomLeft,
                 transform: Matrix4.identity()
                   ..scale(_rightFinScaleX.value, _rightFinScaleY.value, 1.0),
                 child: child,
@@ -178,12 +178,12 @@ class _SharkAnimatedDisplayState extends State<SharkAnimatedDisplay>
           ),
 
           // Layer 4 : Nageoire gauche — DEVANT le body.
-          // Ancrage topCenter : le haut reste fixe, la nageoire descend légèrement.
+          // Ancrage topLeft : coin haut-gauche fixe (point d'ancrage rouge).
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _ctrl,
               builder: (_, child) => Transform(
-                alignment: Alignment.topCenter,
+                alignment: Alignment.topLeft,
                 transform: Matrix4.identity()
                   ..scale(_leftFinScaleX.value, _leftFinScaleY.value, 1.0),
                 child: child,

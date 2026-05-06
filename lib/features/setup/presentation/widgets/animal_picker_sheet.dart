@@ -48,7 +48,10 @@ class _AnimalPickerSheetState extends ConsumerState<AnimalPickerSheet> {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final topPad = MediaQuery.of(context).padding.top;
     final screenHeight = MediaQuery.of(context).size.height;
-    final maxSheetHeight = screenHeight - topPad;
+    // On laisse au minimum la hauteur de la status bar + 24dp de marge
+    // pour que la sheet ne remonte jamais sous le notch.
+    const double sheetTopMargin = 24.0;
+    final maxSheetHeight = screenHeight - topPad - sheetTopMargin;
     final gamif = ref.watch(gamificationServiceProvider);
     final hasLocked = gamif.hasLockedAnimals();
     final purchaseService = ref.watch(purchaseServiceProvider);
