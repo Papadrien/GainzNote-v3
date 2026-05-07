@@ -12,6 +12,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
@@ -352,9 +354,15 @@ private fun ActiveExerciseCard(
                 NumberField(S.reps, reps, onRepsChange, c, placeholder = exercise.referenceReps?.toString())
             }
             CircuitInputType.REPS_WEIGHT -> {
+                val repsFocusRequester = remember { FocusRequester() }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f)) { NumberField(S.weight, weight, onWeightChange, c, decimal = true) }
-                    Box(Modifier.weight(1f)) { NumberField(S.reps, reps, onRepsChange, c, placeholder = exercise.referenceReps?.toString()) }
+                    Box(Modifier.weight(1f)) {
+                        NumberField(S.weight, weight, onWeightChange, c, decimal = true,
+                            onImeAction = { repsFocusRequester.requestFocus() })
+                    }
+                    Box(Modifier.weight(1f).focusRequester(repsFocusRequester)) {
+                        NumberField(S.reps, reps, onRepsChange, c, placeholder = exercise.referenceReps?.toString())
+                    }
                 }
             }
             CircuitInputType.DURATION -> {
@@ -416,7 +424,9 @@ private fun ActiveExerciseCard(
 @Composable
 private fun NumberField(
     label: String, value: String, onChange: (String) -> Unit,
-    c: GainzThemeColors, decimal: Boolean = false, placeholder: String? = null
+    c: GainzThemeColors, decimal: Boolean = false, placeholder: String? = null,
+    imeAction: ImeAction = ImeAction.Next,
+    onImeAction: (() -> Unit)? = null
 ) {
     val focusManager = LocalFocusManager.current
     Column {
@@ -428,9 +438,11 @@ private fun NumberField(
             cursorBrush = SolidColor(c.accent),
             keyboardOptions = KeyboardOptions(
                 keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number,
-                imeAction = ImeAction.Next
+                imeAction = imeAction
             ),
-            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+            keyboardActions = KeyboardActions(onNext = {
+                if (onImeAction != null) onImeAction() else focusManager.moveFocus(FocusDirection.Down)
+            }),
             decorationBox = { inner ->
                 Box(Modifier.fillMaxWidth()
                     .background(c.surfaceAlt, RoundedCornerShape(10.dp))

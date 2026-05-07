@@ -40,10 +40,14 @@ class MainActivity : ComponentActivity() {
 
     /** Pré-charge un interstitiel pour la prochaine utilisation. */
     private fun loadInterstitial() {
+        val adUnitId = if (BuildConfig.DEBUG) {
+            "ca-app-pub-3940256099942544/1033173712" // Interstitiel de test Google
+        } else {
+            "ca-app-pub-7203301690798915/5097105544" // Interstitiel de production
+        }
         InterstitialAd.load(
             this,
-            // ID de test Google — remplacer par le vrai avant publication
-            "ca-app-pub-7203301690798915/5097105544",
+            adUnitId,
             AdRequest.Builder().build(),
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {

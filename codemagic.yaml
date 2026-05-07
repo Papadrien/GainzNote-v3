@@ -1,138 +1,39 @@
-# codemagic.yaml — AnimalTimer
-# Basé sur la GitHub Action ci.yml / dart.yml
-# Secrets requis dans Codemagic :
-#   ANDROID_KEYSTORE_BASE64   — keystore encodé en base64
-#   ANDROID_KEY_PROPERTIES    — contenu du fichier key.properties
-#   CM_CERTIFICATE            — certificat de distribution iOS (base64, pour release iOS)
-#   CM_CERTIFICATE_PASSWORD   — mot de passe du certificat iOS
-#   CM_PROVISIONING_PROFILE   — profil de provisionnement iOS (base64)
-
 workflows:
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # ANDROID DEBUG — branche develop
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ──────────────────────────────────────────
+  # Android Debug — auto on push to develop
+  # ──────────────────────────────────────────
   android-debug:
-    name: Android Debug
-    max_build_duration: 30
-    instance_type: mac_mini_m2
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: develop
-          include: true
-    environment:
-      flutter: 3.32.4
-      java: 17
-      groups:
-        - AnimalTimer
-    scripts:
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Generate localizations
-        script: flutter gen-l10n
-      - name: Analyze
-        script: flutter analyze --no-fatal-infos
-      - name: Run tests
-        script: flutter test --coverage
-      - name: Set build number (timestamp)
-        script: |
-          BUILD=$(date +%s)
-          echo "BUILD_NUMBER=$BUILD" >> $CM_ENV
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' )
-          echo "APP_VERSION=$VERSION" >> $CM_ENV
-          echo "📦 Version: $VERSION  |  Build: $BUILD"
-      - name: Build APK (Debug)
-        script: flutter build apk --debug --no-pub
-      - name: Rename artifact
-        script: |
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-debug.apk "dist/AnimalTimer-${APP_VERSION}-debug.apk"
-          echo "📦 Debug artifact:" && ls -lh dist/
-    artifacts:
-      - dist/*.apk
-    publishing:
-      email:
-        recipients:
-          - ivorydu13@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # ANDROID RELEASE — branche master et tags v*
-  # ═══════════════════════════════════════════════════════════════════════════
-  android-release:
-    name: Android Release
+    name: Android Debug Build
     max_build_duration: 45
     instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+
     triggering:
       events:
         - push
-        - tag
       branch_patterns:
-        - pattern: master
+        - pattern: "develop"
           include: true
-      tag_patterns:
-        - pattern: "v*"
-          include: true
-    environment:
-      flutter: 3.32.4
-      java: 17
-      groups:
-        - AnimalTimer
+
     scripts:
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Generate localizations
-        script: flutter gen-l10n
-      - name: Analyze
-        script: flutter analyze --no-fatal-infos
-      - name: Run tests
-        script: flutter test --coverage
-      - name: Set build number (timestamp)
+      - name: Set up local.properties
         script: |
-          BUILD=$(date +%s)
-          echo "BUILD_NUMBER=$BUILD" >> $CM_ENV
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' )
-          echo "APP_VERSION=$VERSION" >> $CM_ENV
-          echo "📦 Version: $VERSION  |  Build: $BUILD"
-      - name: Setup Android signing
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
         script: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/keystore.jks
-            echo "$ANDROID_KEY_PROPERTIES"  > android/key.properties
-            echo "✅ Signing release (secrets Codemagic)"
-          else
-            keytool -genkey -v \
-              -keystore android/app/keystore.jks \
-              -alias animaltimer-debug \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass animaltimer-debug-pwd -keypass animaltimer-debug-pwd \
-              -dname "CN=AnimalTimer Debug, OU=Dev, O=AnimalTimer, L=Paris, C=FR" 2>/dev/null
-            printf 'storePassword=animaltimer-debug-pwd\nkeyPassword=animaltimer-debug-pwd\nkeyAlias=animaltimer-debug\nstoreFile=keystore.jks\n' > android/key.properties
-            echo "✅ Signing debug stable (sans secrets)"
-          fi
-      - name: Build APK (Release)
+          chmod +x gradlew
+
+      - name: Build Debug APK
         script: |
-          flutter build apk --release --no-pub \
-            --build-name="$APP_VERSION" \
-            --build-number="$BUILD_NUMBER"
-      - name: Build App Bundle (Release)
-        script: |
-          flutter build appbundle --release --no-pub \
-            --build-name="$APP_VERSION" \
-            --build-number="$BUILD_NUMBER"
-      - name: Rename artifacts
-        script: |
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk        "dist/AnimalTimer-${APP_VERSION}.apk"
-          cp build/app/outputs/bundle/release/app-release.aab      "dist/AnimalTimer-${APP_VERSION}.aab"
-          echo "📦 Release artifacts:" && ls -lh dist/
+          ./gradlew :androidApp:assembleDebug
+
     artifacts:
-      - dist/*.apk
-      - dist/*.aab
+      - androidApp/build/outputs/apk/debug/*.apk
+
     publishing:
       email:
         recipients:
@@ -141,87 +42,142 @@ workflows:
           success: true
           failure: true
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # iOS DEBUG — déclenchement manuel uniquement
-  # ═══════════════════════════════════════════════════════════════════════════
-  ios-debug:
-    name: iOS Debug
-    max_build_duration: 30
-    instance_type: mac_mini_m2
-    triggering:
-      events: []          # Manuel uniquement (Start new build dans le dashboard)
-    environment:
-      flutter: 3.32.4
-      xcode: latest
-      cocoapods: default
-    scripts:
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Generate localizations
-        script: flutter gen-l10n
-      - name: Analyze
-        script: flutter analyze --no-fatal-infos
-      - name: Run tests
-        script: flutter test
-      - name: Install CocoaPods
-        script: cd ios && pod install
-      - name: Build iOS (Debug, no codesign)
-        script: flutter build ios --debug --no-codesign
-      - name: Log version
-        script: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' )
-          echo "📦 iOS Debug build validated — version ${VERSION}"
-    artifacts:
-      - build/ios/iphoneos/*.app
-
-  # ═══════════════════════════════════════════════════════════════════════════
-  # iOS RELEASE — tags v* uniquement
-  # ═══════════════════════════════════════════════════════════════════════════
-  ios-release:
-    name: iOS Release
+  # ──────────────────────────────────────────
+  # Android Release — auto on push to master
+  # ──────────────────────────────────────────
+  android-release:
+    name: Android Signed Release
     max_build_duration: 60
     instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+      groups:
+        - keystore_credentials
+      vars:
+        CM_KEYSTORE_PATH: /tmp/keystore.jks
+
     triggering:
       events:
-        - tag
-      tag_patterns:
-        - pattern: "v*"
+        - push
+      branch_patterns:
+        - pattern: "master"
           include: true
-    environment:
-      flutter: 3.32.4
-      xcode: latest
-      cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: fr.junade.animaltimer
+
     scripts:
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Generate localizations
-        script: flutter gen-l10n
-      - name: Set build number (timestamp)
+      - name: Set up local.properties
         script: |
-          BUILD=$(date +%s)
-          echo "BUILD_NUMBER=$BUILD" >> $CM_ENV
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' )
-          echo "APP_VERSION=$VERSION" >> $CM_ENV
-          echo "📦 Version: $VERSION  |  Build: $BUILD"
-      - name: Install CocoaPods
-        script: cd ios && pod install
-      - name: Build IPA (Release)
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Set up keystore
         script: |
-          flutter build ipa --release --no-pub \
-            --build-name="$APP_VERSION" \
-            --build-number="$BUILD_NUMBER" \
-            --export-options-plist=/Users/builder/export_options.plist
-      - name: Rename artifact
+          echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
+
+      - name: Make gradlew executable
         script: |
-          mkdir -p dist
-          cp build/ios/ipa/*.ipa "dist/AnimalTimer-${APP_VERSION}.ipa"
-          echo "📦 iOS Release artifact:" && ls -lh dist/
+          chmod +x gradlew
+
+      - name: Build Release APK + AAB
+        script: |
+          ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease \
+            -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
+
     artifacts:
-      - dist/*.ipa
-      - flutter_drive.log
+      - androidApp/build/outputs/apk/release/*.apk
+      - androidApp/build/outputs/bundle/release/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - ivorydu13@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ──────────────────────────────────────────
+  # iOS Debug — manual only (no auto trigger)
+  # ──────────────────────────────────────────
+  ios-debug:
+    name: iOS Debug Build
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+      xcode: latest
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
+        script: |
+          chmod +x gradlew
+
+      - name: Build KMP framework
+        script: |
+          ./gradlew :composeApp:linkDebugFrameworkIosArm64
+
+      - name: Build iOS (simulator)
+        script: |
+          cd iosApp
+          xcodebuild -project iosApp.xcodeproj             -scheme iosApp             -sdk iphonesimulator             -configuration Debug             -destination 'generic/platform=iOS Simulator'             build
+
+    artifacts:
+      - iosApp/build/**/*.app
+
+    publishing:
+      email:
+        recipients:
+          - ivorydu13@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ──────────────────────────────────────────
+  # iOS Release — manual only (no auto trigger)
+  # ──────────────────────────────────────────
+  ios-release:
+    name: iOS Signed Release
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+      xcode: latest
+      groups:
+        - apple_credentials
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
+        script: |
+          chmod +x gradlew
+
+      - name: Build KMP framework
+        script: |
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64
+
+      - name: Build iOS archive
+        script: |
+          cd iosApp
+          xcodebuild archive             -project iosApp.xcodeproj             -scheme iosApp             -configuration Release             -archivePath build/iosApp.xcarchive             CODE_SIGN_IDENTITY="$APPLE_SIGN_IDENTITY"             PROVISIONING_PROFILE_SPECIFIER="$APPLE_PROVISIONING_PROFILE"
+
+      - name: Export IPA
+        script: |
+          cd iosApp
+          xcodebuild -exportArchive             -archivePath build/iosApp.xcarchive             -exportOptionsPlist exportOptions.plist             -exportPath build/ipa
+
+    artifacts:
+      - iosApp/build/ipa/*.ipa
+
     publishing:
       email:
         recipients:

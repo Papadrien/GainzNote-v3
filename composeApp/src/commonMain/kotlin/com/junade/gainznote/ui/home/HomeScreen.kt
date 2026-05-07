@@ -43,7 +43,8 @@ fun HomeScreen(
     onToggleAdFree: () -> Unit = {},
     language: String = "auto",
     onChangeLang: (String) -> Unit = {},
-    refreshKey: Int = 0
+    refreshKey: Int = 0,
+    onPrivacyPolicy: () -> Unit = {}
 ) {
     val c = GainzThemeColors(darkTheme, type = selectedWorkoutType)
     var recentWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
@@ -196,20 +197,6 @@ fun HomeScreen(
                     }
                 }
             }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(12.dp), color = c.surface,
-                border = BorderStroke(1.dp, c.accent),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(S.adsRemoved, color = c.accent, fontSize = 15.sp)
-                }
-            }
         }
         Spacer(Modifier.height(8.dp))
 
@@ -293,6 +280,10 @@ fun HomeScreen(
                 onDismiss = { showLangDialog = false }
             )
         }
+
+        // ─ Politique de confidentialité ──────────────────────────────────────
+        Spacer(Modifier.height(8.dp))
+        SettingButton("🔒", S.privacyPolicy, c, onPrivacyPolicy)
 
         // ─ Bouton test debug-only (toggle adFree sans achat) ─────────────────
         if (isDebug) {

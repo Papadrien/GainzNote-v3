@@ -2,6 +2,7 @@ package com.junade.gainznote.ui.workout
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,10 +74,19 @@ fun WorkoutScreen(
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-            Column {
-                Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                // Jour en toutes lettres
-                Text(S.startedAt(formatDisplayDateFull(workout.startedAt)), color = c.textMuted, fontSize = 11.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(40.dp).clickable(onClickLabel = S.backDesc) { onBack() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("←", color = c.accent, fontSize = 22.sp)
+                }
+                Spacer(Modifier.width(4.dp))
+                Column {
+                    Text("GainzNote", color = c.accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                    // Jour en toutes lettres
+                    Text(S.startedAt(formatDisplayDateFull(workout.startedAt)), color = c.textMuted, fontSize = 11.sp)
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val chronoActive = chronoStart != null
@@ -135,10 +145,11 @@ fun WorkoutScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-            Button(onClick = vm::addExercise,
+            OutlinedButton(onClick = vm::addExercise,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = c.accentDim, contentColor = c.accent)) {
+                border = BorderStroke(1.dp, c.accent),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = c.accentDim, contentColor = c.accent)) {
                 Text(S.addExercise, fontWeight = FontWeight.SemiBold)
             }
             if (!adFree) {

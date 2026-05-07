@@ -21,8 +21,9 @@ android {
         applicationId = "com.junade.gainznote.android"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0"
+        val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = buildNumber
+        versionName = "1.0.$buildNumber"
     }
     signingConfigs {
         create("release") {

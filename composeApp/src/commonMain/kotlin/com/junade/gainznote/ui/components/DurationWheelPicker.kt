@@ -52,6 +52,15 @@ fun VerticalWheelPicker(
     val initialIndex = (value - range.first).coerceIn(0, total - 1)
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
 
+    // Scroll to the correct position when the value changes externally
+    // (e.g. when a template is loaded with a pre-filled duration)
+    LaunchedEffect(value) {
+        val targetIndex = (value - range.first).coerceIn(0, total - 1)
+        if (!listState.isScrollInProgress) {
+            listState.scrollToItem(targetIndex)
+        }
+    }
+
     // Observer la fin du scroll pour notifier la valeur sélectionnée
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }

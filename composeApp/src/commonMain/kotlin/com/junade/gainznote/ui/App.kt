@@ -14,6 +14,7 @@ import com.junade.gainznote.ui.circuit.CircuitWorkoutScreen
 import com.junade.gainznote.ui.detail.DetailScreen
 import com.junade.gainznote.ui.history.HistoryScreen
 import com.junade.gainznote.ui.home.HomeScreen
+import com.junade.gainznote.ui.home.PrivacyPolicyScreen
 import com.junade.gainznote.ui.theme.GainzTheme
 import com.junade.gainznote.ui.workout.WorkoutScreen
 import kotlinx.coroutines.launch
@@ -29,6 +30,7 @@ sealed class Screen {
     ) : Screen()
     data class CircuitWorkout(val workoutId: String) : Screen()
     data object History : Screen()
+    data object PrivacyPolicy : Screen()
     data class Detail(val workoutId: String) : Screen()
 }
 
@@ -150,6 +152,7 @@ fun App(
                     navigateTo(dest)
                 },
                 onHistory = { navigateTo(Screen.History) },
+                onPrivacyPolicy = { navigateTo(Screen.PrivacyPolicy) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
                 onResumeWorkout = { id ->
                     scope.launch {
@@ -208,6 +211,10 @@ fun App(
                 chronoNotifEnabled = chronoNotifEnabled,
                 onChronoStart = onChronoStart,
                 onChronoStop = onChronoStop
+            )
+            Screen.PrivacyPolicy -> PrivacyPolicyScreen(
+                darkTheme = darkTheme,
+                onBack = { navigateBack() }
             )
             Screen.History -> HistoryScreen(
                 repo = repo,

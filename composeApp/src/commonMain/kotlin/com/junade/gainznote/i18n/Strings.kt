@@ -646,4 +646,10 @@ object S {
         Lang.EN -> "Remaining rest time"
     }
 
+    // ── Privacy Policy ────────────────────────────────────────────────────
+    val privacyPolicy get() = when (lang) {
+        Lang.FR -> "Politique de confidentialité"
+        Lang.EN -> "Privacy Policy"
+    }
+
 }
