@@ -12,8 +12,7 @@ CREATE TABLE exercise (
     workout_id    TEXT NOT NULL REFERENCES workout(id) ON DELETE CASCADE,
     name          TEXT NOT NULL DEFAULT '',
     position      INTEGER NOT NULL DEFAULT 0,
-    superset_with TEXT,
-    superset_group INTEGER
+    superset_with TEXT
 );
 
 CREATE TABLE training_set (

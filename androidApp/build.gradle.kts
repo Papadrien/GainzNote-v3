@@ -15,10 +15,10 @@ kotlin {
 }
 
 android {
-    namespace = "fr.junade.gainznote.android"
+    namespace = "com.junade.gainznote.android"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
     defaultConfig {
-        applicationId = "fr.junade.gainznote.android"
+        applicationId = "com.junade.gainznote.android"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull() ?: 1
