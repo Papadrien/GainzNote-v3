@@ -163,7 +163,7 @@ fun DetailScreen(
 }
 
 @Composable
-fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
+fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors) {
     val isSuperset = exercise.supersetId != null
     Column(Modifier.fillMaxWidth()
         .border(if (isSuperset) 2.dp else 1.dp,
@@ -173,7 +173,7 @@ fun ExerciseDetailCard(exercise: Exercise, c: GainzThemeColors) {
             if (isSuperset) {
                 Box(Modifier.background(c.supersetDim, RoundedCornerShape(5.dp))
                     .padding(horizontal = 5.dp, vertical = 2.dp)) {
-                    Text("SS", color = c.superset, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("SS${if (supersetIndex > 0) supersetIndex else ""}", color = c.superset, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
             }
