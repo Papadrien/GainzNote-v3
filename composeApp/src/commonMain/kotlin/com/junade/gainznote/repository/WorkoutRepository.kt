@@ -97,7 +97,13 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
             q.deleteExercisesForWorkout(workout.id)
             if (workout.type == WorkoutType.MUSCULATION) {
                 workout.exercises.forEachIndexed { i, ex ->
-                    q.insertExercise(ex.id, workout.id, ex.name, i.toLong())
+                    q.insertExercise(
+                        id = ex.id,
+                        workout_id = workout.id,
+                        name = ex.name,
+                        position = i.toLong(),
+                        superset_with = ex.supersetWith
+                    )
                     q.deleteSetsForExercise(ex.id)
                     ex.sets.forEachIndexed { j, s ->
                         q.insertSet(s.id, ex.id, j.toLong(), s.weightKg,
