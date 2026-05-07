@@ -1,4 +1,4 @@
-package com.junade.gainznote.ui
+package fr.junade.gainznote.ui
 
 import androidx.activity.compose.BackHandler as AndroidBackHandler
 import androidx.compose.runtime.Composable

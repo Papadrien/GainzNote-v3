@@ -1,4 +1,4 @@
-package com.junade.gainznote.i18n
+package fr.junade.gainznote.i18n
 
 import platform.Foundation.NSLocale
 import platform.Foundation.currentLocale

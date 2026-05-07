@@ -1,4 +1,4 @@
-package com.junade.gainznote.ui
+package fr.junade.gainznote.ui
 
 import androidx.compose.runtime.Composable
 

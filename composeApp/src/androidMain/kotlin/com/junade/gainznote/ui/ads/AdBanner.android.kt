@@ -1,4 +1,4 @@
-package com.junade.gainznote.ui.ads
+package fr.junade.gainznote.ui.ads
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -7,7 +7,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.junade.gainznote.shared.BuildConfig
+import fr.junade.gainznote.shared.BuildConfig
 
 @Composable
 actual fun AdBanner(modifier: Modifier) {

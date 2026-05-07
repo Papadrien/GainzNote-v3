@@ -1,4 +1,4 @@
-package com.junade.gainznote.ui.ads
+package fr.junade.gainznote.ui.ads
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

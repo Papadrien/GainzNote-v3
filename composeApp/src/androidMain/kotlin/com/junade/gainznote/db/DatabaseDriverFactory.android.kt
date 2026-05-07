@@ -1,4 +1,4 @@
-package com.junade.gainznote.db
+package fr.junade.gainznote.db
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
