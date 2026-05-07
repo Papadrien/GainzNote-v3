@@ -1,4 +1,4 @@
-modules = ["bash", "nix"]
+modules = ["ruby-3.2", "dart-3.10", "python-3.11"]
 [agent]
 expertMode = true
 
@@ -21,17 +21,19 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[workflows.workflow.metadata]
-outputType = "console"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash setup_and_build.sh"
+args = "bash run.sh"
+waitForPort = 5000
 
-[userenv]
+[workflows.workflow.metadata]
+outputType = "webview"
 
-[userenv.shared]
-KEYSTORE_PATH = "androidApp/keystore/gainznote-release.jks"
-KEY_ALIAS = "GainzNote-key"
-STORE_PASSWORD = "gainznote_store_2024"
-KEY_PASSWORD = "gainznote_store_2024"
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[deployment]
+deploymentTarget = "static"
+build = ["bash", "-c", "flutter build web --release"]
+publicDir = "build/web"

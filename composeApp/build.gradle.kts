@@ -42,6 +42,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.sqldelight.android.driver)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.google.play.services.ads)
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
@@ -50,9 +51,20 @@ kotlin {
 }
 
 android {
-    namespace = "com.gainznote.shared"
+    namespace = "fr.junade.gainznote.shared"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
     defaultConfig { minSdk = libs.versions.androidMinSdk.get().toInt() }
+    buildFeatures {
+        buildConfig = true
+    }
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
+        release {
+            buildConfigField("boolean", "DEBUG", "false")
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -62,7 +74,7 @@ android {
 sqldelight {
     databases {
         create("GainzNoteDatabase") {
-            packageName.set("com.gainznote.db")
+            packageName.set("fr.junade.gainznote.db")
         }
     }
 }

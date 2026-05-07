@@ -1,7 +1,7 @@
 workflows:
 
   # ──────────────────────────────────────────
-  # Debug Build — triggered on every push
+  # Android Debug — auto on push to develop
   # ──────────────────────────────────────────
   android-debug:
     name: Android Debug Build
@@ -15,7 +15,7 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: "main"
+        - pattern: "develop"
           include: true
 
     scripts:
@@ -43,7 +43,7 @@ workflows:
           failure: true
 
   # ──────────────────────────────────────────
-  # Signed Release — triggered on version tags
+  # Android Release — auto on push to master
   # ──────────────────────────────────────────
   android-release:
     name: Android Signed Release
@@ -53,15 +53,15 @@ workflows:
     environment:
       java: 17
       groups:
-        - keystore_credentials   # Configure in Codemagic UI → Teams → Global variables
+        - keystore_credentials
       vars:
         CM_KEYSTORE_PATH: /tmp/keystore.jks
 
     triggering:
       events:
-        - tag
-      tag_patterns:
-        - pattern: "v*"
+        - push
+      branch_patterns:
+        - pattern: "master"
           include: true
 
     scripts:
@@ -77,7 +77,7 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Build Release APK
+      - name: Build Release APK + AAB
         script: |
           ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease \
             -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \
@@ -88,6 +88,95 @@ workflows:
     artifacts:
       - androidApp/build/outputs/apk/release/*.apk
       - androidApp/build/outputs/bundle/release/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - ivorydu13@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ──────────────────────────────────────────
+  # iOS Debug — manual only (no auto trigger)
+  # ──────────────────────────────────────────
+  ios-debug:
+    name: iOS Debug Build
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+      xcode: latest
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
+        script: |
+          chmod +x gradlew
+
+      - name: Build KMP framework
+        script: |
+          ./gradlew :composeApp:linkDebugFrameworkIosArm64
+
+      - name: Build iOS (simulator)
+        script: |
+          cd iosApp
+          xcodebuild -project iosApp.xcodeproj             -scheme iosApp             -sdk iphonesimulator             -configuration Debug             -destination 'generic/platform=iOS Simulator'             build
+
+    artifacts:
+      - iosApp/build/**/*.app
+
+    publishing:
+      email:
+        recipients:
+          - ivorydu13@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ──────────────────────────────────────────
+  # iOS Release — manual only (no auto trigger)
+  # ──────────────────────────────────────────
+  ios-release:
+    name: iOS Signed Release
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    environment:
+      java: 17
+      xcode: latest
+      groups:
+        - apple_credentials
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Make gradlew executable
+        script: |
+          chmod +x gradlew
+
+      - name: Build KMP framework
+        script: |
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64
+
+      - name: Build iOS archive
+        script: |
+          cd iosApp
+          xcodebuild archive             -project iosApp.xcodeproj             -scheme iosApp             -configuration Release             -archivePath build/iosApp.xcarchive             CODE_SIGN_IDENTITY="$APPLE_SIGN_IDENTITY"             PROVISIONING_PROFILE_SPECIFIER="$APPLE_PROVISIONING_PROFILE"
+
+      - name: Export IPA
+        script: |
+          cd iosApp
+          xcodebuild -exportArchive             -archivePath build/iosApp.xcarchive             -exportOptionsPlist exportOptions.plist             -exportPath build/ipa
+
+    artifacts:
+      - iosApp/build/ipa/*.ipa
 
     publishing:
       email:
