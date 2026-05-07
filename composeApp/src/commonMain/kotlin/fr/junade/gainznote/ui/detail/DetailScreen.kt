@@ -165,22 +165,24 @@ fun DetailScreen(
 @Composable
 fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors) {
     val isSuperset = exercise.supersetId != null
+    val ssColor = if (isSuperset) supersetColor(supersetIndex) else c.superset
+    val ssColorDim = if (isSuperset) supersetColorDim(supersetIndex) else c.supersetDim
     Column(Modifier.fillMaxWidth()
         .border(if (isSuperset) 2.dp else 1.dp,
-            if (isSuperset) c.superset else c.border, RoundedCornerShape(12.dp))
+            if (isSuperset) ssColor else c.border, RoundedCornerShape(12.dp))
         .background(c.surface, RoundedCornerShape(12.dp))) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (isSuperset) {
-                Box(Modifier.background(c.supersetDim, RoundedCornerShape(5.dp))
+                Box(Modifier.background(ssColorDim, RoundedCornerShape(5.dp))
                     .padding(horizontal = 5.dp, vertical = 2.dp)) {
-                    Text("SS${if (supersetIndex > 0) supersetIndex else ""}", color = c.superset, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("SS${if (supersetIndex > 0) supersetIndex else ""}", color = ssColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
             }
             Text(exercise.name.ifBlank { S.unnamedExercise }, color = c.text,
                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
-        HorizontalDivider(color = if (isSuperset) c.superset.copy(alpha = 0.3f) else c.border, thickness = 0.5.dp)
+        HorizontalDivider(color = if (isSuperset) ssColor.copy(alpha = 0.3f) else c.border, thickness = 0.5.dp)
         Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
             Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(28.dp))
             Text(S.weight, color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
