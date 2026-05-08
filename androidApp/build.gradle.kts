@@ -25,7 +25,7 @@ android {
             commandLine("date", "+%m%d%H%M")
         }.standardOutput.asText.get().trim().toInt()
         versionCode = timestamp
-        versionName = timestamp.toString()
+        versionName = "1.0.$timestamp"
     }
     signingConfigs {
         create("release") {
@@ -45,9 +45,32 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    applicationVariants.all {
+        val variant = this
+        val versionCode = variant.versionCode
+        val buildType = variant.buildType.name
+        variant.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "GainzNote-1.0.$versionCode-$buildType.apk"
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+afterEvaluate {
+    listOf("debug", "release").forEach { buildType ->
+        tasks.named("bundle${buildType.replaceFirstChar { it.uppercase() }}") {
+            doLast {
+                val versionCode = android.defaultConfig.versionCode
+                val aabDir = layout.buildDirectory.dir("outputs/bundle/$buildType").get().asFile
+                aabDir.listFiles { f -> f.extension == "aab" }?.forEach { aab ->
+                    aab.renameTo(File(aab.parent, "GainzNote-1.0.$versionCode-$buildType.aab"))
+                }
+            }
+        }
     }
 }
 
