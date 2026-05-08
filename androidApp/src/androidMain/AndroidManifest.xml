@@ -28,7 +28,7 @@
 
         <service
             android:name=".ChronoForegroundService"
-            android:foregroundServiceType="stopwatch"
+            android:foregroundServiceType="dataSync"
             android:exported="false"/>
 
     </application>

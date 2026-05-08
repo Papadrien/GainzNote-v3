@@ -72,7 +72,7 @@ class ChronoForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= 34) {
             ServiceCompat.startForeground(
                 this, NOTIF_ID, notif,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_STOPWATCH
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
             )
         } else {
             startForeground(NOTIF_ID, notif)
