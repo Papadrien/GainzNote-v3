@@ -22,7 +22,7 @@ android {
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         val timestamp = providers.exec {
-            commandLine("date", "+%y%m%d%H%M")
+            commandLine("date", "+%m%d%H%M")
         }.standardOutput.asText.get().trim().toInt()
         versionCode = timestamp
         versionName = timestamp.toString()
