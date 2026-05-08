@@ -14,6 +14,30 @@ kotlin {
     }
 }
 
+fun gitCommitCount(): Int {
+    return try {
+        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .start()
+        process.inputStream.bufferedReader().readLine()?.trim()?.toInt() ?: 1
+    } catch (e: Exception) {
+        1
+    }
+}
+
+fun gitTag(): String {
+    return try {
+        val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .start()
+        process.inputStream.bufferedReader().readLine()?.trim() ?: "1.0.0"
+    } catch (e: Exception) {
+        "1.0.0"
+    }
+}
+
 android {
     namespace = "fr.junade.gainznote"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
@@ -21,9 +45,8 @@ android {
         applicationId = "fr.junade.gainznote"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull() ?: 1
-        versionCode = buildNumber
-        versionName = "1.0.$buildNumber"
+        versionCode = gitCommitCount()
+        versionName = gitTag()
     }
     signingConfigs {
         create("release") {
