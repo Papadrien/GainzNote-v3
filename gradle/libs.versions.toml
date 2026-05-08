@@ -9,8 +9,8 @@ navigationCompose   = "2.8.0-alpha10"
 playServicesAds     = "23.6.0"
 billing             = "7.1.1"
 androidMinSdk       = "26"
-androidCompileSdk   = "35"
-androidTargetSdk    = "35"
+androidCompileSdk   = "36"
+androidTargetSdk    = "36"
 
 [libraries]
 kotlinx-coroutines-core    = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core",    version.ref = "coroutines" }
