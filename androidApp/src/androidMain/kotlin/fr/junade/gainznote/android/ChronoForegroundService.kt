@@ -4,24 +4,22 @@ import android.app.*
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import fr.junade.gainznote.i18n.S
-import kotlinx.coroutines.*
 
 /**
- * Service de premier plan qui affiche et met à jour le chronomètre
- * (temps de repos en mode elapsed, ou compte à rebours en mode countdown)
- * dans la barre de notifications, même quand l'app est en arrière-plan.
+ * Service de premier plan qui affiche le chronomètre dans la barre de notifications,
+ * même quand l'app est en arrière-plan.
+ * L'affichage du temps est délégué au système via setUsesChronometer (aucune boucle).
  */
 class ChronoForegroundService : Service() {
 
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private var startTimeMs = 0L
-    // Pour le mode countdown : timestamp (ms) auquel le compte à rebours atteint 0.
-    // endTimeMs == 0 => mode elapsed (legacy). Sinon => countdown.
-    private var endTimeMs = 0L
+    private val handler = Handler(Looper.getMainLooper())
+    private var stopRunnable: Runnable? = null
 
     companion object {
         const val ACTION_START     = "fr.junade.gainznote.CHRONO_START"
@@ -41,23 +39,23 @@ class ChronoForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                scope.coroutineContext.cancelChildren()
-                startTimeMs = intent.getLongExtra(EXTRA_START_TIME, System.currentTimeMillis())
-                endTimeMs = 0L
-                val notif = buildNotif("00:00")
-                startFg(notif)
-                startTickingElapsed()
+                cancelStop()
+                val startTimeMs = intent.getLongExtra(EXTRA_START_TIME, System.currentTimeMillis())
+                startFg(buildNotif(startTimeMs, isCountdown = false))
             }
             ACTION_COUNTDOWN -> {
-                scope.coroutineContext.cancelChildren()
-                endTimeMs = intent.getLongExtra(EXTRA_END_TIME, System.currentTimeMillis())
-                startTimeMs = 0L
-                val notif = buildNotif(formatRemaining(endTimeMs - System.currentTimeMillis()))
-                startFg(notif)
-                startTickingCountdown()
+                cancelStop()
+                val endTimeMs = intent.getLongExtra(EXTRA_END_TIME, System.currentTimeMillis())
+                startFg(buildNotif(endTimeMs, isCountdown = true))
+                // Auto-arrêt à l'expiration du minuteur
+                val delay = (endTimeMs - System.currentTimeMillis()).coerceAtLeast(0)
+                stopRunnable = Runnable {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }.also { handler.postDelayed(it, delay) }
             }
             ACTION_STOP -> {
-                scope.coroutineContext.cancelChildren()
+                cancelStop()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -65,58 +63,28 @@ class ChronoForegroundService : Service() {
         return START_NOT_STICKY
     }
 
+    private fun cancelStop() {
+        stopRunnable?.let { handler.removeCallbacks(it) }
+        stopRunnable = null
+    }
+
     private fun startFg(notif: Notification) {
         if (Build.VERSION.SDK_INT >= 34) {
             ServiceCompat.startForeground(
                 this, NOTIF_ID, notif,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_STOPWATCH
             )
         } else {
             startForeground(NOTIF_ID, notif)
         }
     }
 
-    private fun startTickingElapsed() {
-        scope.launch {
-            while (isActive) {
-                val elapsed = (System.currentTimeMillis() - startTimeMs) / 1000L
-                val m = elapsed / 60
-                val s = elapsed % 60
-                val display = "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
-                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                nm.notify(NOTIF_ID, buildNotif(display))
-                delay(1000)
-            }
-        }
-    }
-
-    private fun startTickingCountdown() {
-        scope.launch {
-            while (isActive) {
-                val remainingMs = endTimeMs - System.currentTimeMillis()
-                val display = formatRemaining(remainingMs)
-                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                nm.notify(NOTIF_ID, buildNotif(display))
-                if (remainingMs <= 0) {
-                    // Fin du countdown : on stoppe le service automatiquement
-                    delay(500)
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
-                    break
-                }
-                delay(1000)
-            }
-        }
-    }
-
-    private fun formatRemaining(remainingMs: Long): String {
-        val sec = (remainingMs.coerceAtLeast(0) + 999) / 1000
-        val m = sec / 60
-        val s = sec % 60
-        return "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
-    }
-
-    private fun buildNotif(display: String): Notification {
+    /**
+     * @param whenMs  Pour un chronomètre : timestamp de départ.
+     *                Pour un minuteur    : timestamp d'expiration.
+     * @param isCountdown true = minuteur (compte à rebours), false = chronomètre (elapsed).
+     */
+    private fun buildNotif(whenMs: Long, isCountdown: Boolean): Notification {
         val tapIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java).apply {
@@ -126,12 +94,14 @@ class ChronoForegroundService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(S.chronoNotifTitle)
-            .setContentText("⏱  $display")
             .setSmallIcon(android.R.drawable.ic_menu_recent_history)
             .setOngoing(true)
             .setContentIntent(tapIntent)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .setWhen(whenMs)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(isCountdown)
             .build()
     }
 
@@ -151,7 +121,7 @@ class ChronoForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        scope.cancel()
+        cancelStop()
         super.onDestroy()
     }
 }
