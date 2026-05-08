@@ -63,9 +63,10 @@ android {
 afterEvaluate {
     listOf("debug", "release").forEach { buildType ->
         val capturedVersionCode = android.defaultConfig.versionCode
+        val capturedAabDir = layout.buildDirectory.dir("outputs/bundle/$buildType").get().asFile.absolutePath
         tasks.named("bundle${buildType.replaceFirstChar { it.uppercase() }}") {
             doLast {
-                val aabDir = layout.buildDirectory.dir("outputs/bundle/$buildType").get().asFile
+                val aabDir = File(capturedAabDir)
                 aabDir.listFiles { f -> f.extension == "aab" }?.forEach { aab ->
                     aab.renameTo(File(aab.parent, "GainzNote-1.0.$capturedVersionCode-$buildType.aab"))
                 }
