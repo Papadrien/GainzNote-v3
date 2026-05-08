@@ -45,35 +45,15 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    applicationVariants.all {
-        val variant = this
-        val versionCode = variant.versionCode
-        val buildType = variant.buildType.name
-        variant.outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "GainzNote-1.0.$versionCode-$buildType.apk"
-        }
-    }
+    val versionCode = defaultConfig.versionCode
+    setProperty("archivesBaseName", "GainzNote-1.0.$versionCode")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
-afterEvaluate {
-    listOf("debug", "release").forEach { buildType ->
-        val capturedVersionCode = android.defaultConfig.versionCode
-        val capturedAabDir = layout.buildDirectory.dir("outputs/bundle/$buildType").get().asFile.absolutePath
-        tasks.named("bundle${buildType.replaceFirstChar { it.uppercase() }}") {
-            doLast {
-                val aabDir = File(capturedAabDir)
-                aabDir.listFiles { f -> f.extension == "aab" }?.forEach { aab ->
-                    aab.renameTo(File(aab.parent, "GainzNote-1.0.$capturedVersionCode-$buildType.aab"))
-                }
-            }
-        }
-    }
-}
+
 
 dependencies {
     implementation(project(":composeApp"))
