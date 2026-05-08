@@ -17,7 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.repository.WorkoutRepository
 import fr.junade.gainznote.i18n.S
-import fr.junade.gainznote.android.BuildConfig
+import fr.junade.gainznote.BuildConfig
 import fr.junade.gainznote.ui.App
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
