@@ -24,8 +24,8 @@ android {
         versionCode = java.time.format.DateTimeFormatter
             .ofPattern("yyMMddHHmm")
             .format(java.time.LocalDateTime.now())
-            .toString()
-        versionName = versionCode
+            .toInt()
+        versionName = versionCode.toString()
     }
     signingConfigs {
         create("release") {
