@@ -21,9 +21,11 @@ android {
         applicationId = "fr.junade.gainznote"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        val sdf = java.text.SimpleDateFormat("yyMMddHHmm")
-        versionCode = sdf.format(java.util.Date()).toInt()
-        versionName = versionCode.toString()
+        val timestamp = providers.exec {
+            commandLine("date", "+%y%m%d%H%M")
+        }.standardOutput.asText.get().trim().toInt()
+        versionCode = timestamp
+        versionName = timestamp.toString()
     }
     signingConfigs {
         create("release") {
