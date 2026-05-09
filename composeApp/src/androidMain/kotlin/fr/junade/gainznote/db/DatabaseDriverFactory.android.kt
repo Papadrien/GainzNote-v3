@@ -44,5 +44,10 @@ actual class DatabaseDriverFactory(private val context: Context) {
     }
 
     actual fun createDriver(): SqlDriver =
-        AndroidSqliteDriver(migrationCallback, context, "gainznote.db")
+        AndroidSqliteDriver(
+            schema = GainzNoteDatabase.Schema,
+            context = context,
+            name = "gainznote.db",
+            callback = migrationCallback
+        )
 }
