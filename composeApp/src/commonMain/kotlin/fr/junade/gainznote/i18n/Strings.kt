@@ -291,6 +291,22 @@ object S {
         Lang.FR -> "Achat indisponible pour le moment"
         Lang.EN -> "Purchase unavailable at the moment"
     }
+    val restorePurchases get() = when (lang) {
+        Lang.FR -> "Restaurer les achats"
+        Lang.EN -> "Restore purchases"
+    }
+    val restorePurchasesHint get() = when (lang) {
+        Lang.FR -> "Récupère vos achats depuis le Play Store"
+        Lang.EN -> "Retrieves your purchases from the Play Store"
+    }
+    val restorePurchasesSuccess get() = when (lang) {
+        Lang.FR -> "Achat restauré ✓"
+        Lang.EN -> "Purchase restored ✓"
+    }
+    val restorePurchasesNone get() = when (lang) {
+        Lang.FR -> "Aucun achat trouvé"
+        Lang.EN -> "No purchase found"
+    }
     val language get() = when (lang) {
         Lang.FR -> "Langue"
         Lang.EN -> "Language"

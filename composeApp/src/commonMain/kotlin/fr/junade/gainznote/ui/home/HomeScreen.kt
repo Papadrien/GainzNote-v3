@@ -40,6 +40,7 @@ fun HomeScreen(
     adFree: Boolean = false,
     isDebug: Boolean = false,
     onPurchaseRemoveAds: () -> Unit = {},
+    onRestorePurchases: () -> Unit = {},
     onToggleAdFree: () -> Unit = {},
     language: String = "auto",
     onChangeLang: (String) -> Unit = {},
@@ -284,6 +285,12 @@ fun HomeScreen(
         // ─ Politique de confidentialité ──────────────────────────────────────
         Spacer(Modifier.height(8.dp))
         SettingButton("🔒", S.privacyPolicy, c, onPrivacyPolicy)
+
+        // ─ Restaurer les achats (visible seulement si pas encore adFree) ────
+        if (!adFree) {
+            Spacer(Modifier.height(8.dp))
+            SettingButton("🔄", S.restorePurchases, c, onRestorePurchases)
+        }
 
         // ─ Bouton test debug-only (toggle adFree sans achat) ─────────────────
         if (isDebug) {

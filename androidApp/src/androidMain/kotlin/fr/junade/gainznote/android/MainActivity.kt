@@ -228,6 +228,14 @@ class MainActivity : ComponentActivity() {
                     if (!billingManager.launchPurchase(this@MainActivity)) {
                         Toast.makeText(this@MainActivity, S.purchaseError, Toast.LENGTH_SHORT).show()
                     }
+                },
+                onRestorePurchases = {
+                    billingManager.restorePurchases { found ->
+                        runOnUiThread {
+                            val msg = if (found) S.restorePurchasesSuccess else S.restorePurchasesNone
+                            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             )
         }

@@ -48,7 +48,8 @@ fun App(
     // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
     onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
     isDebug: Boolean = false,
-    onPurchaseRemoveAds: () -> Unit = {}
+    onPurchaseRemoveAds: () -> Unit = {},
+    onRestorePurchases: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -187,6 +188,7 @@ fun App(
                 adFree = adFree,
                 isDebug = isDebug,
                 onPurchaseRemoveAds = onPurchaseRemoveAds,
+                onRestorePurchases = onRestorePurchases,
                 onToggleAdFree = {
                     adFree = !adFree
                     persistSettings()

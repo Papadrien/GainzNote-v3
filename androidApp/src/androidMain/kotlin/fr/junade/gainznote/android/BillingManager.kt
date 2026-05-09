@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import com.android.billingclient.api.*
+import com.android.billingclient.api.PendingPurchasesParams
 import kotlinx.coroutines.*
 
 /**
@@ -27,7 +28,11 @@ class BillingManager(
 
     private val billingClient = BillingClient.newBuilder(context)
         .setListener(this)
-        .enablePendingPurchases()
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .build()
+        )
         .build()
 
     private var productDetails: ProductDetails? = null
@@ -36,6 +41,7 @@ class BillingManager(
 
     /** Connecte le BillingClient et vérifie les achats existants. */
     fun startConnection() {
+        try {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -50,6 +56,9 @@ class BillingManager(
                 Log.w(TAG, "Billing déconnecté")
             }
         })
+        } catch (e: Exception) {
+            Log.e(TAG, "Billing startConnection exception: ${e.message}", e)
+        }
     }
 
     /** Récupère les détails du produit "remove_ads". */
@@ -153,6 +162,43 @@ class BillingManager(
             .build()
         billingClient.acknowledgePurchase(params) { result ->
             Log.d(TAG, "Acknowledge: ${result.responseCode}")
+        }
+    }
+
+    /**
+     * Restaure les achats existants depuis le Play Store.
+     * Appelle [onResult] avec true si un achat valide est trouvé, false sinon.
+     */
+    fun restorePurchases(onResult: (Boolean) -> Unit) {
+        if (!billingClient.isReady) {
+            Log.w(TAG, "restorePurchases: BillingClient non prêt")
+            onResult(false)
+            return
+        }
+        billingClient.queryPurchasesAsync(
+            QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        ) { result, purchases ->
+            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                val hasPurchase = purchases.any { purchase ->
+                    purchase.products.contains(PRODUCT_ID) &&
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED
+                }
+                if (hasPurchase) {
+                    isAdFree = true
+                    onAdFreeChanged(true)
+                    purchases.filter {
+                        it.products.contains(PRODUCT_ID) &&
+                        it.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        !it.isAcknowledged
+                    }.forEach { acknowledgePurchase(it) }
+                }
+                onResult(hasPurchase)
+            } else {
+                Log.w(TAG, "restorePurchases failed: ${result.debugMessage}")
+                onResult(false)
+            }
         }
     }
 
