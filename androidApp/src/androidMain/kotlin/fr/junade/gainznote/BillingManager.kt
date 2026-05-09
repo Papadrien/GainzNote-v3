@@ -1,4 +1,4 @@
-package fr.junade.gainznote.android
+package fr.junade.gainznote
 
 import android.app.Activity
 import android.content.Context
