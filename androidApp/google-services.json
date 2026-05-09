@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1041243271832",
+    "project_id": "gainznote-e4aac",
+    "storage_bucket": "gainznote-e4aac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1041243271832:android:b1e0b1709afe32d6c596ed",
+        "android_client_info": {
+          "package_name": "fr.junade.gainznote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVJE9V3FImPMbKZMx5srgTbpml2yD318s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
