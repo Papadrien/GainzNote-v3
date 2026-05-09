@@ -23,7 +23,7 @@ android {
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         val timestamp = providers.exec {
             commandLine("date", "+%m%d%H%M")
-        }.standardOutput.asText.get().trim().toInt()
+        }.standardOutput.asText.get().trim().toLong().toInt()
         versionCode = timestamp
         versionName = "1.0.$timestamp"
     }
@@ -45,8 +45,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    val versionCode = defaultConfig.versionCode
-    setProperty("archivesBaseName", "GainzNote-1.0.$versionCode")
+    setProperty("archivesBaseName", "GainzNote-1.0.${defaultConfig.versionCode ?: 0}")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
