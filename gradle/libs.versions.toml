@@ -31,8 +31,8 @@ navigation-compose         = { module = "org.jetbrains.androidx.navigation:navig
 google-play-services-ads   = { module = "com.google.android.gms:play-services-ads",     version.ref = "playServicesAds" }
 google-billing             = { module = "com.android.billingclient:billing-ktx",        version.ref = "billing" }
 firebase-bom               = { module = "com.google.firebase:firebase-bom",              version.ref = "firebase-bom" }
-firebase-crashlytics       = { module = "com.google.firebase:firebase-crashlytics-ktx" }
-firebase-analytics         = { module = "com.google.firebase:firebase-analytics-ktx" }
+firebase-crashlytics       = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-analytics         = { module = "com.google.firebase:firebase-analytics" }
 
 [plugins]
 androidApplication      = { id = "com.android.application",                  version.ref = "agp" }
