@@ -26,6 +26,9 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
 
@@ -34,6 +37,8 @@ class MainActivity : ComponentActivity() {
 
     // ── Billing (achat suppression pubs) ─────────────────────────────────
     private lateinit var billingManager: BillingManager
+    /** Prix formaté récupéré depuis le Play Store (ex: "1,99 €", "$1.99"). Null tant que non chargé. */
+    private var removeAdsPrice by mutableStateOf<String?>(null)
 
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
@@ -186,15 +191,21 @@ class MainActivity : ComponentActivity() {
         val repo = WorkoutRepository(DatabaseDriverFactory(this))
 
         // Initialiser Google Play Billing
-        billingManager = BillingManager(this) { purchased ->
-            // Quand l'état d'achat change, on met à jour les settings
-            lifecycleScope.launch {
-                val settings = repo.getAppSettings()
-                if (settings.adFree != purchased) {
-                    repo.saveAppSettings(settings.copy(adFree = purchased))
+        billingManager = BillingManager(
+            context = this,
+            onAdFreeChanged = { purchased ->
+                // Quand l'état d'achat change, on met à jour les settings
+                lifecycleScope.launch {
+                    val settings = repo.getAppSettings()
+                    if (settings.adFree != purchased) {
+                        repo.saveAppSettings(settings.copy(adFree = purchased))
+                    }
                 }
+            },
+            onPriceChanged = { price ->
+                removeAdsPrice = price
             }
-        }
+        )
         billingManager.startConnection()
 
         setContent {
@@ -224,6 +235,7 @@ class MainActivity : ComponentActivity() {
                 onChronoStop  = { stopChronoService() },
                 onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) },
                 isDebug = BuildConfig.DEBUG,
+                removeAdsPrice = removeAdsPrice,
                 onPurchaseRemoveAds = {
                     if (!billingManager.launchPurchase(this@MainActivity)) {
                         Toast.makeText(this@MainActivity, S.purchaseError, Toast.LENGTH_SHORT).show()

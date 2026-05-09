@@ -8,22 +8,24 @@ import com.android.billingclient.api.PendingPurchasesParams
 import kotlinx.coroutines.*
 
 /**
- * Gère l'achat in-app "remove_ads" via Google Play Billing.
+ * Gère l'achat in-app "gainznote_remove_ads" via Google Play Billing.
  *
  * Utilisation :
  *  - Appeler [startConnection] au démarrage (onCreate).
  *  - Appeler [launchPurchase] pour déclencher le flow d'achat.
  *  - Lire [isAdFree] pour savoir si l'utilisateur a acheté.
  *  - [onAdFreeChanged] est appelé quand l'état change (pour mettre à jour l'UI).
+ *  - [onPriceChanged] est appelé avec le prix formaté récupéré depuis le Play Store.
  */
 class BillingManager(
     context: Context,
-    private val onAdFreeChanged: (Boolean) -> Unit
+    private val onAdFreeChanged: (Boolean) -> Unit,
+    private val onPriceChanged: ((String) -> Unit)? = null
 ) : PurchasesUpdatedListener {
 
     companion object {
         private const val TAG = "GainzBilling"
-        const val PRODUCT_ID = "remove_ads"
+        const val PRODUCT_ID = "gainznote_remove_ads"
     }
 
     private val billingClient = BillingClient.newBuilder(context)
@@ -42,26 +44,26 @@ class BillingManager(
     /** Connecte le BillingClient et vérifie les achats existants. */
     fun startConnection() {
         try {
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(result: BillingResult) {
-                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.d(TAG, "Billing connecté")
-                    queryProduct()
-                    queryExistingPurchases()
-                } else {
-                    Log.w(TAG, "Billing setup failed: ${result.debugMessage}")
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(result: BillingResult) {
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Log.d(TAG, "Billing connecté")
+                        queryProduct()
+                        queryExistingPurchases()
+                    } else {
+                        Log.w(TAG, "Billing setup failed: ${result.debugMessage}")
+                    }
                 }
-            }
-            override fun onBillingServiceDisconnected() {
-                Log.w(TAG, "Billing déconnecté")
-            }
-        })
+                override fun onBillingServiceDisconnected() {
+                    Log.w(TAG, "Billing déconnecté")
+                }
+            })
         } catch (e: Exception) {
             Log.e(TAG, "Billing startConnection exception: ${e.message}", e)
         }
     }
 
-    /** Récupère les détails du produit "remove_ads". */
+    /** Récupère les détails du produit depuis le Play Store (prix localisé inclus). */
     private fun queryProduct() {
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(
@@ -77,13 +79,18 @@ class BillingManager(
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 productDetails = detailsList.first()
                 Log.d(TAG, "Produit trouvé: ${productDetails?.name}")
+                // Remonte le prix formaté (localisé selon le pays du compte Play Store)
+                productDetails?.oneTimePurchaseOfferDetails?.formattedPrice?.let { price ->
+                    Log.d(TAG, "Prix récupéré: $price")
+                    onPriceChanged?.invoke(price)
+                }
             } else {
                 Log.w(TAG, "Produit non trouvé: ${result.debugMessage}")
             }
         }
     }
 
-    /** Vérifie si l'utilisateur a déjà acheté "remove_ads". */
+    /** Vérifie si l'utilisateur a déjà acheté "gainznote_remove_ads". */
     private fun queryExistingPurchases() {
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
@@ -167,14 +174,34 @@ class BillingManager(
 
     /**
      * Restaure les achats existants depuis le Play Store.
+     * Si le client est déconnecté, reconnecte d'abord puis interroge.
      * Appelle [onResult] avec true si un achat valide est trouvé, false sinon.
      */
     fun restorePurchases(onResult: (Boolean) -> Unit) {
         if (!billingClient.isReady) {
-            Log.w(TAG, "restorePurchases: BillingClient non prêt")
-            onResult(false)
+            Log.w(TAG, "restorePurchases: BillingClient non prêt, reconnexion...")
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(result: BillingResult) {
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Log.d(TAG, "Reconnexion réussie, lancement de la restauration")
+                        queryProduct()
+                        doQueryPurchases(onResult)
+                    } else {
+                        Log.w(TAG, "Reconnexion échouée: ${result.debugMessage}")
+                        onResult(false)
+                    }
+                }
+                override fun onBillingServiceDisconnected() {
+                    Log.w(TAG, "Déconnecté pendant la restauration")
+                    onResult(false)
+                }
+            })
             return
         }
+        doQueryPurchases(onResult)
+    }
+
+    private fun doQueryPurchases(onResult: (Boolean) -> Unit) {
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.INAPP)

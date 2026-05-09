@@ -279,6 +279,10 @@ object S {
         Lang.FR -> "⚠ Mode test — appuyez pour réactiver"
         Lang.EN -> "⚠ Test mode — tap to re-enable"
     }
+    val removeAdsTitle get() = when (lang) {
+        Lang.FR -> "Supprimer les publicités"
+        Lang.EN -> "Remove ads"
+    }
     val removeAdsPrice get() = when (lang) {
         Lang.FR -> "Supprimer les publicités — 1,99€"
         Lang.EN -> "Remove ads — \$1.99"

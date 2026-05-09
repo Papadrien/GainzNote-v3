@@ -48,6 +48,7 @@ fun App(
     // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
     onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
     isDebug: Boolean = false,
+    removeAdsPrice: String? = null,
     onPurchaseRemoveAds: () -> Unit = {},
     onRestorePurchases: () -> Unit = {}
 ) {
@@ -187,6 +188,7 @@ fun App(
                 },
                 adFree = adFree,
                 isDebug = isDebug,
+                removeAdsPrice = removeAdsPrice,
                 onPurchaseRemoveAds = onPurchaseRemoveAds,
                 onRestorePurchases = onRestorePurchases,
                 onToggleAdFree = {
