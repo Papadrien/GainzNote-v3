@@ -34,15 +34,3 @@
 -keepclassmembers class kotlin.Lazy {
     <fields>;
 }
-
-# ── Firebase ──────────────────────────────────────────────────────────────────
--keepattributes SourceFile,LineNumberTable
--keep public class * extends java.lang.Exception
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.firebase.**
--dontwarn com.google.android.gms.**
-# Empêche R8 de supprimer le ContentProvider d'auto-init Firebase
--keep class com.google.firebase.provider.FirebaseInitProvider { *; }
--keep class com.google.firebase.components.** { *; }
--keep class com.google.firebase.installations.** { *; }

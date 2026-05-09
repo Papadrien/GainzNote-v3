@@ -96,7 +96,7 @@ fun App(
     SystemBarsEffect(darkTheme)
 
     fun navigateTo(screen: Screen) = backStack.add(screen)
-    fun navigateBack() { if (backStack.size > 1) backStack.removeLast() else onExit() }
+    fun navigateBack() { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onExit() }
 
     fun onWorkoutFinished() {
         if (adFree) {
@@ -255,7 +255,7 @@ fun App(
                 onBack = { navigateBack() },
                 onStartWorkout = { workoutId ->
                     // Remplace l'écran de setup par l'écran de séance active
-                    backStack.removeLast()
+                    backStack.removeAt(backStack.lastIndex)
                     backStack.add(Screen.CircuitWorkout(workoutId = workoutId))
                 },
                 onFinished = { onWorkoutFinished() }
