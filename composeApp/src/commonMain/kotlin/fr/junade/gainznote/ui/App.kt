@@ -49,6 +49,7 @@ fun App(
     onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
     isDebug: Boolean = false,
     removeAdsPrice: String? = null,
+    purchasedAdFree: Boolean = false,
     onPurchaseRemoveAds: () -> Unit = {},
     onRestorePurchases: () -> Unit = {}
 ) {
@@ -68,12 +69,23 @@ fun App(
         val settings = repo.getAppSettings()
         darkTheme = settings.darkTheme
         chronoNotifEnabled = settings.chronoNotifEnabled
-        adFree = settings.adFree
+        // Si Billing a déjà confirmé l'achat avant la fin du chargement, on prend la valeur la plus permissive
+        adFree = settings.adFree || purchasedAdFree
         language = settings.language
         lastWorkoutType = settings.lastWorkoutType
         // Initialiser la langue
         if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
         settingsLoaded = true
+        // Si Billing avait confirmé l'achat mais la DB ne l'avait pas encore, on persiste maintenant
+        if (purchasedAdFree && !settings.adFree) persistSettings()
+    }
+
+    // Réagit immédiatement quand BillingManager confirme un achat ou une restauration
+    LaunchedEffect(purchasedAdFree) {
+        if (purchasedAdFree && !adFree) {
+            adFree = true
+            persistSettings()
+        }
     }
 
     fun persistSettings() {

@@ -39,6 +39,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var billingManager: BillingManager
     /** Prix formaté récupéré depuis le Play Store (ex: "1,99 €", "$1.99"). Null tant que non chargé. */
     private var removeAdsPrice by mutableStateOf<String?>(null)
+    /** État d'achat réactif — mis à jour par BillingManager et lu par le composable App. */
+    private var isAdFreePurchased by mutableStateOf(false)
 
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
@@ -194,7 +196,8 @@ class MainActivity : ComponentActivity() {
         billingManager = BillingManager(
             context = this,
             onAdFreeChanged = { purchased ->
-                // Quand l'état d'achat change, on met à jour les settings
+                // Met à jour le state Compose (UI immédiate) ET persiste en DB
+                isAdFreePurchased = purchased
                 lifecycleScope.launch {
                     val settings = repo.getAppSettings()
                     if (settings.adFree != purchased) {
@@ -236,6 +239,7 @@ class MainActivity : ComponentActivity() {
                 onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) },
                 isDebug = BuildConfig.DEBUG,
                 removeAdsPrice = removeAdsPrice,
+                purchasedAdFree = isAdFreePurchased,
                 onPurchaseRemoveAds = {
                     if (!billingManager.launchPurchase(this@MainActivity)) {
                         Toast.makeText(this@MainActivity, S.purchaseError, Toast.LENGTH_SHORT).show()
