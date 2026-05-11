@@ -65,6 +65,21 @@ fun App(
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    fun persistSettings() {
+        if (!settingsLoaded) return
+        scope.launch {
+            repo.saveAppSettings(
+                AppSettings(
+                    darkTheme = darkTheme,
+                    chronoNotifEnabled = chronoNotifEnabled,
+                    adFree = adFree,
+                    language = language,
+                    lastWorkoutType = lastWorkoutType
+                )
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         val settings = repo.getAppSettings()
         darkTheme = settings.darkTheme
@@ -85,21 +100,6 @@ fun App(
         if (purchasedAdFree && !adFree) {
             adFree = true
             persistSettings()
-        }
-    }
-
-    fun persistSettings() {
-        if (!settingsLoaded) return
-        scope.launch {
-            repo.saveAppSettings(
-                AppSettings(
-                    darkTheme = darkTheme,
-                    chronoNotifEnabled = chronoNotifEnabled,
-                    adFree = adFree,
-                    language = language,
-                    lastWorkoutType = lastWorkoutType
-                )
-            )
         }
     }
 
