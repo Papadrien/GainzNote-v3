@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.googleServices)
 }
 
 kotlin {
@@ -62,4 +63,5 @@ dependencies {
     implementation(libs.androidx.splashscreen)
     implementation(libs.google.play.services.ads)
     implementation(libs.google.billing)
+    implementation(libs.firebase.analytics)
 }
