@@ -48,7 +48,10 @@ fun App(
     // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
     onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
     isDebug: Boolean = false,
-    onPurchaseRemoveAds: () -> Unit = {}
+    removeAdsPrice: String? = null,
+    purchasedAdFree: Boolean = false,
+    onPurchaseRemoveAds: () -> Unit = {},
+    onRestorePurchases: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -61,18 +64,6 @@ fun App(
     var lastWorkoutType by remember { mutableStateOf(WorkoutType.MUSCULATION) }
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        val settings = repo.getAppSettings()
-        darkTheme = settings.darkTheme
-        chronoNotifEnabled = settings.chronoNotifEnabled
-        adFree = settings.adFree
-        language = settings.language
-        lastWorkoutType = settings.lastWorkoutType
-        // Initialiser la langue
-        if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
-        settingsLoaded = true
-    }
 
     fun persistSettings() {
         if (!settingsLoaded) return
@@ -89,13 +80,36 @@ fun App(
         }
     }
 
+    LaunchedEffect(Unit) {
+        val settings = repo.getAppSettings()
+        darkTheme = settings.darkTheme
+        chronoNotifEnabled = settings.chronoNotifEnabled
+        // Si Billing a déjà confirmé l'achat avant la fin du chargement, on prend la valeur la plus permissive
+        adFree = settings.adFree || purchasedAdFree
+        language = settings.language
+        lastWorkoutType = settings.lastWorkoutType
+        // Initialiser la langue
+        if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
+        settingsLoaded = true
+        // Si Billing avait confirmé l'achat mais la DB ne l'avait pas encore, on persiste maintenant
+        if (purchasedAdFree && !settings.adFree) persistSettings()
+    }
+
+    // Réagit immédiatement quand BillingManager confirme un achat ou une restauration
+    LaunchedEffect(purchasedAdFree) {
+        if (purchasedAdFree && !adFree) {
+            adFree = true
+            persistSettings()
+        }
+    }
+
     // Clé qui s'incrémente après chaque import pour forcer le rechargement de HomeScreen
     var refreshKey by remember { mutableStateOf(0) }
 
     SystemBarsEffect(darkTheme)
 
     fun navigateTo(screen: Screen) = backStack.add(screen)
-    fun navigateBack() { if (backStack.size > 1) backStack.removeLast() else onExit() }
+    fun navigateBack() { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onExit() }
 
     fun onWorkoutFinished() {
         if (adFree) {
@@ -186,7 +200,9 @@ fun App(
                 },
                 adFree = adFree,
                 isDebug = isDebug,
+                removeAdsPrice = removeAdsPrice,
                 onPurchaseRemoveAds = onPurchaseRemoveAds,
+                onRestorePurchases = onRestorePurchases,
                 onToggleAdFree = {
                     adFree = !adFree
                     persistSettings()
@@ -253,7 +269,7 @@ fun App(
                 onBack = { navigateBack() },
                 onStartWorkout = { workoutId ->
                     // Remplace l'écran de setup par l'écran de séance active
-                    backStack.removeLast()
+                    backStack.removeAt(backStack.lastIndex)
                     backStack.add(Screen.CircuitWorkout(workoutId = workoutId))
                 },
                 onFinished = { onWorkoutFinished() }

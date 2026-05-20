@@ -39,7 +39,9 @@ fun HomeScreen(
     onImport: () -> Unit = {},
     adFree: Boolean = false,
     isDebug: Boolean = false,
+    removeAdsPrice: String? = null,
     onPurchaseRemoveAds: () -> Unit = {},
+    onRestorePurchases: () -> Unit = {},
     onToggleAdFree: () -> Unit = {},
     language: String = "auto",
     onChangeLang: (String) -> Unit = {},
@@ -191,7 +193,14 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(S.removeAdsPrice, color = c.accent, fontSize = 15.sp,
+                        // Prix récupéré depuis le Play Store (localisé par pays).
+                        // Fallback sur la chaîne statique si pas encore chargé.
+                        val priceLabel = if (removeAdsPrice != null) {
+                            "${S.removeAdsTitle} — $removeAdsPrice"
+                        } else {
+                            S.removeAdsPrice
+                        }
+                        Text(priceLabel, color = c.accent, fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold)
                         Text(S.removeAdsPriceDesc, color = c.textMuted, fontSize = 11.sp)
                     }
@@ -284,6 +293,12 @@ fun HomeScreen(
         // ─ Politique de confidentialité ──────────────────────────────────────
         Spacer(Modifier.height(8.dp))
         SettingButton("🔒", S.privacyPolicy, c, onPrivacyPolicy)
+
+        // ─ Restaurer les achats (visible seulement si pas encore adFree) ────
+        if (!adFree) {
+            Spacer(Modifier.height(8.dp))
+            SettingButton("🔄", S.restorePurchases, c, onRestorePurchases)
+        }
 
         // ─ Bouton test debug-only (toggle adFree sans achat) ─────────────────
         if (isDebug) {

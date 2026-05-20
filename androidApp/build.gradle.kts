@@ -14,30 +14,6 @@ kotlin {
     }
 }
 
-fun gitCommitCount(): Int {
-    return try {
-        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
-            .start()
-        process.inputStream.bufferedReader().readLine()?.trim()?.toInt() ?: 1
-    } catch (e: Exception) {
-        1
-    }
-}
-
-fun gitTag(): String {
-    return try {
-        val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
-            .start()
-        process.inputStream.bufferedReader().readLine()?.trim() ?: "1.0.0"
-    } catch (e: Exception) {
-        "1.0.0"
-    }
-}
-
 android {
     namespace = "fr.junade.gainznote"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
@@ -45,8 +21,11 @@ android {
         applicationId = "fr.junade.gainznote"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = gitCommitCount()
-        versionName = gitTag()
+        val timestamp = providers.exec {
+            commandLine("date", "+%m%d%H%M")
+        }.standardOutput.asText.get().trim().toLong().toInt()
+        versionCode = timestamp
+        versionName = "1.0.$timestamp"
     }
     signingConfigs {
         create("release") {
@@ -66,11 +45,14 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    setProperty("archivesBaseName", "GainzNote-1.0.${defaultConfig.versionCode ?: 0}")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+
+
 
 dependencies {
     implementation(project(":composeApp"))

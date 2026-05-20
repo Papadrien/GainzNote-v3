@@ -106,6 +106,41 @@ fun PrivacyPolicyScreen(
                     c = c
                 )
 
+
+
+                PrivacySection(
+                    title = if (S.lang == Lang.FR) "Conservation et suppression des données" else "Data Retention and Deletion",
+                    body = if (S.lang == Lang.FR)
+                        """Les données d'entraînement de l'utilisateur sont stockées uniquement localement sur son appareil et ne sont pas transmises à des serveurs externes.
+
+Ces données sont conservées jusqu'à ce que l'utilisateur :
+
+• les supprime manuellement depuis l'application ;
+• efface les données de l'application depuis les paramètres de son appareil ;
+• ou désinstalle l'application.
+
+Lors de la désinstallation de l'application, toutes les données locales associées peuvent être supprimées automatiquement par le système d'exploitation.
+
+Certaines données publicitaires peuvent être collectées et conservées par Google AdMob conformément à la politique de confidentialité de Google.
+
+Le développeur n'a pas accès aux données d'entraînement des utilisateurs et ne peut pas les supprimer à distance."""
+                    else
+                        """User workout data is stored locally on the user's device only and is not transmitted to external servers.
+
+This data is retained until the user:
+
+• manually deletes it from the application;
+• clears the app data from the device settings;
+• or uninstalls the application.
+
+When the application is uninstalled, all associated local data may be automatically removed by the operating system.
+
+Some advertising-related data may be collected and retained by Google AdMob in accordance with Google's privacy policy.
+
+The developer does not have access to user workout data and cannot delete it remotely.""",
+                    c = c
+                )
+
                 PrivacySection(
                     title = if (S.lang == Lang.FR) "Sécurité" else "Security",
                     body = if (S.lang == Lang.FR)

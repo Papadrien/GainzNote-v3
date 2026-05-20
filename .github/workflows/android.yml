@@ -125,8 +125,7 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p dist
-          VERSION="${{ needs.analyze.outputs.version }}"
-          cp androidApp/build/outputs/apk/debug/androidApp-debug.apk "dist/GainzNote-${VERSION}-debug.apk"
+          cp androidApp/build/outputs/apk/debug/GainzNote-*.apk dist/
           ls -lh dist/
 
       - name: Upload debug APK
@@ -173,8 +172,6 @@ jobs:
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "$ANDROID_KEY_PROPERTIES" > "$RUNNER_TEMP/key.properties"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-          # Charger les propriétés de la clé et les exporter comme variables d'environnement
-          # attendues par androidApp/build.gradle.kts (STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD).
           while IFS='=' read -r key value; do
             case "$key" in
               storePassword) echo "STORE_PASSWORD=$value" >> "$GITHUB_ENV" ;;
@@ -203,9 +200,8 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p dist
-          VERSION="${{ needs.analyze.outputs.version }}"
-          cp androidApp/build/outputs/apk/release/androidApp-release.apk "dist/GainzNote-${VERSION}.apk"
-          cp androidApp/build/outputs/bundle/release/androidApp-release.aab "dist/GainzNote-${VERSION}.aab"
+          cp androidApp/build/outputs/apk/release/GainzNote-*.apk dist/
+          cp androidApp/build/outputs/bundle/release/GainzNote-*.aab dist/
           ls -lh dist/
 
       - name: Upload release artifacts
@@ -240,7 +236,6 @@ jobs:
             TAG="${GITHUB_REF#refs/tags/}"
           else
             TAG="v${{ needs.analyze.outputs.version }}"
-            # Si le tag n'existe pas encore, on le crée
             if ! git rev-parse "$TAG" >/dev/null 2>&1; then
               git config user.name "github-actions[bot]"
               git config user.email "github-actions[bot]@users.noreply.github.com"
