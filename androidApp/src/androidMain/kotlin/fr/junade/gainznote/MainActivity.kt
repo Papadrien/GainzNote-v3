@@ -45,8 +45,9 @@ class MainActivity : ComponentActivity() {
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
 
-    /** Pré-charge un interstitiel pour la prochaine utilisation. */
+    /** Pré-charge un interstitiel pour la prochaine utilisation. Ignoré si l'utilisateur est adFree. */
     private fun loadInterstitial() {
+        if (isAdFreePurchased) return
         val adUnitId = if (BuildConfig.DEBUG) {
             "ca-app-pub-3940256099942544/1033173712" // Interstitiel de test Google
         } else {
@@ -196,8 +197,14 @@ class MainActivity : ComponentActivity() {
         billingManager = BillingManager(
             context = this,
             onAdFreeChanged = { purchased ->
-                // Met à jour le state Compose (UI immédiate) ET persiste en DB
-                isAdFreePurchased = purchased
+                // Mise à jour du state Compose OBLIGATOIREMENT sur le main thread
+                runOnUiThread {
+                    isAdFreePurchased = purchased
+                    // Libérer l'interstitiel en mémoire dès l'achat confirmé
+                    if (purchased) {
+                        interstitialAd = null
+                    }
+                }
                 lifecycleScope.launch {
                     val settings = repo.getAppSettings()
                     if (settings.adFree != purchased) {
