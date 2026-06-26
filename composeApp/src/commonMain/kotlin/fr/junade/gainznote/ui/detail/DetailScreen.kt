@@ -131,7 +131,7 @@ fun DetailScreen(
                             Spacer(Modifier.height(12.dp))
                         }
                         w.circuitExercises.forEach { ex ->
-                            CircuitExerciseDetailCard(ex, cfg?.totalRounds ?: 0, c, typeAccent, typeAccentDim)
+                            CircuitExerciseDetailCard(ex, cfg?.totalRounds ?: 0, c, typeAccent, typeAccentDim, useImperialUnits)
                             Spacer(Modifier.height(12.dp))
                         }
                     }
@@ -256,7 +256,8 @@ fun CircuitExerciseDetailCard(
     totalRounds: Int,
     c: GainzThemeColors,
     typeAccent: Color,
-    typeAccentDim: Color
+    typeAccentDim: Color,
+    useImperialUnits: Boolean = false
 ) {
     Column(
         Modifier.fillMaxWidth()

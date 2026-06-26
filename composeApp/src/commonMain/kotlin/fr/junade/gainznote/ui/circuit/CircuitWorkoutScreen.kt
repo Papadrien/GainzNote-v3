@@ -240,7 +240,8 @@ fun CircuitWorkoutScreen(
                     currentRound = currentRound,
                     currentExIdx = currentExIdx,
                     c = c,
-                    onTapCell = { exId, round -> editing = exId to round }
+                    onTapCell = { exId, round -> editing = exId to round },
+                    useImperialUnits = useImperialUnits
                 )
             }
 
@@ -469,7 +470,8 @@ private fun RecapTable(
     currentRound: Int,
     currentExIdx: Int,
     c: GainzThemeColors,
-    onTapCell: (String, Int) -> Unit
+    onTapCell: (String, Int) -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     Column(Modifier.fillMaxWidth()
         .border(1.dp, c.border, RoundedCornerShape(12.dp))
