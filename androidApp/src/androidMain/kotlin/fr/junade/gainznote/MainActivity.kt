@@ -251,6 +251,15 @@ class MainActivity : ComponentActivity() {
                         runOnUiThread {
                             val msg = if (found) S.restorePurchasesSuccess else S.restorePurchasesNone
                             Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                            if (found) {
+                                isAdFreePurchased = true
+                            }
+                        }
+                        if (found) {
+                            lifecycleScope.launch {
+                                val settings = repo.getAppSettings()
+                                repo.saveAppSettings(settings.copy(adFree = true))
+                            }
                         }
                     }
                 },
