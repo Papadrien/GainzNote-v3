@@ -382,7 +382,7 @@ private fun ActiveExerciseCard(
                     )
                 ) {
                     Text(
-                        "Démarrer",
+                        S.startTimer,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )

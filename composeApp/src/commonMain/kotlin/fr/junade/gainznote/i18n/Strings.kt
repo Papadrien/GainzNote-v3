@@ -564,6 +564,10 @@ object S {
         Lang.FR -> "Passer"
         Lang.EN -> "Skip"
     }
+    val startTimer get() = when (lang) {
+        Lang.FR -> "Démarrer"
+        Lang.EN -> "Start"
+    }
     val validateAndNext get() = when (lang) {
         Lang.FR -> "Valider et passer au suivant"
         Lang.EN -> "Validate and next"
