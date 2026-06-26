@@ -393,7 +393,7 @@ object S {
     // ── Workout types (Cardio, Circuit) ───────────────────────────────────
     val workoutTypeMusculation get() = when (lang) {
         Lang.FR -> "Musculation"
-        Lang.EN -> "Strength training"
+        Lang.EN -> "Fitness"
     }
     val workoutTypeCardio get() = when (lang) {
         Lang.FR -> "Cardio"
