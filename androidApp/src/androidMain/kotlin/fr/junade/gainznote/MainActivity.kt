@@ -180,7 +180,18 @@ class MainActivity : ComponentActivity() {
         startService(intent)
     }
 
-    // ── onCreate ──────────────────────────────────────────────────────────────
+    // ── Cycle de vie ──────────────────────────────────────────────────────────
+
+    override fun onResume() {
+        super.onResume()
+        // Rattrape un achat/restauration dont le callback onPurchasesUpdated
+        // aurait été manqué pendant la transition d'écran du flow de paiement
+        // Google Play (ex: Activity mise en pause puis reprise). Garantit que
+        // l'état "sans pub" est toujours à jour dès que l'app revient au premier plan.
+        if (::billingManager.isInitialized) {
+            billingManager.refreshPurchases()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()

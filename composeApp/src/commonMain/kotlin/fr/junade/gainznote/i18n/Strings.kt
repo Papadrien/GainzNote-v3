@@ -1,5 +1,9 @@
 package fr.junade.gainznote.i18n
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 /** Langue supportée. */
 enum class Lang { FR, EN }
 
@@ -7,9 +11,16 @@ enum class Lang { FR, EN }
  * Objet de traduction centralisé.
  * Utiliser `S.xxx` partout dans l'UI au lieu de chaînes en dur.
  * Appeler `S.setLang(lang)` au démarrage ou quand l'utilisateur change la langue.
+ *
+ * `lang` est backé par un `mutableStateOf` (State Compose) et non une simple `var`.
+ * Cela garantit que tout composable qui lit une chaîne `S.xxx` est automatiquement
+ * recomposé quand la langue change, même si ses propres paramètres (selected, darkTheme, …)
+ * n'ont pas changé — sans ça, certains composables "skippables" par Compose pouvaient
+ * rester figés sur l'ancienne langue jusqu'à ce qu'une recomposition interne (ex: un clic)
+ * les force à se réexécuter.
  */
 object S {
-    var lang: Lang = Lang.FR
+    var lang: Lang by mutableStateOf(Lang.FR)
         private set
 
     fun setLang(l: Lang) { lang = l }
