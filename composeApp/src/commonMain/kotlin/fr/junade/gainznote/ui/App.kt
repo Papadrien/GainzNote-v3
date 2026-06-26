@@ -17,6 +17,7 @@ import fr.junade.gainznote.ui.detail.DetailScreen
 import fr.junade.gainznote.ui.history.HistoryScreen
 import fr.junade.gainznote.ui.home.HomeScreen
 import fr.junade.gainznote.ui.home.PrivacyPolicyScreen
+import fr.junade.gainznote.ui.home.RatingBottomSheet
 import fr.junade.gainznote.ui.theme.GainzTheme
 import fr.junade.gainznote.ui.workout.WorkoutScreen
 import kotlinx.coroutines.launch
@@ -53,7 +54,8 @@ fun App(
     removeAdsPrice: String? = null,
     purchasedAdFree: Boolean = false,
     onPurchaseRemoveAds: () -> Unit = {},
-    onRestorePurchases: () -> Unit = {}
+    onRestorePurchases: () -> Unit = {},
+    onOpenPlayStore: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -65,6 +67,9 @@ fun App(
     var language by remember { mutableStateOf("auto") }
     var lastWorkoutType by remember { mutableStateOf(WorkoutType.MUSCULATION) }
     var useImperialUnits by remember { mutableStateOf(false) }
+    var ratingPromptDone by remember { mutableStateOf(false) }
+    var workoutCount by remember { mutableStateOf(0) }
+    var showRatingSheet by remember { mutableStateOf(false) }
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -77,7 +82,9 @@ fun App(
                     adFree = adFree,
                     language = language,
                     lastWorkoutType = lastWorkoutType,
-                    useImperialUnits = useImperialUnits
+                    useImperialUnits = useImperialUnits,
+                    ratingPromptDone = ratingPromptDone,
+                    workoutCount = workoutCount
                 )
             )
         }
@@ -92,6 +99,8 @@ fun App(
         language = settings.language
         lastWorkoutType = settings.lastWorkoutType
         useImperialUnits = settings.useImperialUnits
+        ratingPromptDone = settings.ratingPromptDone
+        workoutCount = settings.workoutCount
         // Détection auto au premier démarrage
         if (settings.language == "auto" && settings.useImperialUnits == false) {
             val country = getSystemCountry()
@@ -121,6 +130,11 @@ fun App(
     fun navigateBack() { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onExit() }
 
     fun onWorkoutFinished() {
+        workoutCount++
+        if (!ratingPromptDone && workoutCount >= 3) {
+            showRatingSheet = true
+        }
+        persistSettings()
         if (adFree) {
             backStack.clear()
             backStack.add(Screen.Home)
@@ -321,6 +335,28 @@ fun App(
                 },
                 onDeleted = { navigateBack() },
                 useImperialUnits = useImperialUnits
+            )
+        }
+        if (showRatingSheet) {
+            val c = fr.junade.gainznote.ui.theme.GainzThemeColors(darkTheme)
+            RatingBottomSheet(
+                c = c,
+                darkTheme = darkTheme,
+                onDismiss = { showRatingSheet = false },
+                onRate = {
+                    ratingPromptDone = true
+                    showRatingSheet = false
+                    persistSettings()
+                    onOpenPlayStore()
+                },
+                onLater = {
+                    showRatingSheet = false
+                },
+                onNoThanks = {
+                    ratingPromptDone = true
+                    showRatingSheet = false
+                    persistSettings()
+                }
             )
         }
     }

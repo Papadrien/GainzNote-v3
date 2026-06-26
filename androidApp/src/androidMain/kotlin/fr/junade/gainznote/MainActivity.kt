@@ -253,6 +253,13 @@ class MainActivity : ComponentActivity() {
                             Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
                         }
                     }
+                },
+                onOpenPlayStore = {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=fr.junade.gainznote")))
+                    } catch (e: Exception) {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=fr.junade.gainznote")))
+                    }
                 }
             )
         }

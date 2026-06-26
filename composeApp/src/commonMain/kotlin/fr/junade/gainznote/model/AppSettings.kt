@@ -6,5 +6,7 @@ data class AppSettings(
     val adFree: Boolean = false,
     val language: String = "auto",
     val lastWorkoutType: WorkoutType = WorkoutType.MUSCULATION,
-    val useImperialUnits: Boolean = false
+    val useImperialUnits: Boolean = false,
+    val ratingPromptDone: Boolean = false,
+    val workoutCount: Int = 0
 )

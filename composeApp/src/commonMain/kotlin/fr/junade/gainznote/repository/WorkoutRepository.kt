@@ -154,7 +154,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
                 adFree = it.ad_free != 0L,
                 language = it.language,
                 lastWorkoutType = WorkoutType.parse(it.last_workout_type),
-                useImperialUnits = it.use_imperial_units != 0L
+                useImperialUnits = it.use_imperial_units != 0L,
+                ratingPromptDone = it.rating_prompt_done != 0L,
+                workoutCount = it.workout_count?.toInt() ?: 0
             )
         } ?: AppSettings()
     }
@@ -167,7 +169,9 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
             ad_free = if (settings.adFree) 1L else 0L,
             language = settings.language,
             last_workout_type = settings.lastWorkoutType.name,
-            use_imperial_units = if (settings.useImperialUnits) 1L else 0L
+            use_imperial_units = if (settings.useImperialUnits) 1L else 0L,
+            rating_prompt_done = if (settings.ratingPromptDone) 1L else 0L,
+            workout_count = settings.workoutCount.toLong()
         )
     }
 

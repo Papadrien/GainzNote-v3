@@ -694,6 +694,28 @@ object S {
         Lang.EN -> "Remaining rest time"
     }
 
+    // ── Rating Prompt ─────────────────────────────────────────────────────
+    val ratingTitle get() = when (lang) {
+        Lang.FR -> "Vous aimez GainzNote ?"
+        Lang.EN -> "Enjoying GainzNote?"
+    }
+    val ratingBody get() = when (lang) {
+        Lang.FR -> "Prenez une seconde pour noter l'application, ça nous aide beaucoup !"
+        Lang.EN -> "Take a moment to rate the app, it helps us a lot!"
+    }
+    val ratingConfirm get() = when (lang) {
+        Lang.FR -> "Noter"
+        Lang.EN -> "Rate"
+    }
+    val ratingLater get() = when (lang) {
+        Lang.FR -> "Plus tard"
+        Lang.EN -> "Later"
+    }
+    val ratingNo get() = when (lang) {
+        Lang.FR -> "Non merci"
+        Lang.EN -> "No thanks"
+    }
+
     // ── Privacy Policy ────────────────────────────────────────────────────
     val privacyPolicy get() = when (lang) {
         Lang.FR -> "Politique de confidentialité"
