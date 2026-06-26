@@ -46,7 +46,9 @@ fun HomeScreen(
     language: String = "auto",
     onChangeLang: (String) -> Unit = {},
     refreshKey: Int = 0,
-    onPrivacyPolicy: () -> Unit = {}
+    onPrivacyPolicy: () -> Unit = {},
+    useImperialUnits: Boolean = false,
+    onToggleImperialUnits: () -> Unit = {}
 ) {
     val c = GainzThemeColors(darkTheme, type = selectedWorkoutType)
     var recentWorkouts by remember { mutableStateOf<List<Workout>>(emptyList()) }
@@ -254,6 +256,35 @@ fun HomeScreen(
                 }
                 Switch(
                     checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
+                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
+                        uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
+                    )
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // ─ Bloc Unités Impériales ────────────────────────────────────────────
+        Surface(
+            shape = RoundedCornerShape(12.dp), color = c.surface,
+            border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text(S.useImperialUnits, color = c.text, fontSize = 15.sp)
+                    Text(
+                        S.useImperialUnitsDesc,
+                        color = c.textMuted, fontSize = 11.sp
+                    )
+                }
+                Switch(
+                    checked = useImperialUnits, onCheckedChange = { onToggleImperialUnits() },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
                         uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),

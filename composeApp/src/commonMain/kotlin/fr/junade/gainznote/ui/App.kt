@@ -4,7 +4,9 @@ import androidx.compose.runtime.*
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.i18n.Lang
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.i18n.getSystemCountry
 import fr.junade.gainznote.i18n.getSystemLanguage
+import fr.junade.gainznote.i18n.isImperialCountry
 import fr.junade.gainznote.model.AppSettings
 import fr.junade.gainznote.model.WorkoutType
 import fr.junade.gainznote.repository.WorkoutRepository
@@ -62,6 +64,7 @@ fun App(
     var adFree by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf("auto") }
     var lastWorkoutType by remember { mutableStateOf(WorkoutType.MUSCULATION) }
+    var useImperialUnits by remember { mutableStateOf(false) }
     var settingsLoaded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -73,7 +76,8 @@ fun App(
                     chronoNotifEnabled = chronoNotifEnabled,
                     adFree = adFree,
                     language = language,
-                    lastWorkoutType = lastWorkoutType
+                    lastWorkoutType = lastWorkoutType,
+                    useImperialUnits = useImperialUnits
                 )
             )
         }
@@ -87,6 +91,12 @@ fun App(
         adFree = settings.adFree || purchasedAdFree
         language = settings.language
         lastWorkoutType = settings.lastWorkoutType
+        useImperialUnits = settings.useImperialUnits
+        // Détection auto au premier démarrage
+        if (settings.language == "auto" && settings.useImperialUnits == false) {
+            val country = getSystemCountry()
+            if (isImperialCountry(country)) useImperialUnits = true
+        }
         // Initialiser la langue
         if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
         settingsLoaded = true
@@ -213,7 +223,12 @@ fun App(
                     else S.setLang(if (newLang == "fr") Lang.FR else Lang.EN)
                     persistSettings()
                 },
-                refreshKey = refreshKey
+                refreshKey = refreshKey,
+                useImperialUnits = useImperialUnits,
+                onToggleImperialUnits = {
+                    useImperialUnits = !useImperialUnits
+                    persistSettings()
+                }
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
@@ -225,7 +240,8 @@ fun App(
                 onFinished = { onWorkoutFinished() },
                 chronoNotifEnabled = chronoNotifEnabled,
                 onChronoStart = onChronoStart,
-                onChronoStop = onChronoStop
+                onChronoStop = onChronoStop,
+                useImperialUnits = useImperialUnits
             )
             Screen.PrivacyPolicy -> PrivacyPolicyScreen(
                 darkTheme = darkTheme,
@@ -256,7 +272,8 @@ fun App(
                 resumeId = s.resumeId,
                 adFree = adFree,
                 onBack = { navigateBack() },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.CircuitSetup -> CircuitSetupScreen(
                 repo = repo,
@@ -267,11 +284,11 @@ fun App(
                 adFree = adFree,
                 onBack = { navigateBack() },
                 onStartWorkout = { workoutId ->
-                    // Remplace l'écran de setup par l'écran de séance active
                     backStack.removeAt(backStack.lastIndex)
                     backStack.add(Screen.CircuitWorkout(workoutId = workoutId))
                 },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.CircuitWorkout -> CircuitWorkoutScreen(
                 repo = repo,
@@ -282,7 +299,8 @@ fun App(
                 onChronoStart = onChronoStart,
                 onChronoStop = onChronoStop,
                 onBack = { navigateBack() },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
@@ -301,7 +319,8 @@ fun App(
                         })
                     }
                 },
-                onDeleted = { navigateBack() }
+                onDeleted = { navigateBack() },
+                useImperialUnits = useImperialUnits
             )
         }
     }

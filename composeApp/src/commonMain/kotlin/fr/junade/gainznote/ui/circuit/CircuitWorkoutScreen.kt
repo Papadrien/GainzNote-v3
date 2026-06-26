@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.junade.gainznote.i18n.S
 import fr.junade.gainznote.model.CircuitExercise
+import fr.junade.gainznote.model.UnitConverter
 import fr.junade.gainznote.model.CircuitInputType
 import fr.junade.gainznote.model.CircuitPerformance
 import fr.junade.gainznote.model.WorkoutType
@@ -57,7 +58,8 @@ fun CircuitWorkoutScreen(
     onChronoStart: (Long) -> Unit = {},
     onChronoStop: () -> Unit = {},
     onBack: () -> Unit,
-    onFinished: () -> Unit
+    onFinished: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val vm = remember(workoutId) {
@@ -94,9 +96,9 @@ fun CircuitWorkoutScreen(
     var weight by remember(currentRound, currentExIdx) {
         mutableStateOf(
             if (currentRound > 1) {
-                pastPerf?.weightKg?.let { it.toString().replace(".0", "") } ?: ""
+                pastPerf?.weightKg?.let { UnitConverter.displayWeight(it, useImperialUnits) } ?: ""
             } else {
-                currentExo?.referenceWeightKg?.let { it.toString().replace(".0", "") } ?: ""
+                currentExo?.referenceWeightKg?.let { UnitConverter.displayWeight(it, useImperialUnits) } ?: ""
             }
         )
     }
@@ -185,6 +187,7 @@ fun CircuitWorkoutScreen(
                     weight = weight, onWeightChange = { weight = it },
                     duration = duration, onDurationChange = { duration = it },
                     notes = notes, onNotesChange = { notes = it },
+                    useImperialUnits = useImperialUnits,
                     onStartTimer = { durationSec ->
                         val end = Clock.System.now().toEpochMilliseconds() + durationSec * 1000
                         restEndMs = end
@@ -196,7 +199,7 @@ fun CircuitWorkoutScreen(
                             exId = currentExo.id,
                             roundNumber = currentRound,
                             reps = reps.toIntOrNull(),
-                            weightKg = weight.replace(',', '.').toDoubleOrNull(),
+                            weightKg = UnitConverter.parseWeight(weight, useImperialUnits),
                             durationSeconds = if (currentExo.inputType == CircuitInputType.DURATION) duration else null,
                             notes = notes
                         )
@@ -310,6 +313,7 @@ fun CircuitWorkoutScreen(
             initial = perf,
             c = c,
             darkTheme = darkTheme,
+            useImperialUnits = useImperialUnits,
             onSave = { newReps, newWeight, newDuration, newNotes ->
                 vm.upsertPerformance(exId, round, newReps, newWeight, newDuration, newNotes)
                 editing = null
@@ -332,7 +336,8 @@ private fun ActiveExerciseCard(
     duration: Long, onDurationChange: (Long) -> Unit,
     notes: String, onNotesChange: (String) -> Unit,
     onStartTimer: (Long) -> Unit = {},
-    onValidateNext: () -> Unit
+    onValidateNext: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     Column(Modifier.fillMaxWidth()
         .border(2.dp, c.accent, RoundedCornerShape(14.dp))
@@ -357,7 +362,7 @@ private fun ActiveExerciseCard(
                 val repsFocusRequester = remember { FocusRequester() }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.weight(1f)) {
-                        NumberField(S.weight, weight, onWeightChange, c, decimal = true,
+                        NumberField("${S.weight} (${UnitConverter.weightUnit(useImperialUnits)})", weight, onWeightChange, c, decimal = true,
                             onImeAction = { repsFocusRequester.requestFocus() })
                     }
                     Box(Modifier.weight(1f).focusRequester(repsFocusRequester)) {
@@ -514,8 +519,8 @@ private fun RecapTable(
                                 ex.inputType == CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
                                 ex.inputType == CircuitInputType.REPS_WEIGHT -> {
                                     val r2 = perf.reps?.toString() ?: "?"
-                                    val w = perf.weightKg?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "?"
-                                    "$r2×${w}kg"
+                                    val w = UnitConverter.displayWeight(perf.weightKg, useImperialUnits)
+                                    "$r2×${w}${UnitConverter.weightUnit(useImperialUnits)}"
                                 }
                                 else -> perf.reps?.toString() ?: "–"
                             }
@@ -567,10 +572,11 @@ private fun EditPerfDialog(
     c: GainzThemeColors,
     darkTheme: Boolean,
     onSave: (Int?, Double?, Long?, String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     var reps by remember { mutableStateOf(initial?.reps?.toString() ?: "") }
-    var weight by remember { mutableStateOf(initial?.weightKg?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
+    var weight by remember { mutableStateOf(initial?.weightKg?.let { UnitConverter.displayWeight(it, useImperialUnits) } ?: "") }
     var duration by remember { mutableStateOf(initial?.durationSeconds ?: 0L) }
     var notes by remember { mutableStateOf(initial?.notes ?: "") }
 
@@ -584,7 +590,7 @@ private fun EditPerfDialog(
                     CircuitInputType.REPS -> NumberField(S.reps, reps, { reps = it }, c)
                     CircuitInputType.REPS_WEIGHT -> {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) { NumberField(S.weight, weight, { weight = it }, c, decimal = true) }
+                            Box(Modifier.weight(1f)) { NumberField("${S.weight} (${UnitConverter.weightUnit(useImperialUnits)})", weight, { weight = it }, c, decimal = true) }
                             Box(Modifier.weight(1f)) { NumberField(S.reps, reps, { reps = it }, c) }
                         }
                     }
@@ -612,7 +618,7 @@ private fun EditPerfDialog(
                 onClick = {
                     onSave(
                         reps.toIntOrNull(),
-                        weight.replace(',', '.').toDoubleOrNull(),
+                        UnitConverter.parseWeight(weight, useImperialUnits),
                         if (inputType == CircuitInputType.DURATION) duration else null,
                         notes
                     )

@@ -48,7 +48,8 @@ fun CircuitSetupScreen(
     adFree: Boolean = false,
     onBack: () -> Unit,
     onStartWorkout: (String) -> Unit,
-    onFinished: () -> Unit
+    onFinished: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val vm = remember(resumeId, templateId) {

@@ -153,7 +153,8 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
                 chronoNotifEnabled = it.chrono_notif_enabled != 0L,
                 adFree = it.ad_free != 0L,
                 language = it.language,
-                lastWorkoutType = WorkoutType.parse(it.last_workout_type)
+                lastWorkoutType = WorkoutType.parse(it.last_workout_type),
+                useImperialUnits = it.use_imperial_units != 0L
             )
         } ?: AppSettings()
     }
@@ -165,7 +166,8 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
             chrono_notif_enabled = if (settings.chronoNotifEnabled) 1L else 0L,
             ad_free = if (settings.adFree) 1L else 0L,
             language = settings.language,
-            last_workout_type = settings.lastWorkoutType.name
+            last_workout_type = settings.lastWorkoutType.name,
+            use_imperial_units = if (settings.useImperialUnits) 1L else 0L
         )
     }
 

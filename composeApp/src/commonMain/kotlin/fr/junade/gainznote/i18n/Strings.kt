@@ -630,6 +630,30 @@ object S {
         Lang.FR -> "kg"
         Lang.EN -> "kg"
     }
+    val useImperialUnits get() = when (lang) {
+        Lang.FR -> "Unités impériales"
+        Lang.EN -> "Imperial units"
+    }
+    val useImperialUnitsDesc get() = when (lang) {
+        Lang.FR -> "Afficher les poids en lb et les distances en miles"
+        Lang.EN -> "Show weights in lbs and distances in miles"
+    }
+    val unitKg get() = when (lang) {
+        Lang.FR -> "kg"
+        Lang.EN -> "kg"
+    }
+    val unitLbs get() = when (lang) {
+        Lang.FR -> "lb"
+        Lang.EN -> "lbs"
+    }
+    val unitKm get() = when (lang) {
+        Lang.FR -> "km"
+        Lang.EN -> "km"
+    }
+    val unitMiles get() = when (lang) {
+        Lang.FR -> "mi"
+        Lang.EN -> "mi"
+    }
 
 
     // ── Accessibilité (C9) ────────────────────────────────────────────────
