@@ -25,7 +25,7 @@ android {
             commandLine("date", "+%m%d%H%M")
         }.standardOutput.asText.get().trim().toLong().toInt()
         versionCode = timestamp
-        versionName = "1.0.$timestamp"
+        versionName = "1.1.$timestamp"
     }
     signingConfigs {
         create("release") {
@@ -45,7 +45,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    setProperty("archivesBaseName", "GainzNote-1.0.${defaultConfig.versionCode ?: 0}")
+    setProperty("archivesBaseName", "GainzNote-1.1.${defaultConfig.versionCode ?: 0}")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
