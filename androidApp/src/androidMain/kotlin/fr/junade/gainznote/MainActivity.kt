@@ -196,8 +196,9 @@ class MainActivity : ComponentActivity() {
         billingManager = BillingManager(
             context = this,
             onAdFreeChanged = { purchased ->
-                // Met à jour le state Compose (UI immédiate) ET persiste en DB
-                isAdFreePurchased = purchased
+                runOnUiThread {
+                    isAdFreePurchased = purchased
+                }
                 lifecycleScope.launch {
                     val settings = repo.getAppSettings()
                     if (settings.adFree != purchased) {

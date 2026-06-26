@@ -66,7 +66,6 @@ fun App(
     val scope = rememberCoroutineScope()
 
     fun persistSettings() {
-        if (!settingsLoaded) return
         scope.launch {
             repo.saveAppSettings(
                 AppSettings(
