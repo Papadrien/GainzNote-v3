@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.repository.WorkoutRepository
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.i18n.getSystemLanguage
 import fr.junade.gainznote.BuildConfig
 import fr.junade.gainznote.ui.App
 import com.google.android.gms.ads.AdRequest
@@ -191,6 +192,9 @@ class MainActivity : ComponentActivity() {
         loadInterstitial()
 
         val repo = WorkoutRepository(DatabaseDriverFactory(this))
+
+        // Initialiser la langue AVANT le premier frame
+        S.initFromSystem(getSystemLanguage())
 
         // Initialiser Google Play Billing
         billingManager = BillingManager(

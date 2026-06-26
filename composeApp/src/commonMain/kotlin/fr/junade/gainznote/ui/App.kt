@@ -71,10 +71,6 @@ fun App(
     var workoutCount by remember { mutableStateOf(0) }
     var showRatingSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    // Langue initialisée PENDANT la composition (avant le premier frame)
-    if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
-    // Réagit immédiatement à purchasedAdFree (état passé par MainActivity)
-    if (purchasedAdFree && !adFree) adFree = true
 
     fun persistSettings() {
         scope.launch {
@@ -113,6 +109,14 @@ fun App(
         if (settings.language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (settings.language == "fr") Lang.FR else Lang.EN)
         // Si Billing avait confirmé l'achat mais la DB ne l'avait pas encore, on persiste maintenant
         if (purchasedAdFree && !settings.adFree) persistSettings()
+    }
+
+    // Réagit immédiatement quand BillingManager confirme un achat ou une restauration
+    LaunchedEffect(purchasedAdFree) {
+        if (purchasedAdFree && !adFree) {
+            adFree = true
+            persistSettings()
+        }
     }
 
     // Met à jour S.lang à chaque changement de langue explicite
