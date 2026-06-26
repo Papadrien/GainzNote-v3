@@ -104,7 +104,7 @@ fun DetailScreen(
                         }
                         w.exercises.forEach { ex ->
                             val supersetIdx = ex.supersetId?.let { supersetOrder.indexOf(it) + 1 } ?: 0
-                            ExerciseDetailCard(ex, supersetIdx, c)
+                            ExerciseDetailCard(ex, supersetIdx, c, useImperialUnits)
                             Spacer(Modifier.height(12.dp))
                         }
                     }
@@ -165,7 +165,7 @@ fun DetailScreen(
 }
 
 @Composable
-fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors) {
+fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors, useImperialUnits: Boolean = false) {
     val isSuperset = exercise.supersetId != null
     val ssColor = if (isSuperset) supersetColor(supersetIndex) else c.superset
     val ssColorDim = if (isSuperset) supersetColorDim(supersetIndex) else c.supersetDim

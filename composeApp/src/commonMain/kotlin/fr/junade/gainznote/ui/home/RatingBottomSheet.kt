@@ -2,6 +2,7 @@ package fr.junade.gainznote.ui.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -62,9 +63,7 @@ fun RatingBottomSheet(
                 onClick = onLater,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(c.border)
-                )
+                border = BorderStroke(1.dp, c.border)
             ) {
                 Text(S.ratingLater, color = c.text, fontSize = 15.sp)
             }

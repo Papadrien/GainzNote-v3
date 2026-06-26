@@ -156,7 +156,7 @@ class WorkoutRepository(driverFactory: DatabaseDriverFactory) {
                 lastWorkoutType = WorkoutType.parse(it.last_workout_type),
                 useImperialUnits = it.use_imperial_units != 0L,
                 ratingPromptDone = it.rating_prompt_done != 0L,
-                workoutCount = it.workout_count?.toInt() ?: 0
+                workoutCount = it.workout_count.toInt()
             )
         } ?: AppSettings()
     }
