@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.repository.WorkoutRepository
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.i18n.getSystemLanguage
 import fr.junade.gainznote.BuildConfig
 import fr.junade.gainznote.ui.App
 import com.google.android.gms.ads.AdRequest
@@ -180,7 +181,18 @@ class MainActivity : ComponentActivity() {
         startService(intent)
     }
 
-    // ── onCreate ──────────────────────────────────────────────────────────────
+    // ── Cycle de vie ──────────────────────────────────────────────────────────
+
+    override fun onResume() {
+        super.onResume()
+        // Rattrape un achat/restauration dont le callback onPurchasesUpdated
+        // aurait été manqué pendant la transition d'écran du flow de paiement
+        // Google Play (ex: Activity mise en pause puis reprise). Garantit que
+        // l'état "sans pub" est toujours à jour dès que l'app revient au premier plan.
+        if (::billingManager.isInitialized) {
+            billingManager.refreshPurchases()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -193,17 +205,15 @@ class MainActivity : ComponentActivity() {
 
         val repo = WorkoutRepository(DatabaseDriverFactory(this))
 
+        // Initialiser la langue AVANT le premier frame
+        S.initFromSystem(getSystemLanguage())
+
         // Initialiser Google Play Billing
         billingManager = BillingManager(
             context = this,
             onAdFreeChanged = { purchased ->
-                // Mise à jour du state Compose OBLIGATOIREMENT sur le main thread
                 runOnUiThread {
                     isAdFreePurchased = purchased
-                    // Libérer l'interstitiel en mémoire dès l'achat confirmé
-                    if (purchased) {
-                        interstitialAd = null
-                    }
                 }
                 lifecycleScope.launch {
                     val settings = repo.getAppSettings()
@@ -261,7 +271,23 @@ class MainActivity : ComponentActivity() {
                         runOnUiThread {
                             val msg = if (found) S.restorePurchasesSuccess else S.restorePurchasesNone
                             Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                            if (found) {
+                                isAdFreePurchased = true
+                            }
                         }
+                        if (found) {
+                            lifecycleScope.launch {
+                                val settings = repo.getAppSettings()
+                                repo.saveAppSettings(settings.copy(adFree = true))
+                            }
+                        }
+                    }
+                },
+                onOpenPlayStore = {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=fr.junade.gainznote")))
+                    } catch (e: Exception) {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=fr.junade.gainznote")))
                     }
                 }
             )

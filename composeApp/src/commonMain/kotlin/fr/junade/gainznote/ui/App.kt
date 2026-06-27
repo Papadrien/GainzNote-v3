@@ -4,7 +4,9 @@ import androidx.compose.runtime.*
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.i18n.Lang
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.i18n.getSystemCountry
 import fr.junade.gainznote.i18n.getSystemLanguage
+import fr.junade.gainznote.i18n.isImperialCountry
 import fr.junade.gainznote.model.AppSettings
 import fr.junade.gainznote.model.WorkoutType
 import fr.junade.gainznote.repository.WorkoutRepository
@@ -15,6 +17,7 @@ import fr.junade.gainznote.ui.detail.DetailScreen
 import fr.junade.gainznote.ui.history.HistoryScreen
 import fr.junade.gainznote.ui.home.HomeScreen
 import fr.junade.gainznote.ui.home.PrivacyPolicyScreen
+import fr.junade.gainznote.ui.home.RatingBottomSheet
 import fr.junade.gainznote.ui.theme.GainzTheme
 import fr.junade.gainznote.ui.workout.WorkoutScreen
 import kotlinx.coroutines.launch
@@ -56,7 +59,8 @@ fun App(
     removeAdsPrice: String? = null,
     purchasedAdFree: Boolean = false,
     onPurchaseRemoveAds: () -> Unit = {},
-    onRestorePurchases: () -> Unit = {}
+    onRestorePurchases: () -> Unit = {},
+    onOpenPlayStore: () -> Unit = {}
 ) {
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
@@ -67,11 +71,13 @@ fun App(
     var adFree by remember { mutableStateOf(false) }
     var language by remember { mutableStateOf("auto") }
     var lastWorkoutType by remember { mutableStateOf(WorkoutType.MUSCULATION) }
-    var settingsLoaded by remember { mutableStateOf(false) }
+    var useImperialUnits by remember { mutableStateOf(false) }
+    var ratingPromptDone by remember { mutableStateOf(false) }
+    var workoutCount by remember { mutableStateOf(0) }
+    var showRatingSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     fun persistSettings() {
-        if (!settingsLoaded) return
         scope.launch {
             repo.saveAppSettings(
                 AppSettings(
@@ -79,7 +85,10 @@ fun App(
                     chronoNotifEnabled = chronoNotifEnabled,
                     adFree = adFree,
                     language = language,
-                    lastWorkoutType = lastWorkoutType
+                    lastWorkoutType = lastWorkoutType,
+                    useImperialUnits = useImperialUnits,
+                    ratingPromptDone = ratingPromptDone,
+                    workoutCount = workoutCount
                 )
             )
         }
@@ -93,9 +102,16 @@ fun App(
         adFree = settings.adFree || purchasedAdFree
         language = settings.language
         lastWorkoutType = settings.lastWorkoutType
-        // Initialiser la langue
-        if (language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
-        settingsLoaded = true
+        useImperialUnits = settings.useImperialUnits
+        ratingPromptDone = settings.ratingPromptDone
+        workoutCount = settings.workoutCount
+        // Détection auto au premier démarrage
+        if (settings.language == "auto" && settings.useImperialUnits == false) {
+            val country = getSystemCountry()
+            if (isImperialCountry(country)) useImperialUnits = true
+        }
+        // Réinitialiser la langue depuis les préférences (surcharge la détection automatique)
+        if (settings.language == "auto") S.initFromSystem(getSystemLanguage()) else S.lang = if (settings.language == "fr") Lang.FR else Lang.EN
         // Si Billing avait confirmé l'achat mais la DB ne l'avait pas encore, on persiste maintenant
         if (purchasedAdFree && !settings.adFree) persistSettings()
     }
@@ -108,6 +124,12 @@ fun App(
         }
     }
 
+    // Met à jour S.lang à chaque changement de langue explicite
+    LaunchedEffect(language) {
+        if (language == "auto") S.initFromSystem(getSystemLanguage())
+        else S.lang = if (language == "fr") Lang.FR else Lang.EN
+    }
+
     // Clé qui s'incrémente après chaque import pour forcer le rechargement de HomeScreen
     var refreshKey by remember { mutableStateOf(0) }
 
@@ -117,7 +139,11 @@ fun App(
     fun navigateBack() { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onExit() }
 
     fun onWorkoutFinished() {
-        onWorkoutFinish()
+        workoutCount++
+        if (!ratingPromptDone && workoutCount >= 3) {
+            showRatingSheet = true
+        }
+        persistSettings()
         if (adFree) {
             backStack.clear()
             backStack.add(Screen.Home)
@@ -220,10 +246,15 @@ fun App(
                 onChangeLang = { newLang ->
                     language = newLang
                     if (newLang == "auto") S.initFromSystem(getSystemLanguage())
-                    else S.setLang(if (newLang == "fr") Lang.FR else Lang.EN)
+                    else S.lang = if (newLang == "fr") Lang.FR else Lang.EN
                     persistSettings()
                 },
-                refreshKey = refreshKey
+                refreshKey = refreshKey,
+                useImperialUnits = useImperialUnits,
+                onToggleImperialUnits = {
+                    useImperialUnits = !useImperialUnits
+                    persistSettings()
+                }
             )
             is Screen.Workout -> WorkoutScreen(
                 repo = repo,
@@ -235,7 +266,8 @@ fun App(
                 onFinished = { onWorkoutFinished() },
                 chronoNotifEnabled = chronoNotifEnabled,
                 onChronoStart = onChronoStart,
-                onChronoStop = onChronoStop
+                onChronoStop = onChronoStop,
+                useImperialUnits = useImperialUnits
             )
             Screen.PrivacyPolicy -> PrivacyPolicyScreen(
                 darkTheme = darkTheme,
@@ -268,7 +300,8 @@ fun App(
                 resumeId = s.resumeId,
                 adFree = adFree,
                 onBack = { navigateBack() },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.CircuitSetup -> CircuitSetupScreen(
                 repo = repo,
@@ -279,11 +312,11 @@ fun App(
                 adFree = adFree,
                 onBack = { navigateBack() },
                 onStartWorkout = { workoutId ->
-                    // Remplace l'écran de setup par l'écran de séance active
                     backStack.removeAt(backStack.lastIndex)
                     backStack.add(Screen.CircuitWorkout(workoutId = workoutId))
                 },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.CircuitWorkout -> CircuitWorkoutScreen(
                 repo = repo,
@@ -294,7 +327,8 @@ fun App(
                 onChronoStart = onChronoStart,
                 onChronoStop = onChronoStop,
                 onBack = { navigateBack() },
-                onFinished = { onWorkoutFinished() }
+                onFinished = { onWorkoutFinished() },
+                useImperialUnits = useImperialUnits
             )
             is Screen.Detail -> DetailScreen(
                 repo = repo,
@@ -315,7 +349,30 @@ fun App(
                         })
                     }
                 },
-                onDeleted = { navigateBack() }
+                onDeleted = { navigateBack() },
+                useImperialUnits = useImperialUnits
+            )
+        }
+        if (showRatingSheet) {
+            val c = fr.junade.gainznote.ui.theme.GainzThemeColors(darkTheme)
+            RatingBottomSheet(
+                c = c,
+                darkTheme = darkTheme,
+                onDismiss = { showRatingSheet = false },
+                onRate = {
+                    ratingPromptDone = true
+                    showRatingSheet = false
+                    persistSettings()
+                    onOpenPlayStore()
+                },
+                onLater = {
+                    showRatingSheet = false
+                },
+                onNoThanks = {
+                    ratingPromptDone = true
+                    showRatingSheet = false
+                    persistSettings()
+                }
             )
         }
     }

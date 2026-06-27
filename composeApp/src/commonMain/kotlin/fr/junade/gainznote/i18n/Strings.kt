@@ -1,5 +1,9 @@
 package fr.junade.gainznote.i18n
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 /** Langue supportée. */
 enum class Lang { FR, EN }
 
@@ -7,12 +11,16 @@ enum class Lang { FR, EN }
  * Objet de traduction centralisé.
  * Utiliser `S.xxx` partout dans l'UI au lieu de chaînes en dur.
  * Appeler `S.setLang(lang)` au démarrage ou quand l'utilisateur change la langue.
+ *
+ * `lang` est backé par un `mutableStateOf` (State Compose) et non une simple `var`.
+ * Cela garantit que tout composable qui lit une chaîne `S.xxx` est automatiquement
+ * recomposé quand la langue change, même si ses propres paramètres (selected, darkTheme, …)
+ * n'ont pas changé — sans ça, certains composables "skippables" par Compose pouvaient
+ * rester figés sur l'ancienne langue jusqu'à ce qu'une recomposition interne (ex: un clic)
+ * les force à se réexécuter.
  */
 object S {
-    var lang: Lang = Lang.FR
-        private set
-
-    fun setLang(l: Lang) { lang = l }
+    var lang: Lang by mutableStateOf(Lang.FR)
 
     /** Initialise la langue à partir du code système ("fr", "en", …). */
     fun initFromSystem(code: String) {
@@ -393,7 +401,7 @@ object S {
     // ── Workout types (Cardio, Circuit) ───────────────────────────────────
     val workoutTypeMusculation get() = when (lang) {
         Lang.FR -> "Musculation"
-        Lang.EN -> "Strength training"
+        Lang.EN -> "Fitness"
     }
     val workoutTypeCardio get() = when (lang) {
         Lang.FR -> "Cardio"
@@ -564,6 +572,10 @@ object S {
         Lang.FR -> "Passer"
         Lang.EN -> "Skip"
     }
+    val startTimer get() = when (lang) {
+        Lang.FR -> "Démarrer"
+        Lang.EN -> "Start"
+    }
     val validateAndNext get() = when (lang) {
         Lang.FR -> "Valider et passer au suivant"
         Lang.EN -> "Validate and next"
@@ -626,6 +638,30 @@ object S {
         Lang.FR -> "kg"
         Lang.EN -> "kg"
     }
+    val useImperialUnits get() = when (lang) {
+        Lang.FR -> "Unités impériales"
+        Lang.EN -> "Imperial units"
+    }
+    val useImperialUnitsDesc get() = when (lang) {
+        Lang.FR -> "Afficher les poids en lb et les distances en miles"
+        Lang.EN -> "Show weights in lbs and distances in miles"
+    }
+    val unitKg get() = when (lang) {
+        Lang.FR -> "kg"
+        Lang.EN -> "kg"
+    }
+    val unitLbs get() = when (lang) {
+        Lang.FR -> "lb"
+        Lang.EN -> "lbs"
+    }
+    val unitKm get() = when (lang) {
+        Lang.FR -> "km"
+        Lang.EN -> "km"
+    }
+    val unitMiles get() = when (lang) {
+        Lang.FR -> "mi"
+        Lang.EN -> "mi"
+    }
 
 
     // ── Accessibilité (C9) ────────────────────────────────────────────────
@@ -664,6 +700,28 @@ object S {
     val restTimerLabel get() = when (lang) {
         Lang.FR -> "Temps de repos restant"
         Lang.EN -> "Remaining rest time"
+    }
+
+    // ── Rating Prompt ─────────────────────────────────────────────────────
+    val ratingTitle get() = when (lang) {
+        Lang.FR -> "Vous aimez GainzNote ?"
+        Lang.EN -> "Enjoying GainzNote?"
+    }
+    val ratingBody get() = when (lang) {
+        Lang.FR -> "Prenez une seconde pour noter l'application, ça nous aide beaucoup !"
+        Lang.EN -> "Take a moment to rate the app, it helps us a lot!"
+    }
+    val ratingConfirm get() = when (lang) {
+        Lang.FR -> "Noter"
+        Lang.EN -> "Rate"
+    }
+    val ratingLater get() = when (lang) {
+        Lang.FR -> "Plus tard"
+        Lang.EN -> "Later"
+    }
+    val ratingNo get() = when (lang) {
+        Lang.FR -> "Non merci"
+        Lang.EN -> "No thanks"
     }
 
     // ── Privacy Policy ────────────────────────────────────────────────────

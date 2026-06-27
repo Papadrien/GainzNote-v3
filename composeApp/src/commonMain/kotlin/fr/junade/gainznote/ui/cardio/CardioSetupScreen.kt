@@ -48,7 +48,8 @@ fun CardioSetupScreen(
     onFinished: () -> Unit,
     chronoNotifEnabled: Boolean = false,
     onChronoStart: (Long) -> Unit = {},
-    onChronoStop: () -> Unit = {}
+    onChronoStop: () -> Unit = {},
+    useImperialUnits: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val vm = remember(resumeId, templateId) {

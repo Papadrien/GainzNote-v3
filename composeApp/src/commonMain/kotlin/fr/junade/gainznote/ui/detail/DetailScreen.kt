@@ -23,6 +23,7 @@ import fr.junade.gainznote.ui.history.WorkoutStatsRow
 import fr.junade.gainznote.ui.history.WorkoutTypeBadge
 import fr.junade.gainznote.ui.home.formatDisplayDate
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.model.UnitConverter
 import fr.junade.gainznote.ui.theme.GainzThemeColors
 import fr.junade.gainznote.ui.theme.supersetColor
 import fr.junade.gainznote.ui.theme.supersetColorDim
@@ -36,7 +37,8 @@ fun DetailScreen(
     workoutId: String,
     onBack: () -> Unit,
     onUseAsTemplate: (String) -> Unit,
-    onDeleted: () -> Unit
+    onDeleted: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     var workout by remember { mutableStateOf<Workout?>(null) }
@@ -102,7 +104,7 @@ fun DetailScreen(
                         }
                         w.exercises.forEach { ex ->
                             val supersetIdx = ex.supersetId?.let { supersetOrder.indexOf(it) + 1 } ?: 0
-                            ExerciseDetailCard(ex, supersetIdx, c)
+                            ExerciseDetailCard(ex, supersetIdx, c, useImperialUnits)
                             Spacer(Modifier.height(12.dp))
                         }
                     }
@@ -129,7 +131,7 @@ fun DetailScreen(
                             Spacer(Modifier.height(12.dp))
                         }
                         w.circuitExercises.forEach { ex ->
-                            CircuitExerciseDetailCard(ex, cfg?.totalRounds ?: 0, c, typeAccent, typeAccentDim)
+                            CircuitExerciseDetailCard(ex, cfg?.totalRounds ?: 0, c, typeAccent, typeAccentDim, useImperialUnits)
                             Spacer(Modifier.height(12.dp))
                         }
                     }
@@ -163,7 +165,7 @@ fun DetailScreen(
 }
 
 @Composable
-fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors) {
+fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzThemeColors, useImperialUnits: Boolean = false) {
     val isSuperset = exercise.supersetId != null
     val ssColor = if (isSuperset) supersetColor(supersetIndex) else c.superset
     val ssColorDim = if (isSuperset) supersetColorDim(supersetIndex) else c.supersetDim
@@ -192,7 +194,7 @@ fun ExerciseDetailCard(exercise: Exercise, supersetIndex: Int = 0, c: GainzTheme
         exercise.sets.forEachIndexed { i, s ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp)) {
                 Text("${i+1}", color = c.textMuted, fontSize = 12.sp, modifier = Modifier.width(28.dp))
-                Text(s.weightKg?.let { "${if (it == it.toLong().toDouble()) it.toLong() else it} kg" } ?: "—",
+                Text(s.weightKg?.let { UnitConverter.displayWeightWithUnit(it, useImperialUnits) } ?: "—",
                     color = c.text, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                 Text(s.reps?.toString() ?: "—", color = c.text, fontSize = 14.sp,
                     fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
@@ -254,7 +256,8 @@ fun CircuitExerciseDetailCard(
     totalRounds: Int,
     c: GainzThemeColors,
     typeAccent: Color,
-    typeAccentDim: Color
+    typeAccentDim: Color,
+    useImperialUnits: Boolean = false
 ) {
     Column(
         Modifier.fillMaxWidth()
@@ -325,10 +328,8 @@ fun CircuitExerciseDetailCard(
                     val desc: String = when (exercise.inputType) {
                         CircuitInputType.REPS -> "${perf.reps ?: "?"} ${S.repsShort}"
                         CircuitInputType.REPS_WEIGHT -> {
-                            val w = perf.weightKg?.let {
-                                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-                            } ?: "?"
-                            "${perf.reps ?: "?"} ${S.repsShort} × ${w} ${S.kgShort}"
+                            val w = UnitConverter.displayWeight(perf.weightKg, useImperialUnits)
+                            "${perf.reps ?: "?"} ${S.repsShort} × ${w} ${UnitConverter.weightUnit(useImperialUnits)}"
                         }
                         CircuitInputType.DURATION -> formatShortSec(perf.durationSeconds ?: 0L)
                     }

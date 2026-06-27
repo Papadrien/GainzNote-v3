@@ -32,6 +32,7 @@ import fr.junade.gainznote.ui.theme.supersetColor
 import fr.junade.gainznote.ui.theme.supersetColorDim
 import fr.junade.gainznote.ui.components.FloatingTimer
 import fr.junade.gainznote.i18n.S
+import fr.junade.gainznote.model.UnitConverter
 import fr.junade.gainznote.ui.ads.AdBanner
 import kotlinx.coroutines.delay
 
@@ -47,7 +48,8 @@ fun WorkoutScreen(
     adFree: Boolean = false,
     chronoNotifEnabled: Boolean = false,
     onChronoStart: (Long) -> Unit = {},
-    onChronoStop: () -> Unit = {}
+    onChronoStop: () -> Unit = {},
+    useImperialUnits: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     // Key sur resumeId+templateId pour recréer le VM si on change d'entraînement
@@ -151,7 +153,8 @@ fun WorkoutScreen(
                     supersetIndex = supersetIdx,
                     c = c, vm = vm, allExercises = workout.exercises,
                     onPickSuperset = { showSupersetPicker = ex.id },
-                    onAddMultiple = { showAddSetsFor = ex.id }
+                    onAddMultiple = { showAddSetsFor = ex.id },
+                    useImperialUnits = useImperialUnits
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -319,7 +322,8 @@ fun GainzTextField(
 fun ExerciseCard(
     exercise: Exercise, isFirst: Boolean, supersetIndex: Int,
     c: GainzThemeColors, vm: WorkoutViewModel, allExercises: List<Exercise>,
-    onPickSuperset: () -> Unit, onAddMultiple: () -> Unit
+    onPickSuperset: () -> Unit, onAddMultiple: () -> Unit,
+    useImperialUnits: Boolean = false
 ) {
     val isSupersetMember = supersetIndex > 0
     val ssColor = if (isSupersetMember) supersetColor(supersetIndex) else c.superset
@@ -374,7 +378,7 @@ fun ExerciseCard(
 
         Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
             Text("#", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.width(24.dp))
-            Text("kg", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
+            Text(UnitConverter.weightUnit(useImperialUnits), color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("reps", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1f))
             Text("note", color = c.textMuted, fontSize = 11.sp, modifier = Modifier.weight(1.5f))
             Spacer(Modifier.width(64.dp))
@@ -386,7 +390,8 @@ fun ExerciseCard(
                 onRepsChange = { r -> vm.updateSetReps(exercise.id, set.id, r) },
                 onNotesChange = { n -> vm.updateSetNotes(exercise.id, set.id, n) },
                 onPropagate = { vm.propagateWeight(exercise.id, set.id) },
-                onRemove = { vm.removeSet(exercise.id, set.id) })
+                onRemove = { vm.removeSet(exercise.id, set.id) },
+                useImperialUnits = useImperialUnits)
         }
 
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
@@ -405,11 +410,12 @@ fun ExerciseCard(
 @Composable
 fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
            onWeightChange: (Double?) -> Unit, onRepsChange: (Int?) -> Unit,
-           onNotesChange: (String) -> Unit, onPropagate: () -> Unit, onRemove: () -> Unit) {
+           onNotesChange: (String) -> Unit, onPropagate: () -> Unit, onRemove: () -> Unit,
+           useImperialUnits: Boolean = false) {
 
     var weightText by remember(set.id) {
         mutableStateOf(set.weightKg?.let {
-            if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+            UnitConverter.displayWeight(it, useImperialUnits)
         } ?: "")
     }
     var repsText by remember(set.id) { mutableStateOf(set.reps?.toString() ?: "") }
@@ -418,7 +424,7 @@ fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
     LaunchedEffect(set.weightKg) {
         if (weightText.toDoubleOrNull() != set.weightKg) {
             weightText = set.weightKg?.let {
-                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                UnitConverter.displayWeight(it, useImperialUnits)
             } ?: ""
         }
     }
@@ -433,7 +439,7 @@ fun SetRow(index: Int, set: TrainingSet, c: GainzThemeColors,
 
         CompactField(localValue = weightText, hint = "0", keyboardType = KeyboardType.Decimal,
             c = c, modifier = Modifier.weight(1f).height(34.dp),
-            onLocalChange = { raw -> weightText = raw; onWeightChange(raw.toDoubleOrNull()) })
+            onLocalChange = { raw -> weightText = raw; onWeightChange(UnitConverter.parseWeight(raw, useImperialUnits)) })
 
         CompactField(localValue = repsText,
             hint = set.repsPlaceholder?.toString() ?: "0",

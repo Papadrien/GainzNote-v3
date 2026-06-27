@@ -90,8 +90,13 @@ class BillingManager(
         }
     }
 
-    /** Vérifie si l'utilisateur a déjà acheté "gainznote_remove_ads". */
-    private fun queryExistingPurchases() {
+    /**
+     * Vérifie si l'utilisateur a déjà acheté "gainznote_remove_ads".
+     * Public pour pouvoir être ré-appelée (ex: depuis onResume) afin de rattraper
+     * un achat dont le callback onPurchasesUpdated n'aurait pas été reçu
+     * (ex: Activity remise au premier plan après le flow d'achat Google Play).
+     */
+    fun queryExistingPurchases() {
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.INAPP)
@@ -114,6 +119,20 @@ class BillingManager(
                     !it.isAcknowledged
                 }.forEach { acknowledgePurchase(it) }
             }
+        }
+    }
+
+    /**
+     * Re-vérifie l'état d'achat auprès de Google Play.
+     * À appeler depuis onResume() de l'Activity pour rattraper un achat dont le
+     * callback onPurchasesUpdated aurait été manqué (ex: l'Activity est mise en
+     * pause pendant l'écran de paiement Google Play, puis reprend la main).
+     * Ne fait rien si le client Billing n'est pas encore prêt — il sera de toute
+     * façon interrogé dès que startConnection() aura terminé.
+     */
+    fun refreshPurchases() {
+        if (billingClient.isReady) {
+            queryExistingPurchases()
         }
     }
 

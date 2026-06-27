@@ -5,5 +5,8 @@ data class AppSettings(
     val chronoNotifEnabled: Boolean = false,
     val adFree: Boolean = false,
     val language: String = "auto",
-    val lastWorkoutType: WorkoutType = WorkoutType.MUSCULATION
+    val lastWorkoutType: WorkoutType = WorkoutType.MUSCULATION,
+    val useImperialUnits: Boolean = false,
+    val ratingPromptDone: Boolean = false,
+    val workoutCount: Int = 0
 )
