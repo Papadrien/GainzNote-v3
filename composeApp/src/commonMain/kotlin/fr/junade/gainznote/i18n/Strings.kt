@@ -21,9 +21,6 @@ enum class Lang { FR, EN }
  */
 object S {
     var lang: Lang by mutableStateOf(Lang.FR)
-        private set
-
-    fun setLang(l: Lang) { lang = l }
 
     /** Initialise la langue à partir du code système ("fr", "en", …). */
     fun initFromSystem(code: String) {

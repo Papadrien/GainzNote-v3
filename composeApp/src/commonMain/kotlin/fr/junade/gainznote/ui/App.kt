@@ -106,7 +106,7 @@ fun App(
             if (isImperialCountry(country)) useImperialUnits = true
         }
         // Réinitialiser la langue depuis les préférences (surcharge la détection automatique)
-        if (settings.language == "auto") S.initFromSystem(getSystemLanguage()) else S.setLang(if (settings.language == "fr") Lang.FR else Lang.EN)
+        if (settings.language == "auto") S.initFromSystem(getSystemLanguage()) else S.lang = if (settings.language == "fr") Lang.FR else Lang.EN
         // Si Billing avait confirmé l'achat mais la DB ne l'avait pas encore, on persiste maintenant
         if (purchasedAdFree && !settings.adFree) persistSettings()
     }
@@ -122,7 +122,7 @@ fun App(
     // Met à jour S.lang à chaque changement de langue explicite
     LaunchedEffect(language) {
         if (language == "auto") S.initFromSystem(getSystemLanguage())
-        else S.setLang(if (language == "fr") Lang.FR else Lang.EN)
+        else S.lang = if (language == "fr") Lang.FR else Lang.EN
     }
 
     // Clé qui s'incrémente après chaque import pour forcer le rechargement de HomeScreen
@@ -238,7 +238,7 @@ fun App(
                 onChangeLang = { newLang ->
                     language = newLang
                     if (newLang == "auto") S.initFromSystem(getSystemLanguage())
-                    else S.setLang(if (newLang == "fr") Lang.FR else Lang.EN)
+                    else S.lang = if (newLang == "fr") Lang.FR else Lang.EN
                     persistSettings()
                 },
                 refreshKey = refreshKey,
