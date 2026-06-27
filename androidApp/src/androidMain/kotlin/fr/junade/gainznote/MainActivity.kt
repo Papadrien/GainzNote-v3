@@ -46,8 +46,9 @@ class MainActivity : ComponentActivity() {
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
 
-    /** Pré-charge un interstitiel pour la prochaine utilisation. */
+    /** Pré-charge un interstitiel pour la prochaine utilisation. Ignoré si l'utilisateur est adFree. */
     private fun loadInterstitial() {
+        if (isAdFreePurchased) return
         val adUnitId = if (BuildConfig.DEBUG) {
             "ca-app-pub-3940256099942544/1033173712" // Interstitiel de test Google
         } else {
@@ -253,6 +254,10 @@ class MainActivity : ComponentActivity() {
                 onChronoStart = { startTimeMs -> startChronoService(startTimeMs) },
                 onChronoStop  = { stopChronoService() },
                 onShowInterstitial = { onDismissed -> showInterstitialThen(onDismissed) },
+                onWorkoutStart        = { type -> AnalyticsHelper.logWorkoutStart(type) },
+                onWorkoutFinish       = { AnalyticsHelper.logWorkoutFinish() },
+                onWorkoutFromPrevious = { type -> AnalyticsHelper.logWorkoutFromPrevious(type) },
+                onHistoryOpen         = { AnalyticsHelper.logHistoryOpen() },
                 isDebug = BuildConfig.DEBUG,
                 removeAdsPrice = removeAdsPrice,
                 purchasedAdFree = isAdFreePurchased,

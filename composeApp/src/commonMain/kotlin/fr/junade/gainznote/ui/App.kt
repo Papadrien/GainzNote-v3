@@ -50,6 +50,11 @@ fun App(
     // Callback interstitiel pub : appelé quand un entraînement se termine.
     // Le paramètre est un callback à invoquer quand la pub est fermée (ou si pas de pub).
     onShowInterstitial: (onDismissed: () -> Unit) -> Unit = { it() },
+    // Callbacks Analytics — implémentés côté Android, no-op par défaut (iOS)
+    onWorkoutStart: (workoutType: String) -> Unit = {},
+    onWorkoutFinish: () -> Unit = {},
+    onWorkoutFromPrevious: (workoutType: String) -> Unit = {},
+    onHistoryOpen: () -> Unit = {},
     isDebug: Boolean = false,
     removeAdsPrice: String? = null,
     purchasedAdFree: Boolean = false,
@@ -185,6 +190,8 @@ fun App(
                 onStartWorkoutOfType = { type ->
                     lastWorkoutType = type
                     persistSettings()
+                    val typeStr = type.name.lowercase()
+                    onWorkoutStart(typeStr)
                     val dest: Screen = when (type) {
                         WorkoutType.MUSCULATION -> Screen.Workout()
                         WorkoutType.CARDIO -> Screen.CardioSetup()
@@ -192,13 +199,14 @@ fun App(
                     }
                     navigateTo(dest)
                 },
-                onHistory = { navigateTo(Screen.History) },
+                onHistory = { onHistoryOpen(); navigateTo(Screen.History) },
                 onPrivacyPolicy = { navigateTo(Screen.PrivacyPolicy) },
                 onOpenWorkout = { id -> navigateTo(Screen.Detail(id)) },
                 onResumeWorkout = { id ->
                     scope.launch {
                         val w = repo.getWorkoutById(id)
                         val type = w?.type ?: fr.junade.gainznote.model.WorkoutType.MUSCULATION
+                        onWorkoutStart(type.name.lowercase())
                         navigateTo(when (type) {
                             fr.junade.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(resumeId = id)
                             fr.junade.gainznote.model.WorkoutType.CARDIO -> Screen.CardioSetup(resumeId = id)
@@ -274,6 +282,8 @@ fun App(
                     scope.launch {
                         val w = repo.getWorkoutById(id)
                         val type = w?.type ?: fr.junade.gainznote.model.WorkoutType.MUSCULATION
+                        onWorkoutFromPrevious(type.name.lowercase())
+                        onWorkoutStart(type.name.lowercase())
                         backStack.clear(); backStack.add(Screen.Home)
                         navigateTo(when (type) {
                             fr.junade.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(templateId = id)
@@ -329,6 +339,8 @@ fun App(
                     scope.launch {
                         val w = repo.getWorkoutById(id)
                         val type = w?.type ?: fr.junade.gainznote.model.WorkoutType.MUSCULATION
+                        onWorkoutFromPrevious(type.name.lowercase())
+                        onWorkoutStart(type.name.lowercase())
                         backStack.clear(); backStack.add(Screen.Home)
                         navigateTo(when (type) {
                             fr.junade.gainznote.model.WorkoutType.MUSCULATION -> Screen.Workout(templateId = id)

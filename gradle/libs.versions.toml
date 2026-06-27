@@ -8,6 +8,7 @@ datetime            = "0.6.1"
 navigationCompose   = "2.8.0-alpha10"
 playServicesAds     = "23.6.0"
 billing             = "7.1.1"
+firebaseAnalytics   = "22.1.2"
 androidMinSdk       = "26"
 androidCompileSdk   = "35"
 androidTargetSdk    = "35"
@@ -29,6 +30,7 @@ androidx-appcompat         = { module = "androidx.appcompat:appcompat",         
 navigation-compose         = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 google-play-services-ads   = { module = "com.google.android.gms:play-services-ads",     version.ref = "playServicesAds" }
 google-billing             = { module = "com.android.billingclient:billing-ktx",        version.ref = "billing" }
+firebase-analytics         = { module = "com.google.firebase:firebase-analytics-ktx",   version.ref = "firebaseAnalytics" }
 
 [plugins]
 androidApplication      = { id = "com.android.application",                  version.ref = "agp" }
@@ -37,3 +39,4 @@ kotlinMultiplatform     = { id = "org.jetbrains.kotlin.multiplatform",        ve
 composeMultiplatform    = { id = "org.jetbrains.compose",                     version.ref = "composeMultiplatform" }
 composeCompiler         = { id = "org.jetbrains.kotlin.plugin.compose",       version.ref = "kotlin" }
 sqldelight              = { id = "app.cash.sqldelight",                       version.ref = "sqldelight" }
+googleServices          = { id = "com.google.gms.google-services",            version = "4.4.2" }

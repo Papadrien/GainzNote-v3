@@ -4,6 +4,12 @@
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
 
+# Firebase Analytics
+-keep class com.google.firebase.analytics.** { *; }
+-dontwarn com.google.firebase.analytics.**
+-keep class com.google.android.gms.measurement.** { *; }
+-dontwarn com.google.android.gms.measurement.**
+
 # ── Google Play Billing ────────────────────────────────────────────────────────
 -keep class com.android.billingclient.** { *; }
 -dontwarn com.android.billingclient.**
