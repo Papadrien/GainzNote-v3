@@ -178,6 +178,12 @@ fun HomeScreen(
             Spacer(Modifier.height(24.dp))
         }
 
+        // ── Publicité ─────────────────────────────────────────────────────────
+        if (!adFree) {
+            AdBanner(Modifier.fillMaxWidth())
+            Spacer(Modifier.height(16.dp))
+        }
+
         // ── Paramètres ────────────────────────────────────────────────────────
         SectionLabel(S.settings, c)
         Spacer(Modifier.height(12.dp))
@@ -367,11 +373,6 @@ fun HomeScreen(
             }
         }
         Spacer(Modifier.height(24.dp))
-
-        // ── Publicité ─────────────────────────────────────────────────────────
-        if (!adFree) {
-            AdBanner(Modifier.fillMaxWidth())
-        }
 
         Spacer(Modifier.height(24.dp))
     }
