@@ -15,11 +15,16 @@ import kotlinx.coroutines.*
  *  - Appeler [launchPurchase] pour déclencher le flow d'achat.
  *  - Lire [isAdFree] pour savoir si l'utilisateur a acheté.
  *  - [onAdFreeChanged] est appelé quand l'état change (pour mettre à jour l'UI).
+ *  - [onPurchaseJustCompleted] est appelé uniquement quand un NOUVEL achat vient
+ *    d'être validé par l'utilisateur (flow d'achat en direct), pour afficher une
+ *    confirmation. Il n'est jamais déclenché lors des détections passives
+ *    (démarrage, onResume, restauration) afin d'éviter une pop-up hors contexte.
  *  - [onPriceChanged] est appelé avec le prix formaté récupéré depuis le Play Store.
  */
 class BillingManager(
     context: Context,
     private val onAdFreeChanged: (Boolean) -> Unit,
+    private val onPurchaseJustCompleted: (() -> Unit)? = null,
     private val onPriceChanged: ((String) -> Unit)? = null
 ) : PurchasesUpdatedListener {
 
@@ -167,6 +172,7 @@ class BillingManager(
                         isAdFree = true
                         onAdFreeChanged(true)
                         acknowledgePurchase(purchase)
+                        onPurchaseJustCompleted?.invoke()
                         Log.d(TAG, "Achat réussi !")
                     }
                 }

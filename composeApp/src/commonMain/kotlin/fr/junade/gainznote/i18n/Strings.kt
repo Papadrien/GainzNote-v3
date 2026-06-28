@@ -159,6 +159,10 @@ object S {
         Lang.FR -> "Annuler"
         Lang.EN -> "Cancel"
     }
+    val ok get() = when (lang) {
+        Lang.FR -> "OK"
+        Lang.EN -> "OK"
+    }
     val addSetsTitle get() = when (lang) {
         Lang.FR -> "Ajouter des séries"
         Lang.EN -> "Add sets"
@@ -302,6 +306,14 @@ object S {
     val purchaseError get() = when (lang) {
         Lang.FR -> "Achat indisponible pour le moment"
         Lang.EN -> "Purchase unavailable at the moment"
+    }
+    val purchaseConfirmedTitle get() = when (lang) {
+        Lang.FR -> "Achat confirmé ✓"
+        Lang.EN -> "Purchase confirmed ✓"
+    }
+    val purchaseConfirmedBody get() = when (lang) {
+        Lang.FR -> "Merci ! Les publicités ont été supprimées."
+        Lang.EN -> "Thank you! Ads have been removed."
     }
     val restorePurchases get() = when (lang) {
         Lang.FR -> "Restaurer les achats"

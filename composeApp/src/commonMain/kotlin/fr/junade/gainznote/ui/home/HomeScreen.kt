@@ -74,8 +74,6 @@ fun HomeScreen(
         // State local pour le dialog "écraser entraînement en cours"
         var pendingTypeForStart by remember { mutableStateOf<WorkoutType?>(null) }
 
-                
-
         fun tryStart(type: WorkoutType) {
             if (inProgressWorkouts.isNotEmpty()) {
                 pendingTypeForStart = type
@@ -84,7 +82,6 @@ fun HomeScreen(
             }
         }
 
-        
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -96,7 +93,7 @@ fun HomeScreen(
                 darkTheme = darkTheme,
                 modifier = Modifier.weight(1f)
             )
-            val (accent, _) = Pair(c.accent, c.accentDim)
+            val accent = c.accent
             Button(
                 onClick = { tryStart(selectedWorkoutType) },
                 modifier = Modifier.weight(1.2f).height(58.dp),
@@ -222,23 +219,17 @@ fun HomeScreen(
             shape = RoundedCornerShape(12.dp), color = c.surface,
             border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
         ) {
-            Column {
-                // Mode sombre
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(S.darkMode, color = c.text, fontSize = 15.sp)
-                    Switch(
-                        checked = darkTheme, onCheckedChange = { onToggleTheme() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
-                            uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-                        )
-                    )
-                }
+            // Mode sombre
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(S.darkMode, color = c.text, fontSize = 15.sp)
+                Switch(
+                    checked = darkTheme, onCheckedChange = { onToggleTheme() },
+                    colors = gainzSwitchColors(c)
+                )
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -262,11 +253,7 @@ fun HomeScreen(
                 }
                 Switch(
                     checked = chronoNotifEnabled, onCheckedChange = { onToggleChronoNotif() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
-                        uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-                    )
+                    colors = gainzSwitchColors(c)
                 )
             }
         }
@@ -291,11 +278,7 @@ fun HomeScreen(
                 }
                 Switch(
                     checked = useImperialUnits, onCheckedChange = { onToggleImperialUnits() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                        uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
-                        uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-                    )
+                    colors = gainzSwitchColors(c)
                 )
             }
         }
@@ -363,25 +346,32 @@ fun HomeScreen(
                     }
                     Switch(
                         checked = adFree, onCheckedChange = { onToggleAdFree() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.accent, checkedTrackColor = c.accentDim,
-                            uncheckedThumbColor = c.textMuted, uncheckedTrackColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC),
-                            uncheckedBorderColor = if (c.dark) androidx.compose.ui.graphics.Color(0xFF3A3A3A) else androidx.compose.ui.graphics.Color(0xFFCCCCCC)
-                        )
+                        colors = gainzSwitchColors(c)
                     )
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
-
         Spacer(Modifier.height(24.dp))
     }
 }
 
 // ─── Composants ───────────────────────────────────────────────────────────────
 
+/** Palette de couleurs commune à tous les `Switch` de l'écran d'accueil. */
 @Composable
-fun SectionLabel(text: String, c: GainzThemeColors) {
+private fun gainzSwitchColors(c: GainzThemeColors): SwitchColors {
+    val uncheckedTrackAndBorder = if (c.dark) Color(0xFF3A3A3A) else Color(0xFFCCCCCC)
+    return SwitchDefaults.colors(
+        checkedThumbColor = c.accent,
+        checkedTrackColor = c.accentDim,
+        uncheckedThumbColor = c.textMuted,
+        uncheckedTrackColor = uncheckedTrackAndBorder,
+        uncheckedBorderColor = uncheckedTrackAndBorder
+    )
+}
+
+@Composable
+private fun SectionLabel(text: String, c: GainzThemeColors) {
     Text(
         text.uppercase(), color = c.textMuted, fontSize = 11.sp,
         fontWeight = FontWeight.Bold, letterSpacing = 1.sp
@@ -389,7 +379,7 @@ fun SectionLabel(text: String, c: GainzThemeColors) {
 }
 
 @Composable
-fun InProgressCard(
+private fun InProgressCard(
     workout: Workout,
     c: GainzThemeColors,
     onClick: () -> Unit,
@@ -447,7 +437,7 @@ fun InProgressCard(
 }
 
 @Composable
-fun SettingButton(icon: String, label: String, c: GainzThemeColors, onClick: () -> Unit) {
+private fun SettingButton(icon: String, label: String, c: GainzThemeColors, onClick: () -> Unit) {
     Surface(
         onClick = onClick, shape = RoundedCornerShape(12.dp), color = c.surface,
         border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
@@ -462,7 +452,7 @@ fun SettingButton(icon: String, label: String, c: GainzThemeColors, onClick: () 
 }
 
 @Composable
-fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
+private fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
     Surface(
         onClick = onClick, shape = RoundedCornerShape(12.dp), color = c.surface,
         border = BorderStroke(1.dp, c.border), modifier = Modifier.fillMaxWidth()
@@ -491,7 +481,7 @@ fun RecentCard(workout: Workout, c: GainzThemeColors, onClick: () -> Unit) {
 
 
 @Composable
-fun LanguagePickerDialog(
+private fun LanguagePickerDialog(
     current: String,
     c: GainzThemeColors,
     onPick: (String) -> Unit,
@@ -539,8 +529,15 @@ fun LanguagePickerDialog(
 }
 
 
+/** Libellé localisé d'un [WorkoutType] (factorisé pour éviter de dupliquer ce mapping). */
+private fun workoutTypeLabel(type: WorkoutType): String = when (type) {
+    WorkoutType.MUSCULATION -> S.workoutTypeMusculation
+    WorkoutType.CARDIO -> S.workoutTypeCardio
+    WorkoutType.CIRCUIT -> S.workoutTypeCircuit
+}
+
 @Composable
-fun WorkoutTypeDropdown(
+private fun WorkoutTypeDropdown(
     selected: WorkoutType,
     onSelected: (WorkoutType) -> Unit,
     darkTheme: Boolean,
@@ -549,11 +546,7 @@ fun WorkoutTypeDropdown(
     val c = GainzThemeColors(darkTheme)
     var expanded by remember { mutableStateOf(false) }
 
-    val label = when (selected) {
-        WorkoutType.MUSCULATION -> S.workoutTypeMusculation
-        WorkoutType.CARDIO -> S.workoutTypeCardio
-        WorkoutType.CIRCUIT -> S.workoutTypeCircuit
-    }
+    val label = workoutTypeLabel(selected)
     val accent = c.copy(type = selected).accent
 
     Box(modifier) {
@@ -583,11 +576,7 @@ fun WorkoutTypeDropdown(
             containerColor = c.surface
         ) {
             WorkoutType.entries.forEach { type ->
-                val typeLabel = when (type) {
-                    WorkoutType.MUSCULATION -> S.workoutTypeMusculation
-                    WorkoutType.CARDIO -> S.workoutTypeCardio
-                    WorkoutType.CIRCUIT -> S.workoutTypeCircuit
-                }
+                val typeLabel = workoutTypeLabel(type)
                 val typeAccent = c.accent
                 DropdownMenuItem(
                     text = {
@@ -607,15 +596,9 @@ fun WorkoutTypeDropdown(
     }
 }
 
-
-
 /** Affiche le type + le décompte adapté (exos pour muscu, exos cardio pour cardio, exos×tours pour circuit). */
 private fun workoutTypeAndCount(workout: Workout): String {
-    val typeLabel = when (workout.type) {
-        WorkoutType.MUSCULATION -> S.workoutTypeMusculation
-        WorkoutType.CARDIO -> S.workoutTypeCardio
-        WorkoutType.CIRCUIT -> S.workoutTypeCircuit
-    }
+    val typeLabel = workoutTypeLabel(workout.type)
     val count = when (workout.type) {
         WorkoutType.MUSCULATION -> S.exerciseCount(workout.exercises.size)
         WorkoutType.CARDIO -> S.exerciseCount(workout.cardioExercises.size)

@@ -1,5 +1,8 @@
 package fr.junade.gainznote.ui
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import fr.junade.gainznote.db.DatabaseDriverFactory
 import fr.junade.gainznote.i18n.Lang
@@ -58,6 +61,8 @@ fun App(
     isDebug: Boolean = false,
     removeAdsPrice: String? = null,
     purchasedAdFree: Boolean = false,
+    purchaseJustConfirmed: Boolean = false,
+    onPurchaseConfirmationShown: () -> Unit = {},
     onPurchaseRemoveAds: () -> Unit = {},
     onRestorePurchases: () -> Unit = {},
     onOpenPlayStore: () -> Unit = {}
@@ -65,6 +70,7 @@ fun App(
     val repo = remember { WorkoutRepository(driverFactory) }
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     val currentScreen = backStack.last()
+    var showSplash by remember { mutableStateOf(true) }
     var darkTheme by remember { mutableStateOf(true) }
     
     var chronoNotifEnabled by remember { mutableStateOf(false) }
@@ -155,7 +161,12 @@ fun App(
         }
     }
 
-    BackHandler(enabled = backStack.size > 1) { navigateBack() }
+    BackHandler(enabled = backStack.size > 1 && !showSplash) { navigateBack() }
+
+    if (showSplash) {
+        SplashScreen(onFinished = { showSplash = false })
+        return
+    }
 
     GainzTheme(dark = darkTheme) {
         when (val s = currentScreen) {
@@ -372,6 +383,20 @@ fun App(
                     ratingPromptDone = true
                     showRatingSheet = false
                     persistSettings()
+                }
+            )
+        }
+        if (purchaseJustConfirmed) {
+            val c = fr.junade.gainznote.ui.theme.GainzThemeColors(darkTheme)
+            AlertDialog(
+                onDismissRequest = onPurchaseConfirmationShown,
+                containerColor = c.surface,
+                title = { Text(S.purchaseConfirmedTitle, color = c.text) },
+                text = { Text(S.purchaseConfirmedBody, color = c.textSec) },
+                confirmButton = {
+                    TextButton(onClick = onPurchaseConfirmationShown) {
+                        Text(S.ok, color = c.accent)
+                    }
                 }
             )
         }

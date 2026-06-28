@@ -42,6 +42,8 @@ class MainActivity : ComponentActivity() {
     private var removeAdsPrice by mutableStateOf<String?>(null)
     /** État d'achat réactif — mis à jour par BillingManager et lu par le composable App. */
     private var isAdFreePurchased by mutableStateOf(false)
+    /** Bascule à true juste après un achat réussi en direct, pour déclencher la pop-up de confirmation. */
+    private var purchaseJustConfirmed by mutableStateOf(false)
 
     // ── Interstitiel AdMob ────────────────────────────────────────────────────
     private var interstitialAd: InterstitialAd? = null
@@ -222,6 +224,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             },
+            onPurchaseJustCompleted = {
+                runOnUiThread {
+                    purchaseJustConfirmed = true
+                }
+            },
             onPriceChanged = { price ->
                 removeAdsPrice = price
             }
@@ -261,6 +268,8 @@ class MainActivity : ComponentActivity() {
                 isDebug = BuildConfig.DEBUG,
                 removeAdsPrice = removeAdsPrice,
                 purchasedAdFree = isAdFreePurchased,
+                purchaseJustConfirmed = purchaseJustConfirmed,
+                onPurchaseConfirmationShown = { purchaseJustConfirmed = false },
                 onPurchaseRemoveAds = {
                     if (!billingManager.launchPurchase(this@MainActivity)) {
                         Toast.makeText(this@MainActivity, S.purchaseError, Toast.LENGTH_SHORT).show()
