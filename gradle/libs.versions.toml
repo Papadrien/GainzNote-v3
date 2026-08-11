@@ -1,17 +1,17 @@
 [versions]
-agp                 = "8.5.2"
-kotlin              = "2.1.0"
-composeMultiplatform = "1.8.0"
-sqldelight          = "2.0.2"
-coroutines          = "1.9.0"
-datetime            = "0.6.1"
-navigationCompose   = "2.8.0-alpha10"
-playServicesAds     = "23.6.0"
-billing             = "7.1.1"
-firebaseAnalytics   = "22.1.2"
+agp                 = "8.13.2"
+kotlin              = "2.3.21"
+composeMultiplatform = "1.11.1"
+sqldelight          = "2.3.2"
+coroutines          = "1.11.0"
+datetime            = "0.6.2"
+navigationCompose   = "2.9.2"
+playServicesAds     = "25.4.0"
+billing             = "9.1.0"
+firebaseAnalytics   = "23.2.0"
 androidMinSdk       = "26"
-androidCompileSdk   = "35"
-androidTargetSdk    = "35"
+androidCompileSdk   = "36"
+androidTargetSdk    = "36"
 
 [libraries]
 kotlinx-coroutines-core    = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core",    version.ref = "coroutines" }
@@ -29,8 +29,9 @@ androidx-splashscreen     = { module = "androidx.core:core-splashscreen",       
 androidx-appcompat         = { module = "androidx.appcompat:appcompat",                   version = "1.7.0" }
 navigation-compose         = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 google-play-services-ads   = { module = "com.google.android.gms:play-services-ads",     version.ref = "playServicesAds" }
-google-billing             = { module = "com.android.billingclient:billing-ktx",        version.ref = "billing" }
-firebase-analytics         = { module = "com.google.firebase:firebase-analytics-ktx",   version.ref = "firebaseAnalytics" }
+google-billing             = { module = "com.android.billingclient:billing",            version.ref = "billing" }
+material-icons-core        = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
+firebase-analytics         = { module = "com.google.firebase:firebase-analytics",       version.ref = "firebaseAnalytics" }
 
 [plugins]
 androidApplication      = { id = "com.android.application",                  version.ref = "agp" }
@@ -39,4 +40,4 @@ kotlinMultiplatform     = { id = "org.jetbrains.kotlin.multiplatform",        ve
 composeMultiplatform    = { id = "org.jetbrains.compose",                     version.ref = "composeMultiplatform" }
 composeCompiler         = { id = "org.jetbrains.kotlin.plugin.compose",       version.ref = "kotlin" }
 sqldelight              = { id = "app.cash.sqldelight",                       version.ref = "sqldelight" }
-googleServices          = { id = "com.google.gms.google-services",            version = "4.4.2" }
+googleServices          = { id = "com.google.gms.google-services",            version = "4.5.0" }

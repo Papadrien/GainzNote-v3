@@ -80,7 +80,8 @@ class BillingManager(
                 )
             ).build()
 
-        billingClient.queryProductDetailsAsync(params) { result, detailsList ->
+        billingClient.queryProductDetailsAsync(params) { result, productDetailsResult ->
+            val detailsList = productDetailsResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 productDetails = detailsList.first()
                 Log.d(TAG, "Produit trouvé: ${productDetails?.name}")
